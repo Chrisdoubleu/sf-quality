@@ -48,9 +48,9 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 
 **Decision:** Create new v3.0 milestone "Architectural Hardening and Platform Maturation"
 
-**Rationale:** v2.0 ("Quality Intelligence Platform") has 3 remaining phases (22-24) with tightly scoped requirements (analytics, governance, incoming substrate). The 24 DB patterns represent a different initiative — making what exists production-grade. Absorbing them into v2.0 would dilute its narrative and bloat requirements from 37 to 60+. v3.0 begins after v2.0 ships.
+**Rationale:** v2.0 ("Quality Intelligence Platform") has 2 active remaining phases (23-24) with tightly scoped requirements (governance, incoming substrate). Phase 22 (analytics + security grants) is DEFERRED — schema still evolving, no consumers, role architecture not locked. SEC-01 grants ship inline with future migrations as needed. The 24 DB patterns represent a different initiative — making what exists production-grade. Absorbing them into v2.0 would dilute its narrative and bloat requirements from 37 to 60+. v3.0 begins after v2.0 ships.
 
-**Exception:** Pattern #5's audit.vw_SuspiciousActivity anomaly view can optionally absorb into v2.0 Phase 22 (analytics) since it naturally fits with analytics schema creation. Decision made during Phase 22 research.
+**Note:** Pattern #5 (audit.vw_SuspiciousActivity) was previously considered for optional absorption into Phase 22 (analytics). With Phase 22 deferred, Pattern #5 stays in v3.0 Phase 29 (Audit Infrastructure) where it naturally groups with ApiCallLog, temporal queries, and tree helpers — all audit schema work with no analytics schema dependency.
 
 | Phase | Name | Patterns | Type | Size |
 |-------|------|----------|------|------|
@@ -363,13 +363,12 @@ These patterns contain precise schema recommendations that must be in CONTEXT fi
 
 ### Step 0: Prerequisites — Complete v2.0 First
 
-Phases 22-24 in sf-quality-db must ship before v3.0 begins. Current state: 22-24 pending.
+Phases 23-24 in sf-quality-db must ship before v3.0 begins. Phase 22 (Analytics Foundation and Security) is DEFERRED — preconditions not met (schema evolving, no consumers, role architecture not locked). See `sf-quality-db/.planning/phases/22-analytics-foundation-security/22-DEFERRAL.md`.
 
 ```
-sf-quality-db: /gsd:plan-phase 22  →  /gsd:execute-phase 22
 sf-quality-db: /gsd:plan-phase 23  →  /gsd:execute-phase 23
 sf-quality-db: /gsd:plan-phase 24  →  /gsd:execute-phase 24
-sf-quality-db: /gsd:complete-milestone  (archives v2.0)
+sf-quality-db: /gsd:complete-milestone  (archives v2.0; Phase 22 deferred to post-v2.0)
 ```
 
 ### Step 1: sf-quality-db — Initialize v3.0 Milestone
