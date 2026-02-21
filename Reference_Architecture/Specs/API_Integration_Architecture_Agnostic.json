@@ -1,0 +1,818 @@
+{
+  "document_metadata": {
+    "title": "Multi-Tenant Platform API & Integration Architecture — Platform-Agnostic Reference",
+    "derived_from": "Dayforce Web Services Introduction Guide (R2025.2.1, ~180 pages)",
+    "abstraction_note": "All vendor-specific terminology has been replaced with platform-agnostic equivalents. This document reverse-engineers the API layer, data model topology, integration patterns, and system-to-system communication architecture from the original web services guide. It is designed to be read alongside the Security & Role Architecture and Workflow Engine Architecture documents to form a complete picture of the platform's technical design.",
+    "cross_references": [
+      {
+        "document": "Security_Role_Architecture_Agnostic.json",
+        "relationship": "The API layer is a consumer of the security model. Every API request passes through the same 10-layer security stack (authentication → role → feature gating → data authorization → field-level API access → organizational scope). This document describes how that stack manifests at the API boundary."
+      },
+      {
+        "document": "Workflow_Engine_Architecture_Agnostic.json",
+        "relationship": "The workflow engine exposes integration hooks through the API layer: workflow validation notifications allow external systems to participate in approval chains, and event notifications propagate workflow-committed changes to downstream consumers. The API's event system is the external face of the workflow engine's domain event mechanism."
+      }
+    ]
+  },
+
+  "architecture_overview": {
+    "summary": "A RESTful (and legacy SOAP) API layer that exposes a multi-tenant HCM platform's data model for system-to-system integration. The architecture follows a resource-oriented design where every domain entity (employees, org units, departments, jobs, positions) is addressable via a canonical URL pattern, identified by cross-reference codes (XRefCodes), and secured through the platform's existing RBAC and field-level access controls. The API is designed for high-frequency, low-volume incremental synchronization — not bulk data transfer.",
+    "core_architectural_decisions": [
+      "Resource-oriented REST with JSON payloads (SOAP/XML maintained as legacy, frozen — no new development)",
+      "XRefCode as the universal entity identifier across all API boundaries — not internal auto-increment IDs",
+      "Two-step retrieval pattern: list XRefCodes first (cheap), then fetch details per XRefCode (secured and filtered)",
+      "Temporal queries via ContextDate parameter — all data retrieval is point-in-time aware",
+      "Delta synchronization by design — consumers must track their last successful request timestamp and query only for changes since that point",
+      "Symmetric read/write payloads — the JSON structure returned by GET is the same structure accepted by POST/PATCH",
+      "Tenant-scoped URL namespace — every URL contains a client namespace segment that isolates tenant data",
+      "Platform security model enforced at API boundary — no separate API permission system exists; the same roles, features, authorizations, and field-level access that govern the UI also govern the API"
+    ],
+    "design_philosophy": "The API is not a data warehouse extraction tool. It is optimized for frequent, small, incremental data exchanges (hourly or more) rather than infrequent bulk transfers. The platform provides separate file-based export facilities for batch operations. The API and file export are complementary, not interchangeable."
+  },
+
+  "url_architecture": {
+    "pattern": "https://{domain}/api/{clientNamespace}/V1/{Resource}",
+    "segments": {
+      "domain": "Platform deployment domain (varies by environment: production vs. test)",
+      "clientNamespace": "Tenant identifier — isolates all operations to a single tenant's data. Acts as the multi-tenancy boundary at the URL level.",
+      "version": "API version segment (currently V1). Enables future versioning without breaking existing consumers.",
+      "resource": "The domain entity type being accessed (e.g., Employees, OrgUnits, Departments, Jobs, Positions, Documents)"
+    },
+    "sub_resource_pattern": "https://{domain}/api/{clientNamespace}/V1/{Resource}/{XRefCode}/{SubResource}",
+    "example_urls": {
+      "list_entities": "/api/CompanyName/V1/Employees",
+      "get_entity_detail": "/api/CompanyName/V1/Employees/{XRefCode}",
+      "get_sub_resource": "/api/CompanyName/V1/Employees/{XRefCode}/WorkAssignments",
+      "metadata": "/api/CompanyName/V1/ClientMetadata"
+    },
+    "client_metadata_endpoint": {
+      "purpose": "Returns the API service version and base URI for the tenant's environment. Used by consumers to verify connectivity and API version compatibility before making data requests.",
+      "response": {
+        "ServiceVersion": "string (e.g., '51.0.0000')",
+        "ServiceUri": "string (tenant-scoped API base URL)"
+      }
+    }
+  },
+
+  "authentication_and_authorization": {
+    "authentication_methods": {
+      "basic_auth": {
+        "description": "Username and password of a dedicated platform user account. The account must be configured with a role that has web services feature access enabled.",
+        "status": "Supported but not preferred for production use"
+      },
+      "token_based_auth": {
+        "description": "OAuth 2.0 Resource Owner Password Credentials (ROPC) flow. The consumer exchanges credentials for a time-limited JWT access token, then uses the token for subsequent API requests.",
+        "flow": [
+          "Consumer POSTs credentials (grant_type, client_id, company_id, username, password) to the identity server token endpoint",
+          "Identity server validates credentials and returns a signed JWT containing: access_token, expires_in (seconds), token_type (Bearer), scope",
+          "Consumer includes the JWT in the Authorization header of subsequent API requests: 'Authorization: Bearer {token}'",
+          "When the token expires (default 3600 seconds / 1 hour), the consumer requests a new token"
+        ],
+        "token_properties": {
+          "type": "JWT (JSON Web Token)",
+          "lifetime_seconds": 3600,
+          "revocable": false,
+          "scope": "Tenant-scoped API access"
+        },
+        "endpoints": {
+          "production": "https://{identity-domain}/connect/token",
+          "test": "https://{identity-domain-test}/connect/token"
+        },
+        "request_parameters": {
+          "grant_type": "password (always)",
+          "companyId": "Tenant namespace",
+          "username": "Dedicated web services user account",
+          "password": "User account password",
+          "client_id": "Fixed scope identifier (e.g., 'Platform.Client')"
+        },
+        "security_note": "Tokens cannot be revoked once issued. They must be handled as sensitive credentials with the same protection as passwords."
+      }
+    },
+    "authorization_model": {
+      "description": "API authorization is NOT a separate permission system. The platform's existing security model is fully enforced at the API boundary. The authenticated user's primary role determines all access.",
+      "layers_enforced": [
+        {
+          "layer": "Feature Gating",
+          "api_impact": "The role must have the 'Web Services' feature enabled (and specific sub-features like 'Read Data' or 'Write Data') in the platform's role feature tree.",
+          "cross_reference": "Security_Role_Architecture_Agnostic.json → feature_access_control"
+        },
+        {
+          "layer": "Data Authorization (CRUD)",
+          "api_impact": "The role's access authorization rights determine which data categories the API can read, create, update, or delete. If the role lacks 'Read' authorization for a data category, those fields are omitted from GET responses.",
+          "cross_reference": "Security_Role_Architecture_Agnostic.json → data_authorization"
+        },
+        {
+          "layer": "Field-Level API Access",
+          "api_impact": "A dedicated field-level access control layer specifically for API channels. Even if a role has broad Read authorization, individual fields can be unchecked in the 'Web Services Field-Level Access' configuration, causing them to be stripped from API responses. This is the most granular control — it operates at the individual field level within each data entity.",
+          "cross_reference": "Security_Role_Architecture_Agnostic.json → api_and_integration_security → field_level_api_access"
+        },
+        {
+          "layer": "Organizational Scope",
+          "api_impact": "The role's organizational unit assignments bound which employees and records are visible through the API. An API user scoped to 'Plant 4' will never see employees assigned to 'Plant 5' regardless of query parameters.",
+          "cross_reference": "Security_Role_Architecture_Agnostic.json → organizational_scoping"
+        },
+        {
+          "layer": "IP Restriction",
+          "api_impact": "IP address restrictions can be applied to API traffic, blocking requests from unauthorized network origins. Recommended for all integration accounts since they typically originate from fixed infrastructure IPs.",
+          "cross_reference": "Security_Role_Architecture_Agnostic.json → network_access_management"
+        }
+      ],
+      "best_practice": "Create a dedicated non-human user account and a dedicated role for each consuming application. Never reuse a human user's account for API access. Scope each integration role to the minimum data categories, fields, and organizational units required."
+    }
+  },
+
+  "data_model_topology": {
+    "description": "The API exposes the platform's domain model as a graph of interconnected entities. This section reverse-engineers the entity model, its relationships, and its temporal characteristics from the API's resource structure. Each entity is identified by a unique XRefCode (cross-reference code) — a tenant-defined string identifier that serves as the stable API-level primary key.",
+
+    "core_entities": {
+      "employee": {
+        "api_resource": "/Employees/{XRefCode}",
+        "description": "The central entity in the data model. Represents a person with an employment relationship to the tenant organization. The employee record is a composite aggregate consisting of a master record and 40+ subordinate resource collections.",
+        "master_record_fields": [
+          "XRefCode", "FirstName", "LastName", "MiddleName", "CommonName", "PreferredLastName",
+          "MaidenName", "DisplayName", "HomePhone", "HireDate", "OriginalHireDate",
+          "SeniorityDate", "StartDate"
+        ],
+        "subordinate_resources": {
+          "description": "Subordinate resources are child collections accessible via sub-resource URLs. Each contains effective-dated records with EffectiveStart and EffectiveEnd timestamps. The Expand parameter controls which subordinate collections are included in a single GET request.",
+          "categories": {
+            "identity_and_demographics": [
+              "Addresses", "Contacts", "EmergencyContacts", "Ethnicities",
+              "MaritalStatuses", "HealthWellnessDetails"
+            ],
+            "employment_and_assignment": [
+              "EmploymentStatuses", "EmploymentTypes", "WorkAssignments",
+              "WorkContracts", "EmploymentAgreements", "Locations",
+              "EmployeeManagers", "EmployeeWorkAssignmentManagers"
+            ],
+            "compensation_and_payroll": [
+              "CompensationSummary", "DirectDeposits", "GLSplit",
+              "HighlyCompensatedEmployees", "PayGradeRates",
+              "EmployeePayAdjustCodeGroups", "UserPayAdjustCodeGroups"
+            ],
+            "tax": [
+              "USFederalTaxes", "USStateTaxes", "USTaxStatuses",
+              "CANFederalTaxes", "CANStateTaxes", "CANTaxStatuses", "EIRates"
+            ],
+            "security_and_access": [
+              "Roles", "SSOAccounts", "AuthorizationAssignments",
+              "ClockDeviceGroups", "DocumentManagementSecurityGroups"
+            ],
+            "talent_and_development": [
+              "Skills", "Courses", "TrainingPrograms",
+              "PerformanceRatings", "UnionMemberships"
+            ],
+            "organization": [
+              "OrgUnitInfos", "LaborDefaults", "OnboardingPolicies",
+              "EmployeeProperties"
+            ],
+            "documents": [
+              "Documents (via separate /Documents endpoint with employeeXrefCode filter)"
+            ]
+          },
+          "total_count": "40+ subordinate resource types"
+        },
+        "temporal_model": {
+          "description": "Employee data is fundamentally temporal. Most subordinate resources contain effective-dated records with EffectiveStart and EffectiveEnd timestamps. The API does not return full history by default — it returns the record effective as of a specified ContextDate.",
+          "parameters": {
+            "ContextDate": "Returns records effective as of this point in time. Defaults to current server datetime.",
+            "ContextDateRangeFrom": "Returns records effective within a date range (used with ContextDateRangeTo)",
+            "ContextDateRangeTo": "End of the effective date range filter"
+          }
+        }
+      },
+
+      "organizational_unit": {
+        "api_resource": "/OrgUnits/{XRefCode}",
+        "description": "Represents a node in the multi-level organizational hierarchy. The API exposes the tree structure through parent references and child unit expansion.",
+        "expandable_sub_resources": ["OrgUnitLegalEntities", "OrgUnitParents", "ChildOrgUnits"],
+        "key_fields": ["XRefCode", "ShortName", "LongName", "OrgLevel"],
+        "hierarchy_traversal": {
+          "parent_access": "OrgUnitParents sub-resource returns effective-dated parent assignments",
+          "child_access": "IncludeChildOrgUnits=true parameter returns immediate children with full expansion",
+          "tree_reconstruction": "Consumers must make recursive calls to reconstruct the full hierarchy tree"
+        },
+        "cross_reference": "Security_Role_Architecture_Agnostic.json → organizational_scoping → hierarchy_model"
+      },
+
+      "department": {
+        "api_resource": "/Departments/{XRefCode}",
+        "description": "A functional division within the organization. Departments are referenced by work assignments and serve as a labor allocation category.",
+        "relationship": "Referenced by Employee → WorkAssignments → Position → Department"
+      },
+
+      "job": {
+        "api_resource": "/Jobs/{XRefCode}",
+        "description": "A job classification definition. Defines the role, rank, and union status of a position. Jobs are referenced by positions and work assignments.",
+        "key_fields": ["XRefCode", "ShortName", "LongName", "IsUnionJob", "JobRank"],
+        "relationship": "Referenced by Employee → WorkAssignments → Position → Job"
+      },
+
+      "position": {
+        "api_resource": "/Positions/{XRefCode}",
+        "description": "An approved headcount slot in the organizational structure. Positions bind together a department, a job, a location, and a reporting relationship. Positions are assigned to employees via work assignments.",
+        "expandable_sub_resources": ["PositionAssignments"],
+        "cross_reference": "Security_Role_Architecture_Agnostic.json → structural_hierarchy_management → positions"
+      },
+
+      "document": {
+        "api_resource": "/Documents/{DocumentGUID}",
+        "description": "Binary documents attached to employee records (certificates, agreements, performance notes). Retrieved via a two-step process: list documents by employee XRefCode, then fetch content by DocumentGUID.",
+        "content_encoding": "Base64 (BLOB stored in database, serialized to Base64 byte array in API response)",
+        "security": "Controlled at document type level — the role must have access to the specific document type category (e.g., 'Employee File', 'Marriage Certificate')"
+      }
+    },
+
+    "workforce_management_entities": {
+      "description": "Entities related to time, attendance, scheduling, and labor tracking. These represent the operational data layer of the platform.",
+
+      "employee_punch": {
+        "api_resource": "/EmployeePunches",
+        "description": "Clock-in/clock-out records captured from time clocks, mobile devices, or manual entry. Punches are the raw input to the time calculation engine.",
+        "key_fields": ["PunchXRefCode", "EmployeeXRefCode", "PunchTime", "PunchStatus", "PunchType"],
+        "operations": ["GET (list/filter)", "POST (create)", "PATCH (update)", "DELETE"],
+        "related_entity": "EmployeeRawPunches — unprocessed punch data before the time calculation engine applies rules"
+      },
+
+      "employee_raw_punch": {
+        "api_resource": "/EmployeeRawPunches",
+        "description": "Raw, unprocessed punch events as captured from source devices. Distinguished from processed punches by including device metadata, offline flags, and punch origin.",
+        "key_fields": ["RawPunchXRefCode", "PunchState", "RawPunchTime", "WasOfflinePunch", "PunchDevice", "PunchOrigin", "PunchType"],
+        "punch_types": ["PUNCH_IN", "PUNCH_OUT", "BREAK", "TRANSFER", "PROJECT"],
+        "operations": ["GET", "POST"]
+      },
+
+      "employee_schedule": {
+        "api_resource": "/EmployeeSchedules",
+        "description": "Planned work schedules assigned to employees. Schedules contain time segments, breaks, activities, skills, labor metrics, and project allocations.",
+        "key_fields": ["EmployeeScheduleXRefCode", "EmployeeXRefCode", "TimeStart", "TimeEnd", "NetHours", "Published"],
+        "nested_collections": ["Breaks", "Activities", "Skills", "LaborMetrics", "Segments"],
+        "operations": ["GET", "POST", "PATCH"],
+        "constraints": {
+          "max_query_range": "31 days per request",
+          "published_filter": "Default returns only published schedules (visible to employees)"
+        }
+      },
+
+      "employee_availability": {
+        "api_resource": "/Employees/{XRefCode}/EmployeeAvailability",
+        "description": "Employee-declared availability windows for scheduling. Effective-dated with weekly day/time patterns.",
+        "operations": ["GET", "POST"]
+      },
+
+      "time_away": {
+        "api_resource": "/Employees/{XRefCode}/TimeAwayFromWork",
+        "description": "Time-off requests and approved absences (vacation, sick, personal). Status-filterable.",
+        "operations": ["GET", "POST", "PATCH"]
+      },
+
+      "activity": {
+        "api_resource": "/Activities",
+        "description": "Predefined work activities that can be assigned to schedule segments. Configured in scheduling setup.",
+        "operations": ["GET"]
+      }
+    },
+
+    "payroll_entities": {
+      "employee_pay_summary": {
+        "api_resource": "/EmployeePaySummaries",
+        "description": "Calculated pay data after time rules and policies have been applied. Read-only — represents the output of the payroll calculation engine.",
+        "key_fields": ["EmployeeXRefCode", "PunchSegmentStart", "Hours", "Amount", "DepartmentXRefCode", "JobXRefCode", "ProjectXRefCode"],
+        "operations": ["GET"]
+      },
+      "employee_pay_adjustment": {
+        "api_resource": "/EmployeePayAdjustments",
+        "description": "Manual corrections to time/attendance records or pay. Supports manager and employee authorization flags.",
+        "key_fields": ["EmployeePayAdjustXRefCode", "PayAdjustmentCodeXRefCode", "PayAdjustmentDate", "Hours", "Amount", "Rate"],
+        "operations": ["GET", "POST", "PATCH"]
+      },
+      "employee_balance": {
+        "api_resources": [
+          "/Employees/{XRefCode}/EmployeeBalancePeriods",
+          "/Employees/{XRefCode}/EmployeeBalanceTransactions"
+        ],
+        "description": "Accrual balances (vacation banks, sick leave banks) and the transactions that affect them. Periods define the accrual cycle; transactions record individual credits/debits.",
+        "operations": ["GET", "POST (transactions)", "PATCH (transactions)"]
+      },
+      "employee_retro_pay": {
+        "api_resource": "/EmployeePaySummariesRetro",
+        "description": "Retroactive pay calculations — pay corrections applied to past periods. Supports filtering by retro pay date.",
+        "operations": ["GET"]
+      },
+      "job_step_rates": {
+        "api_resource": "/JobStepRates",
+        "description": "Rate tables for step-based pay progression tied to job classifications.",
+        "operations": ["GET"]
+      }
+    },
+
+    "labor_tracking_entities": {
+      "labor_metric": {
+        "api_resources": ["/LaborMetrics", "/LaborMetricTypes"],
+        "description": "Custom-defined labor tracking dimensions (cost centers, project codes, activity codes). Types define the metric categories; codes define the values within each type. Both are tenant-configurable.",
+        "operations": ["GET", "POST", "PATCH"]
+      },
+      "project": {
+        "api_resource": "/Projects",
+        "description": "Costing and tracking projects with hierarchical parent-child relationships, priority, phases, clients, and types. Supports certified payroll project numbers.",
+        "key_fields": ["ProjectXRefCode", "ParentProjectXRefCode", "ProjectClientXRefCode", "ProjectTypeXRefCode", "ProjectPhaseXRefCode", "LedgerCode", "ClockCode", "AccountNumber", "CertifiedPayrollProjectNumber", "ProjectPriority"],
+        "operations": ["GET", "POST", "PATCH"]
+      },
+      "legacy_labor_metric": {
+        "api_resource": "/LegacyLaborMetrics",
+        "description": "Backward-compatible labor metric system including HTML-based project clients, phases, and types. Maintained for migration compatibility.",
+        "operations": ["GET", "POST", "PATCH", "DELETE"]
+      },
+      "kpi_data": {
+        "api_resource": "/KpiData",
+        "description": "Key performance indicator values for operational metrics tracking.",
+        "operations": ["GET", "POST", "PATCH"]
+      },
+      "plan_targets": {
+        "api_resource": "/PlanTargets",
+        "description": "Target values for KPI-driven planning (labor budgets, productivity goals).",
+        "operations": ["GET", "POST", "PATCH"]
+      },
+      "operating_hours": {
+        "api_resource": "/OperatingHours",
+        "description": "Location-level operating hour definitions. Scoped by OrgUnit.",
+        "operations": ["GET", "POST", "PATCH"]
+      }
+    },
+
+    "recruiting_entities": {
+      "description": "APIs for talent acquisition integrations: job board syndication, candidate application ingestion, background screening, and assessment provider connectivity.",
+
+      "job_feed": {
+        "api_resource": "/JobFeeds",
+        "description": "Job posting data in both XML and JSON formats for syndication to external job boards. Includes posting dates, descriptions, requirements, and apply URLs.",
+        "formats": ["XML (legacy)", "JSON"],
+        "operations": ["GET"]
+      },
+      "job_posting": {
+        "api_resource": "/JobPostings",
+        "description": "Active job postings with questionnaire URLs and candidate application POST URLs. Designed for job board providers to discover available positions and submit candidate data back.",
+        "key_fields": ["ClientSiteXrefCode", "ApplyUrl", "QuestionnairesURL", "CandidateApplicationPostUrl"],
+        "operations": ["GET"]
+      },
+      "job_posting_questionnaire": {
+        "api_resource": "/JobPostingQuestionnaires",
+        "description": "Screening questions attached to job postings. External job boards retrieve these to present to candidates before submission.",
+        "operations": ["GET"]
+      },
+      "candidate_sourcing": {
+        "api_resource": "/CandidateSourcing",
+        "description": "Inbound candidate profile and application submission from external job boards. Supports both full applications (with job-specific data and questionnaire responses) and profile-only submissions.",
+        "operations": ["POST"],
+        "data_model": {
+          "candidate_source": "Source tracking (job board identifier, source type)",
+          "candidate_personal": "Name, contact, address, government IDs",
+          "candidate_profile": "Education history, employment history, references",
+          "candidate_application": "Job-specific data, questionnaire responses, resume attachment"
+        }
+      },
+      "candidate_application_status": {
+        "api_resource": "/CandidateApplicationStatuses",
+        "description": "Retrieve current application statuses for candidates in the pipeline.",
+        "operations": ["GET"]
+      },
+      "background_screening": {
+        "api_resource": "/BackgroundScreening/*",
+        "description": "Bidirectional integration with external background screening providers. The platform sends screening orders; the provider sends back statuses, results, PII updates, and right-to-work outcomes.",
+        "sub_endpoints": {
+          "BillingCode": "Provider sends available billing codes (POST)",
+          "Package": "Provider sends available screening packages (POST)",
+          "ProviderStatuses": "Provider sends status definitions (POST)",
+          "Status": "Provider updates screening order status (PATCH)",
+          "AdjudicationStatus": "Provider updates adjudication outcome (PATCH)",
+          "PersonalIdentifiableInformation": "Provider updates candidate PII discovered during screening (PATCH)",
+          "CandidateRightToWorkResults": "Provider sends right-to-work verification results (PATCH)"
+        },
+        "screening_order_model": {
+          "outbound_to_provider": ["OrderDetails (package, billing code, recruiter)", "CandidatePersonal (demographics, address)", "CandidateProfile (education, employment, references)", "JobRequisition (position details)"],
+          "inbound_from_provider": ["ScreeningStatus", "AdjudicationStatus", "URL (provider portal link)", "CandidatePII updates", "Right-to-work results with document images (Base64)"]
+        }
+      },
+      "candidate_assessment": {
+        "api_resources": ["/Assessments", "/CandidateAssessmentRegistration", "/CandidateAssessmentStatus", "/CandidateReports", "/CandidateScores"],
+        "description": "Integration with external assessment providers. The platform retrieves available assessments, registers candidates, and receives scores, reports, and completion statuses.",
+        "operations": {
+          "GET": "Assessment list",
+          "POST": "Registration, status updates, reports, scores"
+        }
+      },
+      "i9_verification": {
+        "api_resource": "/I9Orders",
+        "description": "Employment eligibility verification (I-9) integration. External providers update order status.",
+        "operations": ["PATCH"]
+      }
+    },
+
+    "reporting_entities": {
+      "report_metadata": {
+        "api_resources": ["/ReportMetadata", "/ReportMetadata/{XRefCode}"],
+        "description": "Report definitions and their parameters (GUIDs, names, data types, allowed values). The report metadata API allows consumers to discover available reports and their parameter requirements.",
+        "operations": ["GET"]
+      },
+      "report_data": {
+        "api_resource": "/Reports/{XRefCode}",
+        "description": "Raw report data retrieval. Returns tabular data (rows and columns) from predefined report definitions. The report must be built using the platform's dataset builder.",
+        "operations": ["GET"]
+      }
+    },
+
+    "hr_admin_reference_entities": {
+      "description": "Lookup/reference data entities that define the valid values for fields used across the data model. These are the 'codebooks' of the system.",
+      "entities": [
+        {"resource": "/ContactInformationTypes", "description": "Valid contact method types (email, phone, etc.)"},
+        {"resource": "/EmploymentStatuses", "description": "Employment status codes (Active, Terminated, etc.)"},
+        {"resource": "/EmploymentStatusReasons", "description": "Reason codes for status changes (New Hire, Resignation, etc.)"},
+        {"resource": "/PayClasses", "description": "Pay class definitions (Full Time, Part Time, etc.)"},
+        {"resource": "/PayTypes", "description": "Pay type definitions (Salaried, Hourly, etc.)"}
+      ],
+      "pattern": "All follow the two-step XRefCode list → detail retrieval pattern"
+    }
+  },
+
+  "api_interaction_patterns": {
+    "two_step_retrieval": {
+      "description": "The fundamental data retrieval pattern across all resource types. Step 1 is cheap and unfiltered; Step 2 is secured and detailed. This separation allows consumers to efficiently discover what data exists before making heavier detail requests.",
+      "step_1": {
+        "name": "List XRefCodes",
+        "url": "GET /api/{client}/V1/{Resource}",
+        "returns": "Array of XRefCode strings only",
+        "security": "No field-level security applied (XRefCodes are not sensitive)",
+        "purpose": "Discover the universe of entities; build a processing queue"
+      },
+      "step_2": {
+        "name": "Get Detail by XRefCode",
+        "url": "GET /api/{client}/V1/{Resource}/{XRefCode}",
+        "returns": "Full entity record with all accessible subordinate resources",
+        "security": "Full security model applied: data authorization + field-level API access + organizational scope",
+        "purpose": "Retrieve secured, filtered, point-in-time data for a specific entity"
+      },
+      "optimization": "Use the Expand parameter to request only the specific subordinate resources needed, rather than the full object graph"
+    },
+
+    "delta_synchronization": {
+      "description": "The mandated pattern for production consumers. The API is designed around 'changes since last request' semantics, not full-population retrieval.",
+      "mechanism": {
+        "step_1": "Consumer records the start timestamp of each request cycle",
+        "step_2": "Consumer queries for entities updated within a time window: FilterUpdatedStartDate = previous cycle's timestamp, FilterUpdatedEndDate = current cycle's timestamp",
+        "step_3": "Platform returns only entities where: (a) currently-effective record was modified, (b) a record became effective, or (c) a record ended within the window",
+        "step_4": "Consumer stores the current cycle's timestamp for use as the next cycle's start date"
+      },
+      "entity_level_filtering": {
+        "parameter": "filterUpdatedEntities",
+        "description": "Narrows the change detection to specific entity types within the employee record (e.g., only EmploymentStatuses and WorkAssignments). Accepts comma-separated entity names.",
+        "purpose": "Prevents unnecessary processing when the consumer only cares about specific data categories"
+      },
+      "cross_data_model_search": "The update search spans the ENTIRE HR data model regardless of whether the requesting user has access to all entities. A change to a restricted entity will still cause the employee to appear in the XRefCode list, even though the restricted data won't appear in the detail response."
+    },
+
+    "batch_retrieval_for_large_datasets": {
+      "description": "When the entity count exceeds the query governor limit (1,000), consumers must implement client-side batching.",
+      "pattern": [
+        "Request all matching XRefCodes (not subject to the governor)",
+        "Split the XRefCode list into batches of ≤900 (leaving headroom below the 1,000 limit)",
+        "Make one detail request per batch",
+        "Process each batch before requesting the next"
+      ],
+      "query_governor": {
+        "limit": 1000,
+        "scope": "Per-request maximum for detail retrieval (not for XRefCode listing)",
+        "behavior": "Requests exceeding the limit return a governor error, not truncated results"
+      }
+    },
+
+    "point_in_time_queries": {
+      "description": "All effective-dated entities support temporal queries via the ContextDate parameter.",
+      "behavior": [
+        "If ContextDate is provided, the API returns the record effective as of that date",
+        "If ContextDate is omitted, the API defaults to current server date/time",
+        "Non-effective-dated entities always return current data regardless of ContextDate",
+        "ContextDateRangeFrom/To parameters return all records effective within a date range"
+      ],
+      "cross_reference": "Security_Role_Architecture_Agnostic.json → cross_cutting_patterns → effective_dating"
+    },
+
+    "write_operations": {
+      "post": {
+        "verb": "POST",
+        "semantics": "Create a new entity instance. The consumer must generate and provide a unique XRefCode in the request body.",
+        "xrefcode_ownership": "The CONSUMER is responsible for generating a unique XRefCode. The platform rejects duplicates.",
+        "url": "POST /api/{client}/V1/{Resource}"
+      },
+      "patch": {
+        "verb": "PATCH",
+        "semantics": "Update an existing entity. The XRefCode is included in the URL path. Only the fields being changed need to be included in the request body.",
+        "url": "PATCH /api/{client}/V1/{Resource}/{XRefCode}",
+        "partial_update": true,
+        "special_case": "PATCH can also create new effective-dated subordinate records (e.g., a new work assignment effective in the future)"
+      },
+      "symmetric_payloads": "The JSON structure returned by GET is the same structure accepted by POST and PATCH. Consumers can retrieve a record, modify fields, and send it back.",
+      "validate_only_mode": {
+        "parameter": "isValidateOnly=true",
+        "description": "Runs all server-side validations without committing data. Critical for testing and preventing accidental writes to production environments.",
+        "recommendation": "ALWAYS use isValidateOnly=true during development and testing"
+      },
+      "validation_depth": "Server-side validations on POST/PATCH are equivalent to the platform's batch import validations — more limited than the full UI validation suite"
+    },
+
+    "paging": {
+      "description": "Cursor-based pagination for endpoints that return large result sets.",
+      "mechanism": {
+        "page_size_parameter": "PageSize (optional; default applied if omitted)",
+        "response_structure": "Each page includes a 'Paging.Next' field containing the full URL to the next page, with an opaque cursor parameter",
+        "termination": "When no more pages exist, the Paging.Next field is absent or null"
+      },
+      "applicable_endpoints": "Large-collection endpoints (punches, schedules, reports, pay summaries)"
+    }
+  },
+
+  "event_and_notification_system": {
+    "description": "The platform provides two complementary mechanisms for notifying external systems of internal state changes: event notifications (push/pull) and event services (webhooks). These are the API-layer manifestation of the workflow engine's domain event system.",
+
+    "event_notifications": {
+      "description": "A subscription-based notification system that informs external consumers when specific employment lifecycle events occur. Supports both push (platform sends to consumer's receiver service) and pull (consumer polls platform for unacknowledged notifications) modes.",
+      "supported_events": [
+        "Hire", "Hire Cancel",
+        "Rehire", "Rehire Cancel",
+        "Terminate", "Terminate Cancel",
+        "Workflow Validation", "Workflow Validation Cancel"
+      ],
+      "subscriber_model": {
+        "subscription": "A combination of subscriber + event type. Multiple subscriptions can exist per event.",
+        "detection": "Events are only detected when at least one active subscription exists for the event type.",
+        "publisher_cadence": "The notification publisher runs once per hour."
+      },
+      "push_mode": {
+        "description": "The platform sends notifications to a consumer-hosted receiver service endpoint.",
+        "requirements": ["Consumer hosts an HTTPS endpoint", "Consumer authenticates with the platform", "Consumer acknowledges receipt of each notification"],
+        "failure_handling": "If acknowledgment is not received, subsequent events for that subscriber are queued until the stalled item is resolved. Other subscribers are unaffected."
+      },
+      "pull_mode": {
+        "description": "Consumer polls the platform for unacknowledged notifications.",
+        "request": "GET Notifications with subscriber reference code",
+        "acknowledgment": "Consumer must explicitly acknowledge notifications after retrieval",
+        "advantage": "No need for consumer to host a publicly accessible endpoint"
+      },
+      "notification_payload": {
+        "basic": ["Notification ID", "Event Type (hire, rehire, terminate, etc.)", "Event Time (when the transaction was processed)"],
+        "detail": "Retrieved separately via Get Notification Data request using the Notification ID. This separation ensures events are detected once but detailed data is retrieved per-subscriber with appropriate security filtering."
+      },
+      "ordering_guarantee": "Events are sent in order per subscriber. Events for different subscribers are independent."
+    },
+
+    "event_services_webhooks": {
+      "description": "A newer, webhook-based event delivery mechanism that pushes data change events to defined customer endpoints without requiring polling. Currently in limited release.",
+      "status": "Limited release — USA and Canada only. Workflows and other change methods do not yet trigger events.",
+      "cross_reference": "Workflow_Engine_Architecture_Agnostic.json → event_system — the event services system is the external-facing API for the workflow engine's internal domain event mechanism"
+    },
+
+    "workflow_validation_integration": {
+      "description": "A specialized notification mechanism that allows external systems to participate in workflow approval chains. When a workflow reaches a 'validation' node, the platform pauses execution and notifies an external system, which can then approve, reject, or take other configured actions on the transaction.",
+      "architecture": {
+        "trigger": "Workflow graph contains a validation node (typically placed just before the final commit/process node)",
+        "notification": "Platform sends a Workflow Validation event to the subscriber, optionally including the XML content of the pending transaction",
+        "external_processing": "Consumer evaluates the transaction against external business rules",
+        "response": "Consumer calls Put Workflow Validation Action with the chosen action (approve, reject, etc.) and an optional message",
+        "completion": "The workflow engine resumes execution along the path corresponding to the chosen action"
+      },
+      "timeout_behavior": "If the workflow engine moves the transaction away from the validation node (timeout or user withdrawal), a Workflow Validation Cancel event is sent to the subscriber",
+      "security_note": "The XML content of the transaction can be included but individual fields within the XML cannot be individually secured — it's all-or-nothing at the content level",
+      "cross_reference": "Workflow_Engine_Architecture_Agnostic.json → node_types → domain_event_trigger"
+    }
+  },
+
+  "report_retrieval_architecture": {
+    "description": "The platform's reporting engine is exposed through the API via two patterns: a legacy single-call retrieval and a recommended three-phase paged retrieval.",
+
+    "soap_paged_reports": {
+      "description": "The recommended SOAP pattern for report data retrieval. Uses a server-side temporary data store to enable paged access to large report results.",
+      "phases": {
+        "phase_1_open": {
+          "operation": "Open Report Pages",
+          "behavior": "Runs the report query and stores the full result set in a temporary data store. Returns: ReportID (handle to the temp data), total page count, total row count.",
+          "parameters": ["Report XRefCode", "Rows per page", "Report parameter values (GUIDs and values)"]
+        },
+        "phase_2_iterate": {
+          "operation": "Get Report Page",
+          "behavior": "Retrieves one page of results using the ReportID handle and a page number. Consumer iterates through all pages sequentially.",
+          "termination": "Consumer stops when total rows processed equals total rows available, or current page row count equals requested page size"
+        },
+        "phase_3_close": {
+          "operation": "Close Report Pages",
+          "behavior": "Removes the temporary result set from the server. MUST be called to release server resources."
+        }
+      },
+      "data_format": "Flat tabular structure (rows and columns) regardless of the report's original structure"
+    },
+
+    "rest_reports": {
+      "description": "RESTful report retrieval using the standard paging mechanism.",
+      "endpoint": "GET /api/{client}/V1/Reports/{XRefCode}",
+      "metadata_endpoints": ["GET /ReportMetadata (list all reports)", "GET /ReportMetadata/{XRefCode} (single report parameters)"]
+    },
+
+    "report_requirements": [
+      "Report must be built using the platform's Dataset Builder (not the visual report designer)",
+      "Report cannot contain groupings, subtotals, or custom fields",
+      "Report should be designed to return only changed data since last request (delta pattern)",
+      "Data formatting, derived fields, and aggregation are the consumer's responsibility"
+    ],
+
+    "security": "Report data security is driven by the report's own access authorization configuration, NOT the field-level API access configuration. This is a different security path than direct entity retrieval."
+  },
+
+  "rate_limiting": {
+    "description": "The platform enforces rate limits on RESTful API traffic to ensure fair resource sharing across tenants. Limits are applied at the tenant level, not per-consumer-application.",
+    "enforcement_level": "Client (tenant) level — all consuming applications for a single tenant share the same rate limit pool",
+    "example_limits": {
+      "employee_detail_retrieval": "~10 requests/second or ~100 requests/minute",
+      "heavy_operations": "Lower thresholds for resource-intensive operations like report retrieval"
+    },
+    "exceeded_behavior": "Requests exceeding the limit are rejected (not queued). The response indicates the limit was reached.",
+    "consumer_design_requirements": [
+      "Track request count and implement client-side rate limiting",
+      "Queue requests when rate limit responses are received",
+      "Ensure sequential processing — do not issue overlapping requests for the same data type",
+      "Log and surface rate limit errors for operational monitoring",
+      "When multiple consuming applications share a tenant, coordinate rate limit allocation across applications"
+    ]
+  },
+
+  "legacy_soap_architecture": {
+    "description": "The original API layer, now frozen (no new features). Maintained for backward compatibility. All new development is RESTful.",
+    "status": "Supported but frozen — no enhancements or new features",
+    "protocol": "SOAP (XML payloads, WCF/Java-WS toolkits)",
+    "capabilities": [
+      "Get Employee Data (with query governor)",
+      "Get Employee XRefCodes + Get Employees By XRefCodes (two-step pattern)",
+      "Get Report Definitions (parameter discovery)",
+      "Open/Get/Close Report Pages (paged report retrieval)",
+      "Get Report Data (single-call, limited to <1000 rows)",
+      "Event Notifications (subscribe, receive/retrieve, acknowledge)",
+      "Workflow Validation Notifications and Actions"
+    ],
+    "web_services_explorer": {
+      "description": "A built-in UI tool for testing and exploring SOAP web services. Provides sample code in C# and Java, validates configurations, and demonstrates available operations.",
+      "purpose": "Configuration validation, developer learning, troubleshooting"
+    },
+    "migration_note": "The RESTful employee data model is more closely aligned with the platform's internal HR data model than the SOAP equivalent, and returns more data elements. New integrations should always use REST."
+  },
+
+  "data_model_relationship_graph": {
+    "description": "The entity relationships as revealed through the API's URL structure, response nesting, and XRefCode cross-references. This is the platform's implicit entity-relationship model.",
+    "relationships": [
+      {
+        "from": "Employee",
+        "to": "EmploymentStatus",
+        "cardinality": "1:N (effective-dated history)",
+        "contains": ["PayType", "PayGroup", "PayClass", "EmploymentStatusReason", "NormalWeeklyHours"]
+      },
+      {
+        "from": "Employee",
+        "to": "WorkAssignment",
+        "cardinality": "1:N (effective-dated, primary + secondary)",
+        "contains": ["Position (→ Department, Job)", "Location", "FTE", "BusinessTitle", "LedgerCode", "IsPrimary"]
+      },
+      {
+        "from": "WorkAssignment.Position",
+        "to": "Department",
+        "cardinality": "N:1",
+        "via": "Position.Department.XRefCode"
+      },
+      {
+        "from": "WorkAssignment.Position",
+        "to": "Job",
+        "cardinality": "N:1",
+        "via": "Position.Job.XRefCode"
+      },
+      {
+        "from": "Employee",
+        "to": "OrgUnit",
+        "cardinality": "N:N (via OrgUnitInfos and Location assignments)"
+      },
+      {
+        "from": "OrgUnit",
+        "to": "OrgUnit",
+        "cardinality": "1:N (parent-child hierarchy)",
+        "via": "OrgUnitParents (effective-dated)"
+      },
+      {
+        "from": "OrgUnit",
+        "to": "LegalEntity",
+        "cardinality": "N:1 (effective-dated)"
+      },
+      {
+        "from": "Employee",
+        "to": "Document",
+        "cardinality": "1:N",
+        "via": "DocumentGUID"
+      },
+      {
+        "from": "EmployeeSchedule",
+        "to": ["Employee", "Department", "Job", "Position", "OrgUnit", "Project"],
+        "cardinality": "N:1 (each via XRefCode)",
+        "description": "Schedule segments reference all labor allocation dimensions"
+      },
+      {
+        "from": "EmployeePunch",
+        "to": ["Employee", "Department", "Job", "Position", "OrgUnit", "Project"],
+        "cardinality": "N:1 (each via XRefCode)"
+      },
+      {
+        "from": "Project",
+        "to": "Project",
+        "cardinality": "1:N (hierarchical parent-child)",
+        "via": "ParentProjectXRefCode"
+      },
+      {
+        "from": "Employee",
+        "to": "Role",
+        "cardinality": "N:N (via Roles sub-resource)",
+        "cross_reference": "Security_Role_Architecture_Agnostic.json → role_hierarchy"
+      }
+    ]
+  },
+
+  "cross_system_integration_patterns": {
+    "description": "Common integration architectures supported by the API, as documented in the platform's usage guidelines.",
+    "patterns": {
+      "one_way_employee_sync": {
+        "description": "Platform → External System. Periodic retrieval of employee HR data to feed downstream systems.",
+        "target_systems": ["Point of Sale (POS)", "Security/access control", "Network directories (Active Directory)", "CRM systems", "Labor costing/forecasting"],
+        "trigger": "Hire, termination, rehire, or data change events",
+        "pattern": "Delta sync using FilterUpdatedStartDate/EndDate with two-step XRefCode → Detail retrieval"
+      },
+      "payroll_data_extraction": {
+        "description": "Platform → Payroll/Costing System. Report-based retrieval of payroll and time data.",
+        "mechanism": "Custom report definitions with datetime parameters, retrieved via the Report Data API"
+      },
+      "external_hire_provisioning": {
+        "description": "External System → Platform. Creating employees from an external recruitment or onboarding system.",
+        "mechanism": "POST Employee HR Detail with consumer-generated XRefCode",
+        "fallback": "If PATCH fails (employee doesn't exist), automatically retry as POST (new hire pattern)"
+      },
+      "background_screening_loop": {
+        "description": "Bidirectional. Platform sends screening orders; provider sends back results.",
+        "mechanism": "POST order to provider → provider PATCHes status/results/PII back to platform"
+      },
+      "job_board_integration": {
+        "description": "Bidirectional. Platform publishes job postings; job boards submit candidate applications.",
+        "mechanism": "GET JobPostings/JobFeeds → external board processes → POST CandidateSourcing back to platform"
+      },
+      "workflow_validation_loop": {
+        "description": "Bidirectional. Platform pauses workflow at validation node; external system evaluates and responds.",
+        "mechanism": "Event notification → external evaluation → Put Workflow Validation Action",
+        "cross_reference": "Workflow_Engine_Architecture_Agnostic.json → node_types → domain_event_trigger"
+      }
+    }
+  },
+
+  "security_framework_at_api_boundary": {
+    "description": "Summary of how the platform's security model manifests specifically at the API layer. This is the API-specific view of the security architecture documented in Security_Role_Architecture_Agnostic.json.",
+    "authentication": "Standard platform authentication (basic auth or token-based JWT)",
+    "data_security_layers": {
+      "feature_access": "Role must have 'Web Services > Read Data' and/or 'Write Data' features enabled",
+      "access_authorization": "Role's CRUD permissions on data categories control which entities appear in responses and which write operations are permitted",
+      "field_level_api_access": "Separate checkbox tree specifically for API fields — granular per-field filtering even when the role has broader authorization. This is the primary tool for preventing data over-exposure through API channels.",
+      "organizational_scope": "All data is bounded by the role's organizational unit assignments",
+      "document_type_security": "Document retrieval requires the role to have access to the specific document type category"
+    },
+    "auditing": "All API calls are logged with: calling user, operation type, primary key references, outcomes, and timestamps. Logs are stored in dedicated audit tables.",
+    "ip_restrictions": "API access can be restricted to specific IP address ranges. Recommended for all integration accounts.",
+    "report_security_divergence": "IMPORTANT: Report data security is governed by the report's own access authorization configuration, NOT by the field-level API access settings. This means a consumer may see different fields through a report endpoint than through a direct entity endpoint, even with the same role."
+  },
+
+  "architectural_summary": {
+    "api_style": "Resource-oriented RESTful (JSON) + legacy SOAP (XML, frozen)",
+    "authentication": "OAuth 2.0 ROPC flow (JWT tokens, 1-hour lifetime) or Basic Auth",
+    "multi_tenancy": "URL-level namespace isolation (client namespace in path)",
+    "entity_identification": "XRefCode (tenant-defined stable string identifier) — NOT auto-increment IDs",
+    "temporal_model": "Point-in-time queries via ContextDate parameter; all effective-dated entities",
+    "sync_model": "Delta synchronization by design; changes-since-timestamp pattern mandated for production use",
+    "security_model": "Platform RBAC fully enforced at API boundary (features + data authorization + field-level API access + org scope + IP restrictions)",
+    "write_model": "POST (create with consumer-generated XRefCode) + PATCH (partial update) with validate-only mode",
+    "pagination": "Cursor-based (opaque next-page URL) with configurable page size",
+    "rate_limiting": "Tenant-level rate limits (~10/sec for detail retrieval; lower for heavy operations)",
+    "event_model": "Push (webhook to consumer) or Pull (consumer polls) notification system for lifecycle events",
+    "report_integration": "Three-phase paged retrieval (open → iterate → close) with server-side temp storage",
+    "data_model_breadth": "40+ employee subordinate resources, 8+ core entity types, 10+ workforce management entities, 15+ recruiting endpoints, full CRUD on most entities",
+    "key_constraints": [
+      "API designed for frequent small incremental exchanges, NOT bulk data transfer",
+      "Query governor: 1,000 entities per detail request",
+      "Schedule queries limited to 31-day windows",
+      "Tokens cannot be revoked once issued",
+      "SOAP layer is frozen — no new features",
+      "Report definitions must use Dataset Builder (no groupings, subtotals, or custom fields)",
+      "Consumer responsible for generating unique XRefCodes on write operations"
+    ],
+    "cross_references_to_other_architecture_documents": {
+      "security_model": "Security_Role_Architecture_Agnostic.json — defines the full 10-layer security stack that the API enforces",
+      "workflow_engine": "Workflow_Engine_Architecture_Agnostic.json — defines the workflow graphs whose validation nodes and domain events surface through the API's notification system",
+      "combined_picture": "Together, these three documents describe: (1) how users get access (Security), (2) how changes flow through approvals (Workflow), and (3) how external systems read and write data (this document — API & Integration)"
+    }
+  }
+}

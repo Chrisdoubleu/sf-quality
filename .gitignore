@@ -2,3 +2,6 @@
 sf-quality-db/
 sf-quality-api/
 sf-quality-app/
+
+# Local IDE/agent configuration
+.claude/

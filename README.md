@@ -86,6 +86,20 @@ Each repo deploys independently. There is no shared deployment pipeline.
 | **sf-quality-api** | .NET publish to Azure App Service | See `sf-quality-api/README.md` |
 | **sf-quality-app** | Node.js to Azure App Service | See `sf-quality-app/README.md` (not yet deployed) |
 
+## Reference Architecture
+
+The `Reference_Architecture/` folder at workspace root contains platform-agnostic architectural patterns reverse-engineered from a production enterprise platform, mapped to sf-quality's implementation gaps. See [Reference_Architecture/README.md](Reference_Architecture/README.md) for the full index.
+
+| Document | Description |
+|----------|-------------|
+| [Execution_Plan.md](Reference_Architecture/Execution_Plan.md) | 46 patterns translated into GSD phases across all 3 repos |
+| [Pattern_Mapping.md](Reference_Architecture/Pattern_Mapping.md) | Gap audit: 46 patterns vs. current implementation |
+| [Specs/](Reference_Architecture/Specs/) | 4 platform-agnostic JSON architecture specifications |
+| [Briefings/](Reference_Architecture/Briefings/) | Narrative orientation documents |
+| [Hidden_Patterns/](Reference_Architecture/Hidden_Patterns/) | 3 reverse-engineered implicit patterns |
+
+This folder is the single source of truth — child repos reference it via relative paths, not copies.
+
 ## AI Agent Governance
 
 Each repo contains `AGENTS.md` and `CLAUDE.md` files that define rules for how coding agents (Claude, Cursor, etc.) interact with the codebase — including SQL validation requirements, planning closeout contracts, and enforcement registries. Agents must read these files before making changes.

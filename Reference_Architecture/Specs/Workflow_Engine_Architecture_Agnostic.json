@@ -1,0 +1,912 @@
+{
+  "document_metadata": {
+    "title": "Workflow Engine Architecture — Platform-Agnostic Reference",
+    "derived_from": "Dayforce Workflow Administration (R2025.2.1, 133 pages)",
+    "abstraction_note": "All domain-specific terminology has been replaced with generic application equivalents. This document describes the workflow engine as a reusable architectural pattern for any form-driven approval and orchestration system."
+  },
+  "architecture_overview": {
+    "summary": "A visual, graph-based workflow engine that orchestrates form submissions through configurable approval chains, conditional routing, notifications, and automated processing. Workflows are defined as directed graphs of typed nodes connected by links, where each node performs a specific function (route, decide, notify, evaluate, process) and each link carries a response type or condition outcome.",
+    "core_concepts": [
+      "Graph-Based Design — Workflows are directed acyclic graphs (with controlled looping) composed of typed nodes and directional links.",
+      "Form-Driven Triggers — Workflows are initiated by form submissions. A form is bound to a workflow, and submitting the form starts execution.",
+      "Role-Scoped Access — Which users can submit which forms, and which workflows are triggered, is controlled by role-based access configuration.",
+      "Hierarchy-Aware Routing — The engine traverses organizational and supervisory hierarchies to resolve routing targets dynamically at runtime.",
+      "Expression Engine — Conditional branching uses a rich expression language that can evaluate record fields, list operations, named functions, and cross-reference lookups.",
+      "Timeout & Auto-Resolution — Decision points support configurable timeouts with automatic fallback responses (auto-approve, auto-reject, reroute).",
+      "Event Chaining — Completed workflows can trigger secondary workflows via a domain event system, enabling multi-stage orchestration.",
+      "Immutable After Execution — Once a workflow has been executed at least once, its graph structure is frozen; only node properties (messages, routing targets) can be modified.",
+      "Localization — Workflow names, descriptions, and message templates support multi-language localization."
+    ],
+    "design_principles": [
+      "Separation of structure and behavior — The graph defines the flow; node properties define the behavior at each step.",
+      "First-responder resolution — When a decision is routed to multiple recipients, the first response advances the workflow; subsequent responses are ignored.",
+      "Hierarchy traversal with early termination — Routing algorithms walk up the organizational or supervisory tree and stop as soon as a qualifying recipient is found.",
+      "Subtractive form visibility — Recipients see only the form fields their role permits; sensitive fields can be masked per-node.",
+      "Defensive defaults — Loop protection (max iterations), timeout retries, and fallback recipients prevent workflows from stalling indefinitely."
+    ]
+  },
+  "workflow_designer": {
+    "description": "A visual canvas-based editor where administrators define workflow graphs by placing nodes, connecting them with directional links, and configuring properties for each element.",
+    "config_path": "Workflow Administration > Workflow Designer",
+    "canvas_operations": [
+      {
+        "operation": "Add link between nodes",
+        "mechanism": "Click source anchor point, then click destination anchor point. A single anchor point can accept incoming links from multiple nodes."
+      },
+      {
+        "operation": "Access node/link properties",
+        "mechanism": "Select the node or link; properties appear in a right sidebar panel."
+      },
+      {
+        "operation": "Delete links",
+        "mechanism": "Select the link, then Cut from the toolstrip."
+      },
+      {
+        "operation": "Delete nodes",
+        "mechanism": "Right-click the node and select Delete. Deleting a node also removes all connected links."
+      },
+      {
+        "operation": "Copy/paste nodes",
+        "mechanism": "Select and copy via toolstrip. Node properties are NOT copied to the new instance."
+      },
+      {
+        "operation": "Move nodes",
+        "mechanism": "Click and drag. Hold Ctrl+click to multi-select, then drag as a group."
+      },
+      {
+        "operation": "Rename nodes",
+        "mechanism": "Update the Name field in the properties sidebar (not directly on the canvas)."
+      },
+      {
+        "operation": "Rotate nodes",
+        "mechanism": "Select node, then click and drag the red rotation handle above it."
+      },
+      {
+        "operation": "Undo/Redo",
+        "mechanism": "Toolstrip buttons."
+      },
+      {
+        "operation": "Zoom",
+        "mechanism": "Toolstrip buttons or mouse scroll wheel on canvas."
+      }
+    ],
+    "workflow_properties": {
+      "name": {
+        "required": true,
+        "description": "Display name of the workflow."
+      },
+      "description": {
+        "required": false,
+        "description": "Free-text description."
+      },
+      "effective_from": {
+        "required": true,
+        "description": "Earliest date the workflow can be executed."
+      },
+      "effective_to": {
+        "required": false,
+        "description": "Date after which the workflow is no longer active."
+      },
+      "reference_code": {
+        "required": true,
+        "description": "Unique cross-system identifier. Immutable after first execution.",
+        "constraints": [
+          "Must be unique",
+          "No special characters"
+        ]
+      }
+    }
+  },
+  "node_types": {
+    "description": "The workflow engine supports 9 distinct node types, each with a specific role in the execution flow. Nodes are connected by directional links that define the sequence and branching logic.",
+    "note": {
+      "purpose": "Stores human-readable annotations or reminders visible to workflow administrators. Not part of execution flow.",
+      "participates_in_execution": false,
+      "can_link_to_other_nodes": false,
+      "properties": "None (name and description only)"
+    },
+    "start": {
+      "purpose": "Entry point of the workflow. Every workflow must have exactly one Start node.",
+      "constraints": {
+        "count": "Exactly 1 per workflow",
+        "incoming_links": 0,
+        "max_outbound_links": 1,
+        "valid_successors": [
+          "Routing",
+          "Notification",
+          "Condition",
+          "Process"
+        ]
+      },
+      "properties": {
+        "max_node_iterations": {
+          "description": "Maximum number of times ANY single node in this workflow can be processed. Prevents infinite loops. When a node exceeds this count, the workflow bypasses it and proceeds to the End node with an error.",
+          "default": 0,
+          "note": "0 = unlimited iterations (no loop protection). Recommended to set >0 for production workflows."
+        }
+      },
+      "resubmission_pattern": "When a form is resubmitted (sent back for revision), it should NOT re-enter through the Start node. Instead, it should be routed to a new Decision node before being reprocessed."
+    },
+    "end": {
+      "purpose": "Terminal node marking workflow completion. Should have exactly one per workflow (multiple allowed but not recommended).",
+      "constraints": {
+        "count": "At least 1; recommended exactly 1",
+        "outgoing_links": 0,
+        "valid_predecessors": [
+          "Decision",
+          "Notification",
+          "Condition",
+          "Process"
+        ]
+      },
+      "properties": {
+        "error_message_subject": {
+          "description": "Subject line of the error message sent if the workflow fails to complete normally. Supports expression tokens."
+        },
+        "error_message_body": {
+          "description": "Body of the error message. Supports expression tokens and rich text formatting."
+        },
+        "error_routing": {
+          "description": "Configures who receives the error message if the workflow fails.",
+          "routing_targets": [
+            "Send to specific user",
+            "Send to affected record owner",
+            "Send to submitter",
+            "Send to authority type relative to affected record owner (hierarchy traversal)",
+            "Send to role relative to affected record owner (hierarchy traversal)",
+            "Send to affected record owner's supervisor",
+            "Send to submitter's supervisor"
+          ]
+        }
+      }
+    },
+    "process": {
+      "purpose": "Executes the form submission — commits the data changes contained in the form to the system. This is the node that makes the submitted data 'real' by persisting it.",
+      "constraints": {
+        "max_outbound_links": 1,
+        "valid_predecessors": [
+          "Start",
+          "Decision",
+          "Condition",
+          "Notification"
+        ],
+        "valid_successors": [
+          "End",
+          "Notification",
+          "Condition"
+        ]
+      },
+      "properties": {
+        "function_parameters": {
+          "description": "Optional configuration for specialized processing behaviors.",
+          "options": [
+            "Approved",
+            "None",
+            "Presave",
+            "Rejected"
+          ]
+        }
+      },
+      "key_behavior": "The Process node is the point where pending data becomes committed. A workflow can have zero Process nodes (notification-only workflows) or one or more (approval-then-commit patterns)."
+    },
+    "decision": {
+      "purpose": "A human decision point where one or more users are prompted to respond (typically approve, reject, or request revision). The workflow pauses until a response is received or a timeout occurs.",
+      "constraints": {
+        "incoming_links": "Exactly 1 (must be from a Routing node)",
+        "min_outbound_links": 2,
+        "note": "Each outbound link carries a response type (e.g., Accept, Reject, Resubmit, Timeout)"
+      },
+      "properties": {
+        "message_subject": {
+          "description": "Subject line of the decision request message. Supports expression tokens."
+        },
+        "message_body": {
+          "description": "Body of the decision request message. Supports expression tokens and rich text."
+        },
+        "associated_form": {
+          "description": "Optionally overrides the form sent with the decision request. If a different form is specified, common fields are auto-populated from the original submission.",
+          "use_case": "Multi-level approval where different approvers need different views of the data.",
+          "behavior": "If the override form has no common fields with the original, the approver won't see the original data — but approving it still approves the original submission."
+        },
+        "can_see_self": {
+          "description": "Controls whether the decision recipient can see their own data on the form. When disabled, the recipient's own sensitive fields are masked.",
+          "type": "boolean"
+        },
+        "timeout_value": {
+          "description": "Time in minutes before an automatic timeout response is triggered. Only active if an outbound link with response type 'Timeout' exists.",
+          "example": "1440 = 24 hours"
+        },
+        "max_timeout_retries": {
+          "description": "Number of retry attempts (0-10) before the workflow terminates with a Timeout state. Defaults to 3 if timeout_value is set.",
+          "range": {
+            "min": 0,
+            "max": 10
+          },
+          "default": 3
+        }
+      },
+      "first_responder_rule": "When the preceding Routing node sends the decision to multiple recipients, the first person to respond advances the workflow. All other pending decisions for that node are canceled."
+    },
+    "routing": {
+      "purpose": "Determines WHO receives the next action item. Routes the form to one or more recipients based on configurable targeting rules that leverage the organizational hierarchy, role assignments, and authority types.",
+      "constraints": {
+        "max_outbound_links": 2,
+        "valid_successors": [
+          "Decision"
+        ],
+        "note": "Must have exactly one outgoing link to a Decision node (second link is for 'Route to all from list' pattern)"
+      },
+      "properties": {
+        "routing_targets": {
+          "description": "Multiple routing targets can be combined. If multiple targets are specified, all qualifying recipients receive the request.",
+          "target_types": {
+            "send_to_user": {
+              "description": "Route to a specific named user account."
+            },
+            "send_to_affected_record_owner": {
+              "description": "Route to the user whose record is being modified by the form."
+            },
+            "send_to_submitter": {
+              "description": "Route back to the user who submitted the form. Used for resubmission/revision flows.",
+              "security_warning": "Routing DECISION approvals to the submitter creates a self-approval vulnerability. Use only for resubmission, never for approval decisions."
+            },
+            "send_to_authority_type_relative_to_affected_record": {
+              "description": "Route to users who hold a specified authority type (e.g., Approver, Administrator) relative to the affected record's organizational unit.",
+              "algorithm": "Starting at the record owner's organizational unit, walk UP the organizational hierarchy until at least one user with the specified authority type is found. Stop at the first level where a match is found. All matching users at that level receive the request."
+            },
+            "send_to_authority_type_relative_to_future_location": {
+              "description": "Same as above, but resolves against the FUTURE organizational assignment specified in the form (for transfers/reassignments)."
+            },
+            "send_to_role_relative_to_affected_record": {
+              "description": "Route to users who hold a specified role, searching up either the supervisory hierarchy or the organizational hierarchy (configurable).",
+              "search_hierarchies": {
+                "supervisory": "Walk up the supervisory (reporting) chain from the affected record's owner until a user with the target role is found.",
+                "organizational": "Walk up the organizational unit hierarchy, checking for users with the target role who have access to entities at each level.",
+                "both": "Perform both searches independently. A user found via either hierarchy receives the request. Users found by both receive only one notification."
+              },
+              "early_termination": "The search stops at the first level where a qualifying user is found. Each specified role is searched independently — if multiple roles are specified, the search runs separately for each and all found recipients are notified."
+            },
+            "send_to_role_relative_to_submitter": {
+              "description": "Same as role-relative routing, but the hierarchy traversal starts from the SUBMITTER's position rather than the affected record's owner."
+            },
+            "send_to_role_relative_to_future_location": {
+              "description": "Same as role-relative routing, but resolves against the future organizational assignment."
+            },
+            "send_to_affected_records_supervisor": {
+              "description": "Route to the direct supervisor of the affected record's owner.",
+              "relative_level": {
+                "description": "Configurable integer (default 1). Level 1 = direct supervisor, level 2 = supervisor's supervisor, etc.",
+                "negative_values": "Not supported"
+              }
+            },
+            "send_to_submitters_supervisor": {
+              "description": "Route to the submitter's direct supervisor, with configurable relative level."
+            },
+            "send_to_future_supervisor": {
+              "description": "Route to the supervisor specified in a future-dated assignment on the form. Resolves even if the new supervisory relationship hasn't taken effect yet.",
+              "relative_level": "Configurable — 1 = the future supervisor, 2 = the future supervisor's supervisor, etc."
+            },
+            "send_to_position_supervisor": {
+              "description": "Route to the supervisor of the affected POSITION (for structural hierarchy changes, independent of the current occupant).",
+              "relative_level": "Configurable integer (default 1)."
+            }
+          }
+        },
+        "use_form_effective_date_for_routing": {
+          "description": "When enabled, the routing algorithm resolves recipients based on the effective date specified on the form rather than the current date. This allows future-dated changes to be routed to the correct future supervisor.",
+          "type": "boolean"
+        },
+        "continue_if_no_recipient_found": {
+          "description": "When enabled, if no qualifying recipient is found, the workflow continues to the default recipient rather than failing. If disabled and no recipient is found, the workflow errors.",
+          "type": "boolean"
+        },
+        "fallback_behavior": "When routing returns no recipients, the workflow progresses to the next decision level. If no default recipient exists at any level, the workflow terminates with an error."
+      }
+    },
+    "notification": {
+      "purpose": "Sends an informational message to one or more recipients WITHOUT requiring a response. The workflow continues immediately after sending — it does not pause.",
+      "constraints": {
+        "max_outbound_links": 1,
+        "valid_successors": [
+          "End",
+          "Process",
+          "Condition",
+          "Routing",
+          "Notification"
+        ]
+      },
+      "properties": {
+        "message_subject": {
+          "description": "Subject of the notification. Supports expression tokens."
+        },
+        "message_body": {
+          "description": "Body of the notification. Supports expression tokens and rich text."
+        },
+        "routing_targets": "Same routing target options as Routing nodes (user, submitter, affected record owner, authority type, role, supervisor — all with hierarchy traversal).",
+        "continue_if_no_recipient_found": {
+          "description": "If no recipient matches the routing criteria, the workflow continues rather than erroring.",
+          "type": "boolean"
+        }
+      },
+      "key_distinction": "Unlike Decision nodes, Notification nodes do NOT pause the workflow. They are fire-and-forget messages."
+    },
+    "condition": {
+      "purpose": "Evaluates a boolean expression against the form data and/or system state. Routes the workflow along a TRUE or FALSE path based on the evaluation result.",
+      "constraints": {
+        "outbound_links": "Exactly 2 — one labeled True, one labeled False",
+        "valid_successors": [
+          "Process",
+          "Decision",
+          "Routing",
+          "Notification",
+          "End",
+          "Condition"
+        ]
+      },
+      "properties": {
+        "expression": {
+          "description": "A boolean expression that evaluates form data, record fields, list collections, and named functions. See Expression Engine section for full details.",
+          "syntax_overview": "Expressions reference data fields via <<token>> syntax, use comparison operators, and support list filtering/aggregation functions."
+        }
+      },
+      "branching_model": "Binary branching only. For multi-way branching, chain multiple Condition nodes in sequence."
+    },
+    "domain_event_trigger": {
+      "purpose": "A specialized node that triggers a domain-specific subsystem recalculation when the workflow reaches this point. Abstract equivalent: an external system callback or webhook invocation.",
+      "constraints": {
+        "valid_predecessors": [
+          "Process",
+          "Notification",
+          "Routing"
+        ],
+        "valid_successors": [
+          "Notification",
+          "End"
+        ]
+      },
+      "architectural_note": "This node type represents a tight coupling between the workflow engine and a specific platform subsystem. In an agnostic architecture, this would be replaced by a generic webhook/callback node or an event emission node."
+    }
+  },
+  "link_model": {
+    "description": "Links are directional connections between nodes. They define execution flow and, when attached to Decision nodes, carry response type metadata.",
+    "link_properties": {
+      "name": {
+        "description": "Auto-populated from the response type if one is assigned. Otherwise, editable."
+      },
+      "description": {
+        "description": "Optional free text."
+      },
+      "response_type": {
+        "description": "Only applicable to outbound links from Decision nodes. Determines which path the workflow follows based on the approver's response.",
+        "default_types": [
+          {
+            "type": "Accept",
+            "description": "The approver approves the submission."
+          },
+          {
+            "type": "Reject",
+            "description": "The approver rejects the submission."
+          },
+          {
+            "type": "Resubmit",
+            "description": "The approver requests revision — the form is sent back to the submitter for modification."
+          },
+          {
+            "type": "Timeout",
+            "description": "No response was received within the configured timeout period. Triggers automatic fallback behavior."
+          },
+          {
+            "type": "Cancelled",
+            "description": "The submission was cancelled."
+          },
+          {
+            "type": "True",
+            "description": "Condition evaluated to true (used on Condition node outputs)."
+          },
+          {
+            "type": "False",
+            "description": "Condition evaluated to false (used on Condition node outputs)."
+          }
+        ],
+        "extensibility": "Additional custom response types can be defined and assigned unique reference codes."
+      }
+    },
+    "outbound_link_limits": {
+      "description": "Each node type has a maximum number of outbound links it supports.",
+      "limits": {
+        "Start": 1,
+        "Process": 1,
+        "Notification": 1,
+        "Routing": 2,
+        "Decision": "Unlimited (one per response type)",
+        "Condition": 2,
+        "End": 0,
+        "Note": 0
+      }
+    }
+  },
+  "validation_rules": {
+    "description": "The workflow engine validates the graph structure on save and rejects invalid configurations.",
+    "rules": [
+      {
+        "rule": "Exactly one Start node per workflow."
+      },
+      {
+        "rule": "At least one End node. Multiple allowed but exactly one is recommended."
+      },
+      {
+        "rule": "At least one 'Send to' target must be configured for every Routing and Notification node."
+      },
+      {
+        "rule": "At least one outbound link must be connected to Start, Process, Decision, Routing, and Notification nodes."
+      },
+      {
+        "rule": "Condition nodes must have exactly two outbound links (True and False)."
+      },
+      {
+        "rule": "Routing nodes must connect to a Decision node via their outbound link."
+      },
+      {
+        "rule": "Decision nodes must have at least one incoming link from a Routing node."
+      },
+      {
+        "rule": "End nodes cannot have outgoing links."
+      },
+      {
+        "rule": "Start nodes cannot have incoming links."
+      }
+    ]
+  },
+  "expression_engine": {
+    "description": "The workflow engine includes a rich expression language used in Condition nodes to evaluate form data, system state, and record collections. Expressions return boolean values that drive branching logic.",
+    "field_references": {
+      "syntax": "<<FieldName>> or <<List_EntityName.Item.FieldName>>",
+      "description": "Double angle-bracket tokens reference data fields from the form submission or from the system's data model. List-type references access collections of related records."
+    },
+    "operators": {
+      "comparison": [
+        "Equals",
+        "NotEquals",
+        "GreaterThan",
+        "GreaterThanOrEqual",
+        "LessThan",
+        "LessThanOrEqual",
+        "Contains",
+        "StartsWith"
+      ],
+      "logical": [
+        "AND",
+        "OR",
+        "NOT"
+      ],
+      "null_handling": [
+        "COALESCE(value, fallback)",
+        "IS NULL",
+        "IS NOT NULL"
+      ]
+    },
+    "list_operations": {
+      "description": "Collections of records (e.g., all assignments, all addresses) support filtering and aggregation functions that return boolean results for branching.",
+      "functions": {
+        "Filter": {
+          "syntax": "List.Filter(condition)",
+          "description": "Returns a subset of the list matching the condition. Can be chained with aggregation functions.",
+          "example": "List_Assignments.Filter(\"IsPrimary Equals True\")"
+        },
+        "Any": {
+          "syntax": "List.Any(condition)",
+          "description": "Returns true if ONE OR MORE items match the condition.",
+          "example": "List_Assignments.Any(\"Rate GreaterThan 0\")"
+        },
+        "All": {
+          "syntax": "List.All(condition)",
+          "description": "Returns true if EVERY item matches the condition.",
+          "example": "List_Assignments.Filter(\"IsPrimary Equals True\").All(Rate GreaterThan 0)"
+        },
+        "None": {
+          "syntax": "List.None(condition)",
+          "description": "Returns true if ZERO items match the condition."
+        }
+      },
+      "update_status_evaluation": {
+        "description": "List items carry an UpdateStatus flag indicating what change is being made to that record. Expressions can evaluate this to branch based on the TYPE of change.",
+        "statuses": [
+          "None",
+          "Insert",
+          "Update",
+          "Delete"
+        ],
+        "syntax": "List.Any(UpdateStatus Equals \"Insert\")"
+      }
+    },
+    "named_functions": {
+      "description": "Pre-built functions that encapsulate common evaluation patterns. These are invoked within Condition node expressions.",
+      "functions": [
+        {
+          "function": "Coalesce",
+          "description": "Returns the first non-null value from a collection of parameters.",
+          "returns": "Collection or null"
+        },
+        {
+          "function": "ConvertToDate",
+          "description": "Converts year, month, day integers to a DateTime value.",
+          "syntax": "ConvertToDate(year, month, day)",
+          "returns": "DateTime"
+        },
+        {
+          "function": "Count",
+          "description": "Returns the number of elements in a collection.",
+          "returns": "Integer or null"
+        },
+        {
+          "function": "Current",
+          "description": "Returns the currently-effective record from a collection (effective start <= today, no effective end or effective end in the future).",
+          "returns": "Single record"
+        },
+        {
+          "function": "Date",
+          "description": "Parses a string to DateTime if possible, otherwise returns null.",
+          "returns": "DateTime or null"
+        },
+        {
+          "function": "Today",
+          "description": "Returns the current server date and time at the moment of evaluation.",
+          "returns": "DateTime"
+        },
+        {
+          "function": "GetEntityPropertyValue",
+          "description": "Evaluates a custom property value for the affected record's owner. Supports pick list, boolean, date, string, and number data types.",
+          "syntax": "GetEntityPropertyValue(\"PropertyReferenceCode\") OPERATOR \"VALUE\"",
+          "constraint": "Only works with single-value properties (not multi-value)."
+        },
+        {
+          "function": "HasCurrentPrimaryChanged",
+          "description": "Returns true if the primary assignment record has changed compared to the current database state.",
+          "syntax": "HasCurrentPrimaryChanged(sessionId, entityId, submittedList)",
+          "returns": "Boolean"
+        },
+        {
+          "function": "HasFutureRecord",
+          "description": "Returns true if the entity has a current or future-dated record of the specified type.",
+          "returns": "Boolean"
+        },
+        {
+          "function": "HasPositionPropertyChanged",
+          "description": "Returns true if a specific property of a position in the structural hierarchy has changed.",
+          "syntax": "HasPositionPropertyChanged(entityName, propertyName)",
+          "returns": "Boolean"
+        },
+        {
+          "function": "HasRole",
+          "description": "Returns true if the specified user holds the specified role.",
+          "syntax": "HasRole(sessionId, userId, roleReferenceCode)",
+          "returns": "Boolean"
+        },
+        {
+          "function": "HasAuthorityType",
+          "description": "Returns true if a user has a specified authority type for a given target user.",
+          "returns": "Boolean"
+        },
+        {
+          "function": "IdFromXref",
+          "description": "Looks up a system record ID from a cross-reference code. Used to compare form values against known reference data.",
+          "syntax": "IdFromXref(\"StoreName\", \"ReferenceCode\")",
+          "returns": "Integer",
+          "note": "StoreName is the name of the data table/provider to search. Over 100 store names are supported."
+        },
+        {
+          "function": "LoadIfEmpty",
+          "description": "Loads record data from the database when the form does not contain a corresponding input field. Allows conditions to evaluate system state that isn't on the form.",
+          "syntax": "LoadIfEmpty(\"listFieldReference\", \"loadingMode\")",
+          "loading_modes": {
+            "Current": "Loads only the currently-effective record.",
+            "Primary": "Loads the primary/default record.",
+            "Latest": "Loads the most recently created record.",
+            "CurrentAndFuture": "Loads all current and future-dated records."
+          },
+          "override_behavior": "If the form DOES contain the relevant field, the expression evaluates the form value regardless of the loading mode."
+        }
+      ]
+    },
+    "data_providers": {
+      "description": "The expression engine can reference over 100 data provider/store names for cross-reference lookups. These represent the major entity types in the system's data model.",
+      "count": "100+",
+      "categories": [
+        "Organizational entities (units, locations, regions)",
+        "Role and authority assignments",
+        "User properties and custom attributes",
+        "Financial configuration entities",
+        "Policy configuration entities",
+        "Status and classification entities",
+        "Document management entities"
+      ],
+      "note": "Store names are not case-sensitive."
+    }
+  },
+  "form_binding": {
+    "description": "Workflows are connected to the platform's form system. Forms are the data-entry artifacts that users submit; workflows define what happens after submission.",
+    "config_path": "Workflow Administration > Role Privileges",
+    "binding_model": {
+      "form_to_workflow": "Each form can be associated with one workflow. Submitting the form triggers the associated workflow.",
+      "role_scoped_binding": "The same form can be bound to DIFFERENT workflows for different roles. This allows role-specific approval paths for the same data change.",
+      "form_to_decision_override": "Individual Decision nodes within a workflow can override the default form and present a different form to the approver. Common fields are auto-populated.",
+      "guided_process_binding": "A guided process (multi-form bundle) can be bound to a single workflow. The workflow applies to each form in the bundle."
+    },
+    "form_placement": {
+      "description": "When binding a form to a workflow, administrators configure WHERE in the application the form appears (which parent feature/screen it is accessible from).",
+      "parent_features": "Forms can be surfaced in various application modules. The parent feature controls the UI entry point for the form."
+    },
+    "access_control": {
+      "description": "For each form-workflow binding, administrators configure which roles can access (submit) the form.",
+      "mechanism": "Role assignment in the Role Privileges screen. Changes are bidirectionally synchronized with the role feature configuration in System Admin > Roles.",
+      "grouping_options": [
+        "Group by workflow",
+        "Group by form",
+        "Group by parent feature",
+        "Group by category"
+      ]
+    }
+  },
+  "event_system": {
+    "description": "A domain event mechanism that chains workflows together. When a form is processed (committed) by one workflow, it can trigger one or more secondary workflows via an event. This enables multi-stage orchestration without coupling workflows directly.",
+    "config_path": "Workflow Administration > Events",
+    "event_types": {
+      "custom": {
+        "description": "User-defined events. Fully configurable — name, description, reference code, triggering forms, and triggered workflows are all customizable.",
+        "operations": [
+          "Create",
+          "Edit",
+          "Copy",
+          "Delete",
+          "Localize"
+        ]
+      },
+      "template": {
+        "description": "System-provided events pre-configured for common scenarios. Most properties are read-only, but triggered workflows can be customized.",
+        "operations": [
+          "Edit (limited)",
+          "Copy (creates editable duplicate)"
+        ],
+        "note": "Template events cannot be deleted."
+      }
+    },
+    "event_configuration": {
+      "triggering_forms": "One or more forms whose processing triggers the event.",
+      "triggered_workflows": "One or more workflows that execute when the event fires.",
+      "execution_order": "If multiple workflows are associated with an event, they are queued and executed SEQUENTIALLY (not in parallel).",
+      "user_declarable": {
+        "description": "Events can optionally be made declarable by end users, allowing users to manually trigger the event via a self-service form.",
+        "type": "boolean"
+      }
+    },
+    "import_triggered_events": {
+      "description": "Events can also be triggered by bulk data imports (not just form submissions). This allows automated processing when records are loaded from external systems.",
+      "configuration": {
+        "lookback_period": {
+          "description": "Number of past days to include when determining if an imported record should trigger an event.",
+          "default": 0,
+          "note": "0 = only current-dated and future-dated imports trigger events."
+        }
+      },
+      "requirements": [
+        "The imported record must have both an active status and an active assignment.",
+        "If either status or assignment is missing, the event is not triggered until both are present.",
+        "Events are triggered only ONCE per qualifying record, even across multiple import runs."
+      ]
+    }
+  },
+  "guided_processes": {
+    "description": "A multi-form orchestration mechanism that bundles related forms into a single step-by-step experience for the end user. Each form in the bundle can have its own workflow, but the guided process tracks the completion state of all forms as a unit.",
+    "config_path": "Workflow Administration > Guided Process",
+    "properties": {
+      "name": {
+        "required": true
+      },
+      "reference_code": {
+        "required": true,
+        "note": "Editable until the guided process is published."
+      },
+      "description": {
+        "required": false
+      },
+      "mode": {
+        "options": [
+          "Read Only",
+          "Edit",
+          "New"
+        ],
+        "description": "Determines whether the forms in the process are read-only, editing existing records, or creating new records."
+      },
+      "effective_from": {
+        "required": true
+      },
+      "effective_to": {
+        "required": false
+      }
+    },
+    "form_configuration": {
+      "add_forms": "Select forms from the available pool and add them to the guided process.",
+      "ordering": "Forms are presented to the user in the configured order (adjustable via move up/down).",
+      "per_form_workflow": "Each form can optionally have its own workflow. A default workflow applies to forms without an explicit assignment.",
+      "skippable_forms": "Individual forms can be marked as skippable, allowing the user to bypass them."
+    },
+    "lifecycle_tracking": {
+      "description": "A system-generated monitoring workflow automatically tracks the completion of all forms within a guided process.",
+      "states": [
+        "Open (in progress)",
+        "Completed (all forms processed)"
+      ],
+      "history": "Each form's submission and processing status is logged in the monitoring workflow's history.",
+      "summary_dialog": "Administrators can view a summary showing the guided process name, submission date, total forms, forms completed, and forms skipped."
+    },
+    "publication": {
+      "description": "Guided processes must be published before they become active. Once published, the reference code becomes immutable.",
+      "states": [
+        "Draft",
+        "Published"
+      ]
+    }
+  },
+  "message_templates": {
+    "description": "Workflow messages (decision requests, notifications, error alerts) use a token-based template system that dynamically inserts data values at runtime.",
+    "token_system": {
+      "syntax": "<<TokenPath>>",
+      "description": "Tokens reference data fields from the form, the submitter's profile, the affected record, or the workflow state.",
+      "categories": [
+        "Workflow state tokens (submitter name, form name, affected record owner name)",
+        "Record field tokens (any field from the form's data model)",
+        "List item tokens (fields from related record collections)",
+        "Custom property tokens (user-defined attributes)"
+      ]
+    },
+    "lookup_functions": {
+      "description": "Message templates support a Lookup() function that resolves a foreign key reference to a human-readable display name.",
+      "syntax": "Lookup(<<List_Entity.Item.ForeignKeyId>>, FullName)",
+      "constraint": "Supported only in Notification, Decision, and End nodes (not Condition nodes)."
+    },
+    "sensitive_data_masking": {
+      "description": "Certain tokens have default masking applied (e.g., dates show only the month, with year and day masked). Masking can be overridden by wrapping the token in an Unmask() function.",
+      "syntax": "Unmask(<<SensitiveToken>>)"
+    },
+    "localization": {
+      "description": "Message subjects and bodies can be localized per language. The system sends the message in the recipient's preferred language.",
+      "mechanism": "Language-specific variants are configured via an expression builder dialog with language selection."
+    },
+    "rich_text": {
+      "description": "Message bodies support rich text editing including font face, size, color, style, and hyperlinks.",
+      "hyperlinks": "Links can be inserted via the text editor. Links can point to platform URLs or external URLs."
+    }
+  },
+  "workflow_lifecycle": {
+    "description": "Workflows have a well-defined lifecycle with specific immutability rules that protect the integrity of workflows already in use.",
+    "states": {
+      "draft": {
+        "description": "The workflow has been created but never executed. Full editing of graph structure, nodes, links, properties, and reference code is allowed."
+      },
+      "active": {
+        "description": "The workflow has been executed at least once. Graph structure is FROZEN — no nodes or links can be added, removed, or reconnected. Node and link PROPERTIES (messages, routing targets, timeout values) can still be modified.",
+        "immutable": [
+          "Graph topology (node count, link connections)",
+          "Reference code"
+        ],
+        "mutable": [
+          "Node properties (messages, routing targets, timeouts)",
+          "Link properties",
+          "Workflow name and description",
+          "Effective dates"
+        ]
+      },
+      "system": {
+        "description": "System-provided workflows that cannot be edited in any way — neither graph structure nor properties.",
+        "operations": "View only"
+      }
+    },
+    "operations": {
+      "create": "Build a new workflow from scratch in the designer.",
+      "edit": "Modify properties of an existing workflow (with restrictions based on state).",
+      "copy": "Duplicate an existing workflow. The copy is in draft state and fully editable.",
+      "delete": "Remove a workflow. Only allowed if the workflow has NEVER been executed.",
+      "localize": "Add language-specific name and description variants."
+    }
+  },
+  "electronic_signature_integration": {
+    "description": "The workflow engine integrates with external electronic signature services to enable legally binding digital signatures on forms as part of the approval process.",
+    "architecture": {
+      "provider_integration": "The platform integrates with a third-party e-signature provider via API. Documents are sent as 'envelopes' containing one or more forms.",
+      "authentication_methods": [
+        "Access code",
+        "SMS verification",
+        "Knowledge-based authentication",
+        "ID verification",
+        "Phone authentication"
+      ],
+      "supplemental_documents": "Attachments can be included in the e-signature envelope. Recipients must review all documents before signing.",
+      "template_based": "E-signature templates define which fields require signatures, initials, or dates."
+    },
+    "constraints": [
+      "No limit on documents per envelope, but large volumes may cause performance issues.",
+      "External provider API rate limits may apply (typically 1,000 calls/hour).",
+      "Supplemental documents cannot be signed individually — the entire envelope is signed in one session."
+    ]
+  },
+  "timeout_and_auto_resolution": {
+    "description": "Decision nodes support automatic resolution when no human response is received within a configured time window. This prevents workflows from stalling indefinitely.",
+    "pattern": {
+      "configuration": [
+        "Set timeout_value on the Decision node (in minutes).",
+        "Add an outbound link with response type 'Timeout' from the Decision node.",
+        "Connect the Timeout link to a Process node configured with the desired auto-resolution action (Approved or Rejected)."
+      ],
+      "behavior": "When the timeout period elapses with no response, the workflow follows the Timeout path automatically.",
+      "retry_mechanism": "Up to 10 retries can be configured. The engine re-attempts processing before finally terminating with a Timeout state."
+    },
+    "common_patterns": {
+      "auto_approve_on_timeout": "Timeout → Process (function: Approved) → End",
+      "auto_reject_on_timeout": "Timeout → Process (function: Rejected) → End",
+      "reroute_on_timeout": "Timeout → Routing (to escalated approver) → Decision"
+    }
+  },
+  "common_workflow_patterns": {
+    "description": "Recurring graph structures that solve common approval and orchestration scenarios.",
+    "single_level_approval": {
+      "description": "Submitter → Routing (to supervisor) → Decision → [Accept → Process → End] [Reject → Notification → End]",
+      "node_count": "5-7 nodes"
+    },
+    "multi_level_approval": {
+      "description": "Submitter → Routing (to direct supervisor) → Decision → [Accept → Routing (to senior approver) → Decision → [Accept → Process → End]] [Reject → Notification → End]",
+      "note": "Each level can present a different form via the Decision node's associated_form override."
+    },
+    "approval_with_resubmission": {
+      "description": "Submitter → Routing → Decision → [Accept → Process → End] [Resubmit → Routing (back to submitter) → Decision (resubmit confirmation) → Routing (back to approver) → Decision]",
+      "note": "Uses max_node_iterations on the Start node to prevent infinite resubmission loops."
+    },
+    "conditional_routing": {
+      "description": "Submitter → Condition (evaluate field X) → [True → Routing (to department A)] [False → Routing (to department B)] → Decision → Process → End",
+      "note": "Condition nodes enable data-driven routing without human intervention."
+    },
+    "event_chained_processing": {
+      "description": "Workflow A: Form submission → Process → End → [triggers Event] → Workflow B: Notification → Subsystem Recalculation → Notification → End",
+      "note": "Multiple triggered workflows execute sequentially."
+    },
+    "auto_approval_on_timeout": {
+      "description": "Submitter → Routing → Decision (timeout: 1440 min) → [Accept → Process → End] [Reject → Notification → End] [Timeout → Process (auto-approve) → End]"
+    }
+  },
+  "security_considerations": {
+    "self_approval_prevention": {
+      "description": "Never route approval decisions (Routing → Decision) back to the submitter. The 'Send to Submitter' target should only be used for resubmission/revision flows, not for approval decisions.",
+      "risk": "Self-approval creates a control bypass where users can approve their own changes."
+    },
+    "post_approval_notification": {
+      "description": "Always configure a Notification node after the Process node to inform the affected record's owner that a change was made to their data. Without this, changes can be made without the affected user's knowledge."
+    },
+    "form_visibility_control": {
+      "description": "Use the 'Can See Self' flag on Decision nodes to control whether approvers can see their own sensitive data. Use associated_form overrides to restrict which fields different approval levels can see."
+    },
+    "immutability_protection": {
+      "description": "The fact that executed workflows become structurally immutable prevents retroactive tampering with approval chains that have already been used."
+    }
+  },
+  "architectural_summary": {
+    "engine_type": "Graph-based, form-driven, event-capable workflow orchestration engine",
+    "execution_model": "Sequential node evaluation with pause-on-decision semantics",
+    "branching_model": "Binary (Condition nodes) + multi-way (Decision nodes via response types)",
+    "routing_model": "Hierarchy-aware dynamic resolution with early termination",
+    "state_management": "Per-workflow execution history with node-level status tracking",
+    "extensibility_points": [
+      "Custom response types on Decision links",
+      "Custom events for workflow chaining",
+      "Expression engine with 100+ data providers and named functions",
+      "Multi-form guided processes with per-form workflow binding",
+      "Electronic signature integration via external provider API",
+      "Token-based message templates with masking and localization"
+    ],
+    "key_constraints": [
+      "Workflows are structurally immutable after first execution.",
+      "Routing nodes must connect to Decision nodes (enforced by validation).",
+      "First-responder semantics — multi-recipient decisions resolve on first response.",
+      "Hierarchy traversal stops at first qualifying level (no broadcast to all levels).",
+      "Sequential (not parallel) execution of event-triggered workflow chains."
+    ]
+  }
+}

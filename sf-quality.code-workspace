@@ -1,9 +1,21 @@
 {
   "folders": [
-    { "path": ".", "name": "Workspace Root" },
-    { "path": "sf-quality-db", "name": "Database" },
-    { "path": "sf-quality-api", "name": "API" },
-    { "path": "sf-quality-app", "name": "Frontend" }
+    {
+      "path": ".",
+      "name": "Workspace Root"
+    },
+    {
+      "path": "sf-quality-db",
+      "name": "Database"
+    },
+    {
+      "path": "sf-quality-api",
+      "name": "API"
+    },
+    {
+      "path": "sf-quality-app",
+      "name": "Frontend"
+    }
   ],
   "settings": {
     "typescript.tsdk": "sf-quality-app/node_modules/typescript/lib",

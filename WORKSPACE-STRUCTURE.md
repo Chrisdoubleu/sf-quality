@@ -7,6 +7,13 @@
 ```
 c:\Dev\sf-quality\
 ├── sf-quality.code-workspace          # VS Code workspace linking all 3 repos
+├── Reference_Architecture/            # Single source of truth for architecture patterns + execution plan
+│   ├── README.md                      #   Index and reading order
+│   ├── Execution_Plan.md             #   46 patterns → GSD phases across all repos
+│   ├── Pattern_Mapping.md            #   Gap audit: 46 patterns vs. current implementation
+│   ├── Specs/                         #   4 platform-agnostic JSON architecture specifications
+│   ├── Briefings/                     #   Narrative orientation + agent guidance documents
+│   └── Hidden_Patterns/              #   3 reverse-engineered implicit patterns
 ├── sf-quality-db/                     # Database repo (SQL Server)
 ├── sf-quality-api/                    # API repo (ASP.NET Core)
 └── sf-quality-app/                    # Frontend repo (Next.js — planning only, no source yet)
@@ -173,11 +180,12 @@ sf-quality-app/
 
 ---
 
-## Shared Config at Root Level
+## Shared Config and Resources at Root Level
 
-| File | Purpose |
-|------|---------|
+| File / Folder | Purpose |
+|---------------|---------|
 | `sf-quality.code-workspace` | VS Code workspace linking all 3 folders with shared settings |
+| `Reference_Architecture/` | Single source of truth for architecture patterns, gap analysis, and cross-repo execution plan |
 
 There is **no** `package.json`, `docker-compose.yml`, `Dockerfile`, or any other shared config at the root. Each repo manages its own configuration independently.
 

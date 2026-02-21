@@ -1,0 +1,633 @@
+{
+  "document_metadata": {
+    "title": "Platform System Architecture — Software Engineering Patterns & Technical Design Reference",
+    "purpose": "Identifies the software engineering patterns, code architecture decisions, system design principles, and infrastructure patterns used to build a multi-tenant enterprise SaaS platform. All domain-specific terminology has been removed. What remains is a pure technical blueprint that could apply to any complex, hierarchical, event-driven, multi-tenant application.",
+    "intended_audience": "Agentic coding agents, software architects, platform engineers, and developers building or extending systems with similar complexity requirements.",
+    "derived_from": [
+      "Security_Role_Architecture_Agnostic.json",
+      "Workflow_Engine_Architecture_Agnostic.json",
+      "API_Integration_Architecture_Agnostic.json"
+    ]
+  },
+
+  "system_classification": {
+    "type": "Multi-tenant SaaS platform with layered security, graph-based orchestration, and RESTful integration layer",
+    "scale_profile": "Enterprise-grade: hundreds of tenants, thousands of users per tenant, millions of records, 40+ entity types, 10+ hierarchical tree structures",
+    "architectural_style": "Modular monolith with resource-oriented API surface, event-driven subsystem integration, and graph-based workflow orchestration engine"
+  },
+
+  "multi_tenancy_architecture": {
+    "pattern_name": "URL-Namespaced Logical Multi-Tenancy",
+    "description": "Every API request includes a tenant identifier in the URL path. The tenant namespace acts as the isolation boundary — all data, configuration, security rules, and entity graphs are scoped to a single tenant. There is no cross-tenant data leakage at any layer.",
+    "implementation": {
+      "url_structure": "https://{host}/api/{tenantId}/V1/{resource}",
+      "isolation_mechanism": "Logical isolation via tenant-scoped queries (not separate databases per tenant). The tenant ID is resolved from the URL and applied as a filter to every data access operation.",
+      "configuration_isolation": "Each tenant has independent: role hierarchies, feature trees, organizational hierarchies, password policies, workflow definitions, and entity configurations"
+    },
+    "technical_terms": ["Logical multi-tenancy", "Tenant-scoped routing", "Namespace isolation", "Shared-nothing configuration"]
+  },
+
+  "identity_and_access_patterns": {
+
+    "authentication_patterns": {
+      "oauth2_ropc_flow": {
+        "pattern_name": "OAuth 2.0 Resource Owner Password Credentials (ROPC) with JWT",
+        "description": "Consumers exchange long-lived credentials for short-lived JWT tokens. The token is opaque to the consumer and encodes tenant scope, user identity, and expiration.",
+        "token_type": "JWT (JSON Web Token)",
+        "lifetime": "3600 seconds (1 hour), non-revocable",
+        "design_tradeoff": "Non-revocable tokens trade immediate revocation capability for stateless verification (no server-side token store needed). This is a conscious architectural choice that simplifies the auth infrastructure at the cost of requiring short token lifetimes."
+      },
+      "hybrid_authentication": {
+        "pattern_name": "Federated Authentication with Native Fallback",
+        "description": "The system supports SSO via external identity providers AND native credential management simultaneously. Individual accounts or entire roles can be configured to allow fallback to native auth when the SSO provider is unavailable.",
+        "technical_terms": ["Federation", "SSO bypass", "Hybrid auth", "Identity provider failover"]
+      },
+      "mfa_pipeline": {
+        "pattern_name": "Pluggable Second-Factor Pipeline with Failure Mode Configuration",
+        "description": "MFA is implemented as a pluggable pipeline where multiple second-factor methods can be configured in priority order. Critically, the system has an explicit failure mode configuration: when the MFA provider is unavailable, the system can either deny all logins (closed mode) or degrade to single-factor (open mode). This is configurable per-policy.",
+        "technical_terms": ["Pluggable authentication pipeline", "Graceful degradation", "Circuit breaker on auth provider", "Fail-closed vs. fail-open"]
+      },
+      "password_policy_engine": {
+        "pattern_name": "Priority-Ranked Policy Resolution Engine",
+        "description": "Multiple password policies coexist. Each has a priority score. When evaluating which policy applies to a user, the engine sorts all matching policies by priority and applies the strongest match. This is a general pattern for any system where multiple overlapping policies must be resolved to a single effective policy.",
+        "technical_terms": ["Policy resolution", "Priority-based evaluation", "Strongest-match selection", "Policy stacking"]
+      }
+    },
+
+    "authorization_architecture": {
+      "pattern_name": "Defense-in-Depth Layered Authorization Pipeline",
+      "core_principle": "Security is subtractive by default. A principal has ZERO access until every independent layer explicitly grants permission. The effective access is the INTERSECTION of all layer grants, not the union.",
+      "formal_equation": "EffectiveAccess = Layer1 ∩ Layer2 ∩ Layer3 ∩ ... ∩ LayerN",
+      "layers": [
+        {
+          "layer": 1,
+          "pattern": "Network-Level Access Control",
+          "technical_name": "IP Allowlist / Network ACL",
+          "description": "Requests are accepted or rejected based on source IP address before any application logic executes.",
+          "implementation": "IP range whitelist evaluated at the network/reverse-proxy layer"
+        },
+        {
+          "layer": 2,
+          "pattern": "Identity Verification",
+          "technical_name": "Authentication (AuthN)",
+          "description": "The system verifies the principal's identity via credentials, tokens, or federated assertions."
+        },
+        {
+          "layer": 3,
+          "pattern": "Role Assignment Resolution",
+          "technical_name": "Role-Based Access Control (RBAC) with Hierarchical Inheritance",
+          "description": "Each principal is assigned one or more roles organized in a parent-child tree. Child roles inherit constraints from parents and can NEVER exceed parent permissions. The system resolves the effective role set at request time.",
+          "key_constraint": "Monotonically subtractive inheritance — children can only narrow, never widen, parent permissions"
+        },
+        {
+          "layer": 4,
+          "pattern": "Feature Entitlement",
+          "technical_name": "Feature Tree / Feature Gating (Whitelist Model)",
+          "description": "Application capabilities are organized as a tree of features (screens, modules, tabs, toggles). Each role is granted access to a curated subset. Only explicitly enabled features (and their children) are available. This is a whitelist — anything not granted is denied.",
+          "data_structure": "Tree (adjacency list with parent references). Two node types: container nodes (grouping) and leaf nodes (functional capabilities).",
+          "technical_terms": ["Feature flags", "Entitlement tree", "Capability-based security", "Whitelist gating"]
+        },
+        {
+          "layer": 5,
+          "pattern": "Data Category Permissions",
+          "technical_name": "CRUD Authorization Matrix",
+          "description": "Independent of feature access, each role has Create/Read/Update/Delete permissions on categories of data. A principal may access a feature (screen) but be restricted from certain data types within it. Permissions are organized as a matrix: roles × data categories × CRUD operations.",
+          "technical_terms": ["CRUD matrix", "Data-level authorization", "Category-based access control"]
+        },
+        {
+          "layer": 6,
+          "pattern": "Field-Level Filtering (API Channel)",
+          "technical_name": "Column-Level Security / Field-Level Access Control",
+          "description": "For API/integration channels specifically, individual fields within data entities can be independently enabled or disabled per role. This is implemented as a checkbox tree of every API-exposed field. Disabled fields are stripped from API responses regardless of broader authorization grants.",
+          "technical_terms": ["Column-level security", "Field masking", "Response field filtering", "API-specific projection"]
+        },
+        {
+          "layer": 7,
+          "pattern": "Organizational Scope Boundary",
+          "technical_name": "Hierarchy-Scoped Data Visibility (Row-Level Security)",
+          "description": "Data visibility is bounded by the principal's position in a multi-level organizational tree. Principals only see records belonging to organizational nodes they have been granted access to. Higher tree positions inherit visibility into all descendant nodes.",
+          "technical_terms": ["Row-level security", "Hierarchical data partitioning", "Organizational scoping", "Tree-based visibility"]
+        },
+        {
+          "layer": 8,
+          "pattern": "Behavioral Parameterization",
+          "technical_name": "Role-Scoped Feature Configuration / Feature Parameters",
+          "description": "Even after a feature is enabled, its behavior can differ per role through configurable parameters (default views, time horizons, result limits, display options). The same feature renders differently based on role context.",
+          "technical_terms": ["Parameterized features", "Role-scoped configuration", "Behavioral customization"]
+        },
+        {
+          "layer": 9,
+          "pattern": "Activity Monitoring",
+          "technical_name": "Audit Trail / Security Event Logging",
+          "description": "All operations are logged with actor, action, target, timestamp, and outcome. Anomaly detection identifies suspicious patterns (failed login bursts, concurrent multi-IP sessions).",
+          "technical_terms": ["Audit logging", "SIEM integration", "Behavioral anomaly detection"]
+        }
+      ]
+    },
+
+    "role_hierarchy_pattern": {
+      "pattern_name": "Tree-Structured RBAC with Monotonic Subtractive Inheritance",
+      "data_structure": "Rooted tree (adjacency list: each role has 0 or 1 parent)",
+      "inheritance_rule": "A child node can only reference permissions that exist on its parent. Administrators can only modify roles at or below their own level. The root node (no parent) has full administrative capability.",
+      "lifecycle_roles": {
+        "description": "The system defines special-purpose roles for lifecycle state transitions: pre-activation (before first login), self-service (restricted to own data), and deactivation (auto-assigned when account is disabled).",
+        "pattern": "State Machine on Principal Lifecycle → Automatic Role Transition"
+      },
+      "operational_patterns": [
+        "Least Privilege — grant minimum required permissions",
+        "Just-In-Time Access — temporary privilege escalation with automatic revocation",
+        "Separation of Duties — isolate security admin from business admin roles",
+        "Periodic Access Review — scheduled audit of role-to-principal assignments"
+      ]
+    }
+  },
+
+  "data_architecture_patterns": {
+
+    "entity_identity_pattern": {
+      "pattern_name": "Dual-Key Identity: Internal Surrogate + External Cross-Reference Code",
+      "description": "Every entity has TWO identifiers: (1) an internal auto-generated surrogate key (used for joins and relational integrity) and (2) an external cross-reference code (XRefCode) — a tenant-defined string that serves as the stable API-level identity. The XRefCode is the ONLY identifier exposed through the API. Internal IDs never leak to consumers.",
+      "constraints": ["XRefCode must be unique within entity type per tenant", "No special characters", "No spaces", "Immutable after certain lifecycle events (e.g., after first workflow execution)"],
+      "design_rationale": "Decouples the internal data model from the integration contract. Internal IDs can be auto-incremented, relocated, or resequenced without breaking external integrations. XRefCodes are under tenant control, enabling meaningful, predictable identifiers.",
+      "technical_terms": ["Surrogate key", "Natural key", "External reference code", "Stable API identity", "Integration key pattern"]
+    },
+
+    "temporal_data_model": {
+      "pattern_name": "Effective-Dated Records (Type 2 Slowly Changing Dimension)",
+      "description": "Most entities support bi-temporal modeling: an EffectiveFrom/EffectiveTo date range that defines when the record is 'active' in the business sense. The system renders active/inactive views based on whether the current date falls within the effective range. Future-dated records can be created (pre-staging), and historical records are retained.",
+      "query_semantics": {
+        "point_in_time": "ContextDate parameter returns the record effective as of that date",
+        "range_query": "ContextDateRangeFrom/To returns all records effective within a window",
+        "default": "Current server datetime if no ContextDate specified"
+      },
+      "implications": [
+        "Every query is implicitly temporal — there is no 'current' record, only 'effective as of date X'",
+        "Insert operations create a new effective-dated version, not an overwrite",
+        "Delete is expressed as end-dating (setting EffectiveTo), not physical removal",
+        "Schema requires: effective_from DATETIME NOT NULL, effective_to DATETIME NULL on most tables"
+      ],
+      "technical_terms": ["SCD Type 2", "Temporal tables", "Bi-temporal modeling", "Point-in-time queries", "Effective dating", "Soft delete via end-dating"]
+    },
+
+    "composite_aggregate_pattern": {
+      "pattern_name": "Aggregate Root with Subordinate Resource Collections",
+      "description": "The central entity (aggregate root) is a composite of a master record and 40+ child collections (subordinate resources). Each child collection contains independently effective-dated records. The aggregate is addressable at the root level (/Entity/{id}) or at the child collection level (/Entity/{id}/{SubResource}).",
+      "access_patterns": {
+        "selective_expansion": "The 'Expand' parameter controls which child collections are loaded in a single request (lazy loading by default, eager loading on demand)",
+        "sub_resource_direct_access": "Child collections can be addressed directly via sub-resource URLs without loading the full aggregate",
+        "symmetric_payloads": "The JSON structure returned by GET is the same structure accepted by POST/PATCH (read and write share the same schema)"
+      },
+      "technical_terms": ["Aggregate root (DDD)", "Subordinate entities", "Lazy vs. eager loading", "Resource expansion", "Composite entity pattern"]
+    },
+
+    "tree_data_structures": {
+      "pattern_name": "Multiple Independent Tree Hierarchies (Adjacency List Model)",
+      "description": "The system maintains at least 5 independent tree structures, each stored using the adjacency list pattern (each node holds a reference to its parent). Trees serve different purposes but share the same storage and traversal infrastructure.",
+      "trees": [
+        {
+          "name": "Organizational Hierarchy",
+          "purpose": "Data visibility scoping and record ownership",
+          "characteristics": "Multi-level (configurable depth), nodes typed by 'level', effective-dated parent assignments, supports reparenting"
+        },
+        {
+          "name": "Role Hierarchy",
+          "purpose": "Permission inheritance and administrative delegation",
+          "characteristics": "Single-root, monotonic subtractive inheritance, max 1 parent per node"
+        },
+        {
+          "name": "Feature Tree",
+          "purpose": "UI capability entitlement",
+          "characteristics": "Two node types (container, leaf), whitelist semantics, parent must be enabled before children"
+        },
+        {
+          "name": "Supervisory / Reporting Hierarchy",
+          "purpose": "Approval routing and management chain traversal",
+          "characteristics": "Position-based (independent of the people occupying positions), supports solid-line and dotted-line relationships"
+        },
+        {
+          "name": "Functional Unit Hierarchy",
+          "purpose": "Headcount tracking and resource allocation",
+          "characteristics": "Aggregate metrics (count, filled, vacant) roll up through the tree"
+        },
+        {
+          "name": "Project Hierarchy",
+          "purpose": "Cost allocation and labor tracking",
+          "characteristics": "Self-referential parent-child via ParentXRefCode"
+        }
+      ],
+      "traversal_algorithms": {
+        "upward_walk_with_early_termination": "Starting from a leaf node, walk up toward the root, evaluating a predicate at each level. Stop at the FIRST level where the predicate is satisfied. This is the core routing algorithm used by the workflow engine.",
+        "downward_visibility_propagation": "A principal at level N inherits visibility into all nodes at levels N+1, N+2, ... (all descendants).",
+        "effective_date_aware_traversal": "Parent-child relationships are themselves effective-dated, so the tree shape can change over time. Traversals must resolve relationships as-of a specific date."
+      },
+      "storage_model": "Adjacency list (parent_id FK on each node). NOT nested sets or materialized paths, based on the operational characteristics (frequent reparenting, effective dating on edges).",
+      "technical_terms": ["Adjacency list model", "Tree traversal", "Early termination search", "Hierarchical aggregation", "Effective-dated edges"]
+    },
+
+    "reference_data_pattern": {
+      "pattern_name": "Codebook / Lookup Table Pattern",
+      "description": "The system maintains a set of reference data entities (codebooks) that define the valid values for categorized fields across the data model. Each codebook entity follows the same structure: XRefCode, ShortName, LongName. These are the enumerations of the system — but they're tenant-configurable, not hardcoded.",
+      "access_pattern": "Same two-step retrieval as domain entities: list XRefCodes, then get detail by XRefCode",
+      "technical_terms": ["Lookup tables", "Reference data", "Code tables", "Tenant-configurable enumerations", "Codebook pattern"]
+    },
+
+    "document_storage_pattern": {
+      "pattern_name": "BLOB Storage with Base64 API Serialization",
+      "description": "Binary documents are stored as BLOBs in the database. When retrieved through the API, they are serialized to Base64-encoded byte arrays within the JSON response. Consumers must deserialize on their side.",
+      "metadata_model": "Each document has: GUID (identifier), name, type category, upload timestamp, uploader, content (Base64), file size",
+      "security": "Document access is controlled at the type-category level, not the individual document level",
+      "technical_terms": ["BLOB storage", "Base64 encoding", "Binary-to-text encoding", "Document management system", "Category-level access control"]
+    },
+
+    "polymorphic_properties_pattern": {
+      "pattern_name": "Entity-Attribute-Value (EAV) for Custom Properties",
+      "description": "Entities support tenant-defined custom properties with multiple data types (string, number, boolean, date, pick list). These are stored using an EAV-style model where property definitions are separate from property values. The expression engine can evaluate these at runtime.",
+      "technical_terms": ["Entity-Attribute-Value", "EAV pattern", "Custom fields", "Dynamic schema extension", "Metadata-driven properties"]
+    }
+  },
+
+  "api_design_patterns": {
+
+    "resource_oriented_design": {
+      "pattern_name": "RESTful Resource-Oriented Architecture",
+      "description": "Every domain entity is a first-class resource with a canonical URL. Operations map to HTTP verbs: GET (read), POST (create), PATCH (partial update), DELETE (remove). URLs follow a consistent hierarchical pattern.",
+      "url_anatomy": {
+        "collection": "/{tenantId}/V1/{Resource}",
+        "instance": "/{tenantId}/V1/{Resource}/{XRefCode}",
+        "sub_resource": "/{tenantId}/V1/{Resource}/{XRefCode}/{SubResource}"
+      },
+      "technical_terms": ["REST", "Resource-oriented architecture", "HATEOAS (partial)", "Content negotiation"]
+    },
+
+    "two_phase_retrieval": {
+      "pattern_name": "Discovery-Then-Detail (Lightweight Index + Secured Detail)",
+      "description": "Data retrieval is split into two phases: (1) a cheap, unsecured discovery call that returns only entity identifiers (XRefCodes), and (2) individual secured detail calls that return the full entity with all security layers applied. This pattern keeps the discovery phase fast while concentrating the security evaluation cost on the detail phase.",
+      "phase_1": {"name": "Discovery / Index", "returns": "Array of identifiers only", "security": "Minimal (no field-level filtering)", "cost": "Low"},
+      "phase_2": {"name": "Secured Detail", "returns": "Full entity with security-filtered fields", "security": "Full pipeline (all 9 layers)", "cost": "High"},
+      "technical_terms": ["Two-phase retrieval", "Index-then-fetch", "Lazy loading", "Security-deferred pattern"]
+    },
+
+    "delta_sync_pattern": {
+      "pattern_name": "Timestamp-Windowed Change Data Capture (CDC)",
+      "description": "The API is designed around incremental synchronization. Consumers maintain a high-water mark (the timestamp of their last successful request) and query for entities that changed since that timestamp. The platform evaluates changes across the ENTIRE data model (not just the fields the consumer has access to) to determine which entities have changed.",
+      "mechanism": {
+        "query_parameters": ["FilterUpdatedStartDate", "FilterUpdatedEndDate"],
+        "change_detection_criteria": [
+          "A currently-effective record was modified within the window",
+          "A record became effective (start date) within the window",
+          "A record ended (end date) within the window"
+        ],
+        "granularity_filter": "Optional entity-type filter narrows change detection to specific sub-resource types"
+      },
+      "important_behavior": "Change detection spans the FULL data model regardless of the consumer's access permissions. A change to a restricted field still surfaces the entity in the discovery phase — but the restricted field won't appear in the detail response. This prevents security-filtered changes from being invisible to the sync process.",
+      "technical_terms": ["Change Data Capture (CDC)", "High-water mark pattern", "Delta synchronization", "Timestamp-based polling", "Incremental sync"]
+    },
+
+    "query_governor_pattern": {
+      "pattern_name": "Request-Level Result Set Governor",
+      "description": "Detail retrieval operations enforce a hard maximum on the number of entities returned per request (1,000). Exceeding the limit returns an error, NOT truncated results. This forces consumers to implement client-side batching.",
+      "consumer_pattern": "Split the XRefCode list from Phase 1 into batches of ≤N (where N < governor limit), and make one Phase 2 request per batch",
+      "technical_terms": ["Query governor", "Result set limiter", "Client-side batching", "Request throttling"]
+    },
+
+    "cursor_based_pagination": {
+      "pattern_name": "Opaque Cursor Pagination",
+      "description": "Large result sets use cursor-based pagination. Each response page includes a 'Paging.Next' field containing a full URL with an opaque cursor token. The consumer follows the chain of next-page URLs until the field is absent.",
+      "advantages_over_offset": "Cursor-based pagination is stable under concurrent writes (no skipped/duplicated records when data changes between page requests)",
+      "technical_terms": ["Cursor pagination", "Keyset pagination", "Opaque continuation token", "Stable pagination"]
+    },
+
+    "rate_limiting": {
+      "pattern_name": "Tenant-Level Rate Limiting with Client-Side Backoff",
+      "description": "API requests are rate-limited at the tenant level (not per-consumer-application). All consuming applications for a single tenant share the same rate limit pool. Exceeded requests are rejected immediately (not queued).",
+      "consumer_requirements": [
+        "Client-side request counting",
+        "Queue-and-retry on rate limit responses",
+        "Sequential processing (no overlapping requests for same data type)",
+        "Coordinated rate allocation when multiple consumers share a tenant"
+      ],
+      "technical_terms": ["Rate limiting", "Tenant-scoped throttling", "Client-side backoff", "Token bucket (implied)", "429 Too Many Requests"]
+    },
+
+    "validate_only_mode": {
+      "pattern_name": "Dry-Run / Validation-Only Write Operations",
+      "description": "All write operations (POST, PATCH) accept an 'isValidateOnly' flag that runs the full server-side validation pipeline without committing any data. This enables consumers to test payloads against production validation rules without side effects.",
+      "technical_terms": ["Dry run", "Validation-only mode", "Side-effect-free validation", "Idempotent testing"]
+    },
+
+    "symmetric_payload_design": {
+      "pattern_name": "Read-Write Payload Symmetry",
+      "description": "The JSON structure returned by GET is the same structure accepted by POST and PATCH. Consumers can: (1) GET an entity, (2) modify fields in the response JSON, (3) send the modified JSON back as a PATCH body. No schema transformation is needed between read and write.",
+      "partial_update_support": "PATCH bodies only need to include the fields being changed, not the complete entity",
+      "technical_terms": ["Payload symmetry", "Round-trip compatibility", "Partial update", "PATCH semantics"]
+    },
+
+    "consumer_generated_identity": {
+      "pattern_name": "Consumer-Assigned External Identifier on Write",
+      "description": "When creating a new entity via POST, the CONSUMER is responsible for generating and providing a unique XRefCode. The server rejects duplicates. This inverts the typical pattern where the server generates the ID and returns it.",
+      "design_rationale": "Enables idempotent creation (consumer can retry a POST with the same XRefCode without creating duplicates) and maintains the principle that XRefCodes are tenant-controlled, not platform-controlled.",
+      "technical_terms": ["Client-generated ID", "Idempotent creation", "External ID assignment", "Natural key creation"]
+    }
+  },
+
+  "workflow_orchestration_engine": {
+
+    "graph_engine": {
+      "pattern_name": "Directed Acyclic Graph (DAG) Execution Engine with Controlled Looping",
+      "description": "Business process orchestration is modeled as a visual graph of typed nodes connected by directional links. The engine traverses the graph sequentially, executing each node's behavior and following the appropriate outbound link based on the node's output.",
+      "graph_properties": {
+        "structure": "Directed graph (edges have direction)",
+        "cycles": "Controlled — a global max-iterations counter prevents infinite loops",
+        "node_typing": "9 distinct node types, each with specific input/output constraints",
+        "link_typing": "Links carry response-type metadata (Accept, Reject, True, False, Timeout, etc.)",
+        "validation": "Graph topology is validated on save — invalid structures are rejected"
+      },
+      "technical_terms": ["DAG execution", "Graph-based workflow", "Typed node graph", "Visual workflow designer", "Graph validation"]
+    },
+
+    "node_type_catalog": {
+      "description": "Each node type implements a specific behavioral contract. The type system enforces which nodes can connect to which other nodes.",
+      "types": [
+        {
+          "type": "Entry Point",
+          "behavior": "Single entry node. Configures global graph constraints (max iterations, error routing).",
+          "technical_analog": "Start state in a state machine"
+        },
+        {
+          "type": "Terminal",
+          "behavior": "Marks graph completion. No outbound links.",
+          "technical_analog": "Accept/final state in a state machine"
+        },
+        {
+          "type": "Router",
+          "behavior": "Resolves one or more recipients dynamically by traversing hierarchical data structures at runtime. Does NOT pause execution.",
+          "technical_analog": "Dynamic dispatch / service locator with hierarchy traversal"
+        },
+        {
+          "type": "Decision Gate",
+          "behavior": "PAUSES execution and waits for human input. Multiple recipients may receive the prompt; the first response wins (competing consumer pattern). Supports configurable timeout with auto-resolution.",
+          "technical_analog": "Human-in-the-loop gate / approval barrier with timeout and first-responder semantics"
+        },
+        {
+          "type": "Processor",
+          "behavior": "Commits pending data changes to the database. This is the node where staged data becomes persisted. Can be configured as approve, reject, or presave.",
+          "technical_analog": "Transaction commit / saga completion step"
+        },
+        {
+          "type": "Notifier",
+          "behavior": "Sends fire-and-forget messages to resolved recipients. Does NOT pause execution.",
+          "technical_analog": "Async event emission / notification dispatch"
+        },
+        {
+          "type": "Condition Evaluator",
+          "behavior": "Evaluates a boolean expression against the payload data. Binary branching (true/false). For multi-way branching, chain multiple condition evaluators.",
+          "technical_analog": "If/else gate / predicate evaluation node"
+        },
+        {
+          "type": "External System Trigger",
+          "behavior": "Fires a domain event that triggers downstream graph executions. Represents a tight coupling point to other subsystems.",
+          "technical_analog": "Webhook emission / domain event publication / system callback"
+        },
+        {
+          "type": "Annotation",
+          "behavior": "Human-readable documentation node. Not part of execution flow.",
+          "technical_analog": "Code comment / documentation node"
+        }
+      ]
+    },
+
+    "execution_model": {
+      "pattern_name": "Sequential Node Evaluation with Pause-on-Gate Semantics",
+      "description": "The engine processes nodes sequentially. Most nodes execute instantly and advance to the next. Decision Gate nodes PAUSE execution and create pending work items for resolved recipients. Execution resumes when a response is received or a timeout fires.",
+      "state_tracking": "Per-graph execution history with per-node status tracking (pending, completed, timed out, bypassed, error)",
+      "technical_terms": ["State machine execution", "Pause/resume semantics", "Human-in-the-loop", "Work item queue"]
+    },
+
+    "dynamic_routing_engine": {
+      "pattern_name": "Hierarchy-Aware Dynamic Recipient Resolution with Early Termination",
+      "description": "The routing subsystem resolves recipients at RUNTIME (not design time) by traversing hierarchical data structures. Starting from a context entity, the algorithm walks up a tree structure, evaluating a predicate at each level, and stops at the FIRST level where a qualifying recipient is found.",
+      "routing_strategies": [
+        "Direct assignment (hardcoded recipient)",
+        "Role-relative traversal (walk hierarchy until a node with target role is found)",
+        "Authority-type relative traversal (walk until authority type match)",
+        "Supervisor-chain traversal with configurable depth (level 1 = direct, level 2 = skip-level, etc.)",
+        "Future-state resolution (resolve against a pending/uncommitted hierarchy change)",
+        "Submitter-relative routing (start traversal from the submitter's position instead of the affected entity)"
+      ],
+      "multi_hierarchy_search": "Routing can search the supervisory hierarchy, the organizational hierarchy, or BOTH independently. A recipient found via either search receives the work item. A recipient found via both receives only one.",
+      "fallback_behavior": "Configurable: either continue to default recipient or fail with error when no match found",
+      "technical_terms": ["Dynamic dispatch", "Hierarchy traversal", "Early termination search", "Runtime recipient resolution", "Multi-hierarchy routing"]
+    },
+
+    "embedded_expression_engine": {
+      "pattern_name": "Embedded Domain-Specific Language (DSL) for Conditional Logic",
+      "description": "The workflow engine includes a rich expression language used in condition evaluator nodes. Expressions evaluate payload data, system state, and entity collections to produce boolean results that drive branching logic.",
+      "capabilities": {
+        "field_references": "Token syntax (<<FieldName>>) references payload fields and related entity fields",
+        "operators": ["Equals", "NotEquals", "GreaterThan", "LessThan", "Contains", "StartsWith", "AND", "OR", "NOT", "IS NULL", "COALESCE"],
+        "collection_operations": {
+          "Filter": "Returns subset matching a predicate",
+          "Any": "Returns true if 1+ items match",
+          "All": "Returns true if every item matches",
+          "None": "Returns true if zero items match"
+        },
+        "built_in_functions": [
+          "Coalesce (first non-null from set)",
+          "ConvertToDate / Date / Today (temporal functions)",
+          "Count (collection size)",
+          "Current (currently-effective record from a temporal collection)",
+          "IdFromXref (cross-reference lookup across 100+ data stores)",
+          "LoadIfEmpty (lazy-load system state not present in the payload)",
+          "HasRole / HasAuthorityType (role/permission predicates)",
+          "GetEntityPropertyValue (custom property evaluation)"
+        ],
+        "data_providers": "100+ registered data stores available for cross-reference lookups"
+      },
+      "technical_terms": ["Embedded DSL", "Expression engine", "Predicate evaluation", "Collection LINQ-style operations", "Cross-reference resolution", "Lazy state loading"]
+    },
+
+    "timeout_and_auto_resolution": {
+      "pattern_name": "Configurable Timeout with Retry and Auto-Resolution",
+      "description": "Decision gate nodes support: (1) a timeout value in minutes, (2) retry count (0-10), (3) a timeout link that routes to an auto-resolution path. This prevents graphs from stalling indefinitely when no human response is received.",
+      "patterns": [
+        "Auto-approve on timeout (Timeout → Processor[approve] → Terminal)",
+        "Auto-reject on timeout (Timeout → Processor[reject] → Terminal)",
+        "Escalation on timeout (Timeout → Router[escalated recipient] → Decision Gate)"
+      ],
+      "technical_terms": ["SLA enforcement", "Timeout handler", "Auto-escalation", "Retry with backoff", "Dead letter handling"]
+    },
+
+    "first_responder_pattern": {
+      "pattern_name": "Competing Consumer with First-Response-Wins Semantics",
+      "description": "When a decision gate is routed to multiple recipients, the first person to respond advances the graph. All other pending decisions for that node are automatically cancelled. There is no aggregation of multiple responses.",
+      "technical_terms": ["Competing consumers", "First-response-wins", "Pending work item cancellation", "Race condition resolution"]
+    },
+
+    "immutability_pattern": {
+      "pattern_name": "Structural Immutability After First Execution",
+      "description": "Once a graph definition has been executed at least once, its topology (nodes, links, connections) is PERMANENTLY FROZEN. Only node properties (messages, routing targets, timeouts) can be modified. This protects the integrity of already-executed processes. To make structural changes, administrators must copy the graph to create a new draft.",
+      "lifecycle_states": [
+        {"state": "Draft", "mutability": "Full editing (structure + properties)"},
+        {"state": "Active", "mutability": "Properties only (structure frozen)"},
+        {"state": "System", "mutability": "Read-only (nothing editable)"}
+      ],
+      "technical_terms": ["Immutable after activation", "Version-on-copy", "Structural freezing", "Configuration versioning"]
+    },
+
+    "event_chaining": {
+      "pattern_name": "Domain Event-Driven Graph Chaining (Pub/Sub)",
+      "description": "Completed graph executions can fire events that trigger secondary graph executions. Events are configured as subscriptions: one or more triggering forms → one or more triggered graphs. Execution is SEQUENTIAL (not parallel) when multiple graphs subscribe to the same event.",
+      "event_types": ["Custom (fully tenant-configurable)", "Template (system-provided, limited editability)"],
+      "import_triggered_events": "Events can also be triggered by bulk data imports, with configurable lookback periods and once-per-record deduplication",
+      "technical_terms": ["Pub/sub", "Event-driven architecture", "Saga pattern", "Choreography", "Sequential pipeline execution", "Event deduplication"]
+    },
+
+    "form_binding_architecture": {
+      "pattern_name": "Role-Scoped Form-to-Graph Binding",
+      "description": "Data entry forms are the trigger mechanism for graph execution. The binding between form and graph is ROLE-SCOPED — the same form can trigger different graphs for different roles. Decision gate nodes can override which form is presented to recipients, enabling multi-view approval patterns.",
+      "multi_form_orchestration": "Multiple forms can be bundled into a guided process (wizard) with per-form graph binding, skip support, and lifecycle tracking",
+      "technical_terms": ["Form-to-workflow binding", "Role-scoped routing", "Multi-form wizard", "Guided process orchestration"]
+    }
+  },
+
+  "notification_and_event_patterns": {
+
+    "push_pull_notification_system": {
+      "pattern_name": "Dual-Mode Event Notification (Push + Pull)",
+      "description": "External systems can receive event notifications via two modes: (1) push — the platform sends events to a consumer-hosted endpoint, or (2) pull — the consumer polls the platform for unacknowledged events. Both modes require explicit acknowledgment to advance the event queue.",
+      "ordering_guarantee": "Events are ordered per-subscriber. Cross-subscriber ordering is not guaranteed.",
+      "failure_isolation": "A stalled subscriber blocks only its own event queue. Other subscribers are unaffected.",
+      "technical_terms": ["Webhook", "Long polling", "Event acknowledgment", "Per-subscriber queue", "Backpressure isolation"]
+    },
+
+    "external_validation_hook": {
+      "pattern_name": "External System Participation in Approval Chains",
+      "description": "The graph engine can pause at a validation node and emit an event to an external system. The external system evaluates the pending data against its own rules and responds with an action (approve, reject, etc.) that advances the graph. This enables external business rule engines to participate in the platform's approval process without modifying the graph engine itself.",
+      "technical_terms": ["External validation", "Webhook-driven approval", "Rule engine integration", "Synchronous callback in async workflow"]
+    },
+
+    "message_template_engine": {
+      "pattern_name": "Token-Based Message Template System with Masking and Localization",
+      "description": "Notification messages use a template engine with <<Token>> syntax that resolves to payload fields at runtime. Supports: foreign key lookup resolution (Lookup function), sensitive data masking by default with explicit Unmask override, per-language localization with recipient-preferred language delivery, and rich text formatting.",
+      "technical_terms": ["Template engine", "Token interpolation", "Data masking", "i18n/l10n", "Lookup/dereferencing functions"]
+    }
+  },
+
+  "infrastructure_patterns": {
+
+    "background_job_processing": {
+      "pattern_name": "Asynchronous Background Job System",
+      "description": "Certain administrative operations are executed asynchronously via background jobs: data synchronization, hierarchy integrity checks and auto-repair, automatic role reassignment on account status change, display format propagation.",
+      "technical_terms": ["Background workers", "Job queue", "Async processing", "Eventual consistency", "Self-healing jobs"]
+    },
+
+    "configuration_portability": {
+      "pattern_name": "Environment-to-Environment Configuration Promotion",
+      "description": "Role configurations (features, authorizations, parameters, field-level access) can be exported to a portable file format and imported into a different environment. Import behavior is upsert-based: creates if XRefCode doesn't exist, overwrites if it does. Never deletes.",
+      "technical_terms": ["Configuration as code (partial)", "Environment promotion", "Upsert-based import", "Dev → Staging → Production pipeline"]
+    },
+
+    "import_export_framework": {
+      "pattern_name": "CSV-Based Bulk Import/Export with Header-Locked Schema",
+      "description": "The platform provides a consistent import/export pattern: export a CSV template with headers and existing records, modify offline, re-import. Import supports add and update but never delete. Field order is locked (headers must not be reordered). Reference codes in relational fields must match existing records.",
+      "technical_terms": ["Bulk import", "CSV processing", "Schema-locked templates", "Upsert semantics", "Referential integrity validation on import"]
+    },
+
+    "audit_infrastructure": {
+      "pattern_name": "Universal Change Audit with Shadow Tables",
+      "description": "Every entity modification is logged with: actor (who), action (what changed — before and after values), target (which record), and timestamp (when). Audit records are viewable in dedicated UI sections throughout the platform. API calls are logged in separate audit tables with call metadata and outcome.",
+      "technical_terms": ["Audit trail", "Shadow tables", "Change data capture", "Before/after logging", "API call logging"]
+    },
+
+    "localization_framework": {
+      "pattern_name": "Per-Entity Localization with Language Fallback",
+      "description": "Names and descriptions for configurable entities support per-language localization. When a user creates or updates an entity in a non-default language, the change is stored as a localization for that language only. The system falls back to the organization's default language when a localization is unavailable.",
+      "technical_terms": ["i18n", "Per-record localization", "Language fallback chain", "Locale-aware rendering"]
+    },
+
+    "encryption_model": {
+      "pattern_name": "Encryption at Rest + In Transit + PGP for Outbound Integration",
+      "description": "Three encryption layers: (1) all stored data encrypted at rest, (2) all client-server communication encrypted in transit (TLS), (3) outbound integration data encrypted with PGP (public key per integration partner).",
+      "file_transfer_security": "SFTP accounts with 90-day password rotation, per-user/per-vendor credentials, immediate rotation on personnel changes",
+      "technical_terms": ["Encryption at rest", "TLS", "PGP encryption", "SFTP", "Credential rotation"]
+    },
+
+    "data_lifecycle_management": {
+      "pattern_name": "Configurable Retention with Automated Purging",
+      "description": "Tenants configure data retention periods per data category. The platform automates purging of expired records. Supports data minimization (reducing stored data volume to limit breach exposure) and data subject access requests (privacy compliance).",
+      "technical_terms": ["Data retention policies", "Automated purging", "Data minimization", "DSAR (Data Subject Access Request)", "Right to erasure"]
+    }
+  },
+
+  "design_pattern_cross_reference": {
+    "description": "A quick-reference mapping of industry-standard design patterns to where they appear in this architecture.",
+    "patterns": {
+      "RBAC": "Authorization architecture → role hierarchy",
+      "ABAC (partial)": "Authorization architecture → organizational scoping + data authorization adds attribute-based dimensions to the RBAC core",
+      "Aggregate Root (DDD)": "Data architecture → composite aggregate pattern",
+      "Repository Pattern": "API design → two-phase retrieval (discovery = repository query, detail = aggregate loading)",
+      "Saga Pattern": "Workflow engine → event chaining (sequential graph executions forming a distributed transaction)",
+      "State Machine": "Workflow engine → graph execution model with states per node",
+      "Observer Pattern": "Notification system → push/pull event subscriptions",
+      "Competing Consumers": "Workflow engine → first-responder pattern on decision gates",
+      "Strategy Pattern": "Workflow engine → routing strategies (different algorithms selected by configuration)",
+      "Chain of Responsibility": "Authorization → layered security pipeline (each layer can deny; all must permit)",
+      "Template Method": "Message templates → token interpolation with masking/unmasking overrides",
+      "Visitor Pattern": "Workflow engine → graph traversal with type-specific node processing",
+      "Builder Pattern": "Expression engine → chainable Filter().Any().All() collection operations",
+      "Facade Pattern": "API layer → single REST surface over complex internal subsystems",
+      "Proxy Pattern": "Field-level API access → strips unauthorized fields before response reaches consumer",
+      "Null Object": "Workflow engine → continue-if-no-recipient-found option prevents null reference errors in routing",
+      "Flyweight Pattern": "Reference data → shared codebook entities referenced by many records",
+      "Memento Pattern": "Configuration portability → export/import captures and restores configuration state",
+      "Command Pattern": "Write operations → POST/PATCH as commands with validate-only dry-run mode",
+      "Event Sourcing (partial)": "Audit infrastructure → before/after change logging creates a reconstructible event history",
+      "CQRS (partial)": "Two-phase retrieval → lightweight query (discovery) separated from full read model (detail)",
+      "Circuit Breaker": "MFA pipeline → fail-open/fail-closed mode when auth provider is down",
+      "Bulkhead": "Rate limiting → tenant-level isolation prevents one consumer from starving others",
+      "SCD Type 2": "Temporal data model → effective-dated records preserving full history"
+    }
+  },
+
+  "anti_patterns_and_constraints": {
+    "description": "Architectural constraints and known limitations that an implementing agent must respect.",
+    "constraints": [
+      {
+        "constraint": "No server-generated identifiers exposed through API",
+        "implication": "Consumers must generate and manage their own XRefCodes. Collision detection is the consumer's responsibility."
+      },
+      {
+        "constraint": "Non-revocable authentication tokens",
+        "implication": "If a token is compromised, it remains valid until expiration. Compensating control: short token lifetime (1 hour)."
+      },
+      {
+        "constraint": "Graph topology frozen after first execution",
+        "implication": "Structural refactoring requires copy → modify → activate cycle. Cannot hotfix graph topology in production."
+      },
+      {
+        "constraint": "Sequential (not parallel) event chain execution",
+        "implication": "Long event chains execute serially. No fan-out parallelism for triggered graphs."
+      },
+      {
+        "constraint": "Query governor hard limit (1,000 per detail request)",
+        "implication": "Client-side batching is mandatory for large datasets. The API is not designed for bulk extraction."
+      },
+      {
+        "constraint": "First-responder-wins on multi-recipient decisions",
+        "implication": "No consensus/quorum mechanism. Cannot require 'N of M approvers must agree.'"
+      },
+      {
+        "constraint": "Binary branching only on condition evaluators",
+        "implication": "Multi-way branching requires chaining multiple condition nodes in sequence (cascading if/else-if pattern)."
+      },
+      {
+        "constraint": "Effective-dated edges in hierarchy trees",
+        "implication": "Tree traversal algorithms must be time-aware. The same query at different ContextDates may traverse different tree shapes."
+      },
+      {
+        "constraint": "Report security uses a different path than entity security",
+        "implication": "A consumer may see different fields via the report API than via the direct entity API, even with the same role. Two independent security configurations must be maintained."
+      }
+    ]
+  }
+}

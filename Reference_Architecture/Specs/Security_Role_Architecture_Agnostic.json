@@ -1,0 +1,1104 @@
+{
+  "document_metadata": {
+    "title": "Multi-Tenant Application Security & Role Architecture",
+    "derived_from": "Dayforce Role Security Architecture (R2025.2.1)",
+    "abstraction_note": "All domain-specific terminology has been replaced with platform-agnostic equivalents. This document describes the security model as a generic enterprise application pattern.",
+    "source_documents": [
+      {
+        "title": "Dayforce Role Security Architecture",
+        "version": "R2025.2.1",
+        "content": "Core RBAC model, feature gating, organizational scoping, configuration portability"
+      },
+      {
+        "title": "Dayforce Security Best Practices Guide",
+        "version": "R2025.2.1",
+        "content": "Shared responsibility model, operational security controls, compliance posture, hardening strategies"
+      }
+    ]
+  },
+  "architecture_overview": {
+    "summary": "A hierarchical, role-based access control (RBAC) system that combines identity management, feature-level gating, data-level authorization, and organizational scoping to govern access across a multi-tenant enterprise platform.",
+    "core_pillars": [
+      "Shared Responsibility — delineation of provider vs. tenant security obligations",
+      "Identity & Authentication — user accounts, credentials, SSO, MFA, and account recovery",
+      "Role Hierarchy — parent-child role inheritance with configurable properties and operational hardening",
+      "Feature Access Control — tree-structured feature gating with parameterization",
+      "Data Authorization — CRUD-level permissions on data categories",
+      "Field-Level API Access — granular control over which data fields are exposed through API channels",
+      "Organizational Scoping — multi-level entity hierarchy that bounds data visibility",
+      "Network Access Control — IP-based restrictions on platform access",
+      "Integration Security — dedicated accounts, token auth, encryption, and field filtering for system-to-system communication",
+      "Secure File Transfer — credential management and encryption for bulk data exchange",
+      "Data Security — encryption at rest/in transit, retention policies, and privacy tools",
+      "Configuration Portability — environment-to-environment role migration",
+      "Workflow Security — approval routing hardened against self-approval and missing notifications",
+      "Monitoring & Audit — session tracking, anomaly detection, and change history"
+    ]
+  },
+  "shared_responsibility_model": {
+    "description": "A framework that delineates the security responsibilities of the platform provider (SaaS operator) and the tenant (customer organization). The provider secures the cloud infrastructure; the tenant secures their configuration and usage within the cloud.",
+    "provider_responsibilities": {
+      "data_compliance_program": {
+        "description": "The provider maintains an independently audited data security program aligned with industry frameworks.",
+        "certifications": [
+          {
+            "framework": "ISO/IEC 27001",
+            "scope": "Information security management systems"
+          },
+          {
+            "framework": "ISO/IEC 27017",
+            "scope": "Cloud security controls"
+          },
+          {
+            "framework": "ISO/IEC 27018",
+            "scope": "Protection of personally identifiable information in public clouds"
+          },
+          {
+            "framework": "ISO/IEC 27701",
+            "scope": "Privacy information management"
+          },
+          {
+            "framework": "ISO/IEC 27036",
+            "scope": "Information security for supplier relationships"
+          },
+          {
+            "framework": "ISO/IEC 22301",
+            "scope": "Business continuity management"
+          },
+          {
+            "framework": "NIST 800-171",
+            "scope": "Protecting controlled unclassified information (SOC for Cyber)"
+          },
+          {
+            "framework": "SOC 1 Type 2",
+            "scope": "Internal controls over financial reporting"
+          },
+          {
+            "framework": "SOC 2 Type 2",
+            "scope": "Security, availability, processing integrity, confidentiality, and privacy"
+          }
+        ]
+      },
+      "privacy_compliance_program": {
+        "description": "The provider operates as a data processor and helps tenants meet obligations as data controllers.",
+        "supported_regulatory_frameworks": [
+          {
+            "regulation": "CCPA / CPRA",
+            "jurisdiction": "California, USA"
+          },
+          {
+            "regulation": "PIPEDA",
+            "jurisdiction": "Canada"
+          },
+          {
+            "regulation": "GDPR",
+            "jurisdiction": "European Union"
+          }
+        ]
+      },
+      "cybersecurity_program": {
+        "description": "A global cybersecurity team providing 24/7 coverage across multiple operational domains.",
+        "operational_domains": [
+          "Compliance and Auditing",
+          "Identity and Access Management",
+          "Incident Response and Management",
+          "Network and System Security",
+          "Product Security (secure SDLC)",
+          "Risk Management and Assessment",
+          "Security Architecture and Engineering",
+          "Security Awareness and Training",
+          "Security Strategy and Policy Development",
+          "Threat Intelligence and Monitoring",
+          "Vendor and Third-Party Risk Management"
+        ]
+      },
+      "platform_security_features": {
+        "description": "Security capabilities built into the platform by the provider.",
+        "features": [
+          {
+            "feature": "Role-Based Access Control",
+            "description": "Configurable RBAC to restrict access to sensitive data and functions."
+          },
+          {
+            "feature": "Audit Trails",
+            "description": "Comprehensive logging of all actions for tracing unauthorized or suspicious activity."
+          },
+          {
+            "feature": "Data Encryption",
+            "description": "All data encrypted at rest and in transit using industry-standard techniques."
+          },
+          {
+            "feature": "Notification System",
+            "description": "Alerts users to important account activities such as credential changes, logins from new devices, or changes to sensitive record fields."
+          },
+          {
+            "feature": "User Activity Logging",
+            "description": "Tracking of activities related to sensitive operations."
+          },
+          {
+            "feature": "Strong Authentication",
+            "description": "Configurable password policies, account lockout rules, and multi-factor authentication."
+          },
+          {
+            "feature": "Customer Support",
+            "description": "Dedicated support for security concerns, guidance, and fraud investigation assistance."
+          }
+        ]
+      }
+    },
+    "tenant_responsibilities": {
+      "description": "The tenant organization is the first line of defense for security within the platform. Tenants must configure, monitor, and enforce security policies appropriate to their operational risk profile.",
+      "obligations": [
+        "Verify that platform notification emails are delivered to end users and not blocked by email security systems.",
+        "Train users regularly on phishing risks, credential hygiene, and suspicious link avoidance.",
+        "Instruct users to bookmark the platform URL and verify the browser address bar before entering credentials.",
+        "Configure internal alerts for changes to sensitive record fields (financial accounts, contact information, credentials).",
+        "Require all sensitive account changes to be communicated through secure, official channels.",
+        "Enable all available platform security features including MFA and strong password policies."
+      ],
+      "fraud_response": {
+        "description": "If fraud is suspected, the tenant should immediately contact the platform provider's support team, isolate affected accounts, and initiate an internal investigation."
+      }
+    }
+  },
+  "identity_and_authentication": {
+    "description": "Each platform user is assigned a unique account identifier (username). The username is bound to one or more roles, which collectively determine the user's capabilities and data visibility.",
+    "account_management": {
+      "config_path": "System Admin > User",
+      "username_constraints": {
+        "max_length": 128,
+        "case_sensitive": false,
+        "spaces_allowed": false
+      }
+    },
+    "credential_generation": {
+      "description": "Usernames for new accounts can be auto-generated using a configurable token-based algorithm, allowing organizations to enforce a consistent naming convention.",
+      "config_path": "System Admin > Client Properties > Properties tab > Account section",
+      "tokens": [
+        {
+          "token": "{FIRST}",
+          "resolves_to": "User's first name."
+        },
+        {
+          "token": "{LAST}",
+          "resolves_to": "User's last name."
+        },
+        {
+          "token": "{F}",
+          "resolves_to": "First character of user's first name."
+        },
+        {
+          "token": "{ACCOUNTNUMBER}",
+          "resolves_to": "User's unique system identifier."
+        }
+      ],
+      "allowed_literal_characters": [
+        "Alphabetic (a-z)",
+        "Numeric (0-9)",
+        "Special (!._@,%$)",
+        "Unicode (e.g. eù£)"
+      ],
+      "constraint": "Tokens and literals can be combined in any order. The resulting username must be unique across all accounts."
+    },
+    "authentication_modes": {
+      "native": "Username and password managed within the platform.",
+      "sso": "Single Sign-On via external identity provider.",
+      "hybrid": "SSO-enabled users can be granted fallback native authentication at the role or individual account level. Controlled by the 'Allow Native Authentication for SSO Users' flag.",
+      "sso_override_scope": "Can be set per-role (System Admin > Roles) or per-account (System Admin > User)."
+    },
+    "password_policies": {
+      "description": "Each role is bound to a password policy that governs credential complexity, rotation, lockout behavior, and default password generation. Password policies are prioritized — the platform evaluates policies in priority order and applies the strongest matching policy.",
+      "config_path": "System Admin > Password Policy",
+      "assignment": "Each role must have exactly one password policy. A default policy is auto-assigned on role creation.",
+      "recommended_settings": {
+        "enforcement": {
+          "require_complex_password": {
+            "value": true,
+            "description": "Ensures passwords do not contain any part of the user's full name or username longer than two characters. Requires characters from at least three of five character categories."
+          },
+          "require_reset_on_login": {
+            "value": true,
+            "description": "Forces password reset on first login or after administrative password reset."
+          },
+          "history_duration": {
+            "value": 6,
+            "description": "Number of previous passwords remembered. Prevents reuse of recent passwords."
+          }
+        },
+        "password_rules": {
+          "minimum_length": {
+            "value": 8,
+            "description": "Minimum number of characters."
+          },
+          "maximum_length": {
+            "value": null,
+            "description": "Optional upper bound on password length."
+          },
+          "minimum_age": {
+            "value": null,
+            "description": "Minimum time before a password can be changed again (prevents rapid cycling)."
+          },
+          "maximum_age": {
+            "value": 60,
+            "unit": "days",
+            "description": "Maximum time before a forced password rotation."
+          },
+          "default_password_life": {
+            "value": 72,
+            "unit": "hours",
+            "description": "Lifespan of system-generated default passwords."
+          }
+        },
+        "complexity_character_categories": [
+          "Uppercase alphabetic (A-Z)",
+          "Lowercase alphabetic (a-z)",
+          "Numeric digits (0-9)",
+          "Non-alphanumeric symbols (e.g., !, $, #, %)",
+          "Unicode characters (e.g., e, u, £)"
+        ],
+        "lockout_rules": {
+          "failed_attempts_before_lockout": {
+            "value": 5,
+            "description": "Number of consecutive failed login attempts that trigger account lockout."
+          },
+          "lockout_duration_minutes": {
+            "value": 15,
+            "description": "Duration of the lockout period before the account is automatically unlocked."
+          }
+        },
+        "additional_lockout_types": [
+          {
+            "type": "Biometric Lockout",
+            "description": "Separate failed-attempt counter and lockout duration for biometric authentication."
+          },
+          {
+            "type": "PIN Lockout",
+            "description": "Separate failed-attempt counter and lockout duration for PIN-based authentication."
+          }
+        ]
+      },
+      "default_password_generation": {
+        "description": "System-generated default passwords can use a token-based algorithm to create predictable initial credentials that users must change on first login.",
+        "token_example": "{LAST4SSN}{BIRTHMONTH}{ACCOUNTNUMBER}$2023",
+        "note": "Tokens resolve to user profile attributes. The resulting password expires according to the default_password_life setting."
+      },
+      "policy_priority": {
+        "description": "Multiple password policies can coexist. Each has a priority number. The platform sorts policies by strength (highest priority at the top) and applies the strongest policy that matches the user's role.",
+        "recommendation": "Ensure the policy list is sorted by strength with the strongest policy at the top."
+      },
+      "user_guidance": [
+        "Remind users that no legitimate person or system will ever request their password via email or SMS.",
+        "Instruct users to create passwords with a mix of character types.",
+        "Instruct users to avoid dictionary words, names, or dates derivable from social media.",
+        "Encourage use of a password manager for strong, randomly generated passwords.",
+        "Warn users to create unique passwords and never reuse passwords across systems.",
+        "Pair password policies with MFA to reduce the impact of compromised credentials."
+      ]
+    },
+    "lifecycle_roles": {
+      "self_service_role": {
+        "description": "A role type flagged as 'self-service' (ESS). Users assigned this role bypass certain organizational unit visibility configurations, as they only need access to their own data.",
+        "effect": "When this flag is set, the platform disables the Location Visibility selector during account provisioning."
+      },
+      "pre_activation_role": {
+        "description": "A designated role type that grants pre-activation access, allowing newly provisioned users to interact with the platform before their formal start date.",
+        "sso_interaction": "Pre-activation roles typically have native authentication enabled so users can log in before their SSO account exists."
+      },
+      "deactivation_role": {
+        "description": "A designated role type that provides limited post-deactivation access. Only one deactivation role may exist at a time.",
+        "constraint": "Must be configured with minimal features and authorizations appropriate for inactive users (e.g., read-only access to historical records).",
+        "assignment_mechanism": "Automatic assignment driven by a background process (User Account Status Job) when a user's status changes to inactive."
+      }
+    },
+    "account_types": {
+      "description": "The platform distinguishes between three categories of accounts, each with different security implications and management requirements.",
+      "types": [
+        {
+          "type": "Individual User Account",
+          "description": "An account assigned to a single person who interacts with the platform through its UI. Each person must have their own unique account.",
+          "shared_accounts_prohibited": true,
+          "rationale": "Shared accounts violate security and audit standards by breaking individual accountability."
+        },
+        {
+          "type": "Third-Party Account",
+          "description": "An account assigned to an external partner or service provider who needs access to specific platform functions.",
+          "management": "Must be audited regularly to verify continued need and correct permission scope."
+        },
+        {
+          "type": "Integration Account",
+          "description": "A specialized account used exclusively for system-to-system communication (API calls, data synchronization). Must never be used by a human user.",
+          "security_requirements": [
+            "Dedicated non-human account per integration.",
+            "Scoped to only the data and user population relevant to the integration.",
+            "Credentials accessible only to the consuming application or its maintainers.",
+            "Prefer token-based authentication over username/password."
+          ]
+        }
+      ]
+    },
+    "account_lifecycle_management": {
+      "description": "Operational practices for managing accounts from provisioning through deactivation.",
+      "best_practices": [
+        "Assign unique accounts — one account per user or system. Never share accounts.",
+        "Audit all accounts not directly associated with an active user to verify continued need and correct permissions.",
+        "Remove or deactivate expired accounts promptly. Best practice is quarterly or monthly review depending on volume.",
+        "Review account permissions quarterly or semi-annually. Revoke elevated permissions that are no longer required.",
+        "Ensure users keep their profile and contact information current to receive security notifications.",
+        "Create a dedicated low-privilege role for deactivated accounts (Deactivation Role).",
+        "Secure all ancillary accounts (SFTP, integration credentials) under the same strict policies as primary accounts.",
+        "Use SSO to simplify lifecycle management — especially for privileged accounts."
+      ],
+      "role_end_dating_rule": {
+        "description": "When removing a role from a user, apply the current date as the effective end date rather than deleting the role assignment. Only delete a role assignment if it was assigned in error and never used.",
+        "rationale": "Preserves audit history while revoking access."
+      }
+    },
+    "multi_factor_authentication": {
+      "description": "The platform supports multiple second-factor methods for identity verification beyond the primary credential. MFA should be enabled for all roles unless a specific business exception is justified. It is especially critical for administrative and supervisory roles with access to sensitive data.",
+      "methods_ranked_by_preference": [
+        {
+          "rank": 1,
+          "method": "Authenticator App (TOTP)",
+          "description": "A compliant authenticator application generates a time-based one-time password. Preferred because it eliminates the risk of transmitting login information through unsecured channels.",
+          "examples": [
+            "Microsoft Authenticator",
+            "Google Authenticator"
+          ]
+        },
+        {
+          "rank": 2,
+          "method": "Email Delivery of TOTP",
+          "description": "A one-time password is sent to the user's verified email address. Recommended as a secondary/fallback option, especially for users without access to a mobile device.",
+          "trade_off": "Slower than authenticator app; depends on email availability."
+        },
+        {
+          "rank": 3,
+          "method": "Push Notification (Mobile App)",
+          "description": "A push notification is sent to a companion mobile application. The user approves or denies the login attempt.",
+          "trade_off": "Users may approve suspicious notifications by mistake without direct interaction with the identity verification screen."
+        },
+        {
+          "rank": 4,
+          "method": "SMS or Voice Call",
+          "description": "A one-time code is delivered via SMS text message or automated voice call.",
+          "trade_off": "Least secure option due to SIM-swapping attacks. SMS may be unavailable or unreliable in some regions."
+        }
+      ],
+      "operational_guidance": [
+        "Communicate preferred MFA methods to all users who are required to use MFA.",
+        "Define clear exception rules explaining when less-preferred methods are acceptable.",
+        "Provide MFA enrollment instructions to users before their first login (pre-activation provisioning).",
+        "Enable MFA configuration for all roles by default."
+      ],
+      "two_factor_failure_mode": {
+        "description": "When the external MFA provider is unavailable, the platform can be configured to either deny all logins (Closed mode) or allow logins without the second factor (Open mode).",
+        "closed_mode": "All logins are blocked until the MFA provider recovers. More secure but risks locking out administrators.",
+        "open_mode": "Logins proceed with only the primary credential. Less secure but prevents lockout.",
+        "recommendation": "Use Closed mode by default. Create a separate password policy with Open mode for critical administrative roles to prevent total lockout."
+      }
+    },
+    "account_recovery": {
+      "description": "A self-service account recovery mechanism that allows native-authentication users to regain access without administrative intervention. It also ensures users maintain current contact information for security notifications.",
+      "config_path": "System Admin > Client Properties > Properties tab > Messages section",
+      "mechanism": [
+        "On login, users without verified contact information are prompted to verify their email address via a confirmation link.",
+        "Users are prompted to complete security questions and provide any missing profile information.",
+        "The prompt recurs on every login until verification is complete."
+      ],
+      "skip_option": {
+        "description": "By default, users can skip the recovery assistant prompt. Best practice is to disable the skip option, forcing users to complete verification before proceeding.",
+        "recommended_setting": "Disable skip"
+      },
+      "scope": "Applies to native-authentication users only. SSO users are excluded as their identity is managed by the external provider."
+    }
+  },
+  "role_hierarchy": {
+    "description": "Roles are the central unit of the security model. They are organized in a parent-child tree that controls inheritance, delegation, and administrative scope.",
+    "config_path": "System Admin > Roles",
+    "hierarchy_rules": [
+      "A role may have zero or one parent role.",
+      "Child roles can only access features and authorizations that their parent role has been granted.",
+      "Users can only assign features to roles at or below their own level in the hierarchy.",
+      "The topmost role (no parent) has full administrative capability over all descendant roles.",
+      "Only users whose role has no parent can perform cross-environment role migration (export/import)."
+    ],
+    "role_properties": [
+      {
+        "property": "Name",
+        "description": "Display name for the role."
+      },
+      {
+        "property": "Description",
+        "description": "Free-text description of the role's purpose."
+      },
+      {
+        "property": "Parent Role",
+        "description": "The role under which this role is nested in the hierarchy. Determines inheritance scope."
+      },
+      {
+        "property": "Password Policy",
+        "description": "The credential policy governing this role. Required; auto-populated with default."
+      },
+      {
+        "property": "Self-Service Role",
+        "description": "Flags the role as a self-service type. Simplifies provisioning by disabling organizational scoping controls.",
+        "type": "boolean"
+      },
+      {
+        "property": "Deactivation Role",
+        "description": "Designates this role as the post-deactivation role. Only one may exist system-wide.",
+        "type": "boolean"
+      },
+      {
+        "property": "Reference Code",
+        "description": "Unique cross-system identifier. Used for import/export and integration with external systems."
+      },
+      {
+        "property": "Pre-Activation Role",
+        "description": "Flags the role for pre-activation access.",
+        "type": "boolean"
+      },
+      {
+        "property": "Allow Native Auth for SSO Users",
+        "description": "Permits SSO-enabled users with this role to also use platform-native credentials.",
+        "type": "boolean"
+      },
+      {
+        "property": "Exclude from Delegation",
+        "description": "Users with this role cannot be selected as delegates.",
+        "type": "boolean"
+      },
+      {
+        "property": "Anonymize Sensitive Records",
+        "description": "Masks certain flagged data records from users with this role.",
+        "type": "boolean"
+      }
+    ],
+    "operational_hardening": {
+      "description": "Operational best practices for maintaining a secure and well-governed role structure over time.",
+      "principles": [
+        {
+          "principle": "Least Privilege",
+          "description": "Grant only the minimum roles and permissions required for an account to perform its function. Limit the number of administrators and accounts with elevated roles."
+        },
+        {
+          "principle": "Just-In-Time Access",
+          "description": "Implement processes to control temporary privilege escalation. Do not apply elevated permissions until absolutely necessary and ensure they are revoked as quickly as possible."
+        },
+        {
+          "principle": "Separation of Duties",
+          "description": "Isolate security administration features into a dedicated Security Administrator role with sole access to password policies, IP restrictions, and MFA configuration. Create separate purpose-specific roles for other administrative functions."
+        },
+        {
+          "principle": "Periodic Review",
+          "description": "Review role definitions semi-annually or annually to ensure assigned privileges remain appropriate. Review individual user-to-role assignments (especially for administrative and supervisory roles) on the same cadence."
+        },
+        {
+          "principle": "MFA for Elevated Roles",
+          "description": "Enable MFA for all roles by default. It is especially critical for administrative and supervisory roles that have access to sensitive data or the ability to make system-wide changes."
+        }
+      ]
+    }
+  },
+  "feature_access_control": {
+    "description": "Features represent functional areas of the application — screens, modules, tabs, and configuration panels. Each role is granted access to a curated subset of features via a hierarchical feature tree. The feature tree acts as a whitelist: only explicitly enabled features (and their sub-features) are available to users with that role.",
+    "config_path": "System Admin > Roles > Features tab",
+    "feature_types": [
+      {
+        "type": "Navigation Panel Feature",
+        "description": "A feature that appears as a navigable entry point in the application UI (e.g., a menu item, a screen). These are either direct feature screens or containers that group related sub-features."
+      },
+      {
+        "type": "Feature Component",
+        "description": "A feature that does not map to a standalone screen. Instead, it controls visibility of a tab, a data section, a control flag, or a behavioral toggle within a parent feature."
+      }
+    ],
+    "assignment_rules": [
+      "A parent feature must be enabled before any of its sub-features can be assigned.",
+      "Enabling a container feature without any child navigation features triggers a validation error.",
+      "Child roles can only view and modify features that their parent role has granted.",
+      "Each role must be assigned to at least one feature."
+    ],
+    "feature_ordering": {
+      "description": "The display order of features in the navigation panel is configurable per role. Feature components (tabs, sections) can also be reordered.",
+      "mechanism": "Drag-and-drop or move-up/move-down controls within the Features tab. Reordering preserves hierarchy level."
+    },
+    "feature_parameterization": {
+      "description": "Certain features expose configurable parameters that modify their behavior for a given role. Parameters are role-scoped — different roles can have different parameter values for the same feature.",
+      "examples": [
+        {
+          "feature": "Approval Workflows",
+          "parameter": "Default grouping view (by supervisor or by organizational unit)."
+        },
+        {
+          "feature": "Report Features",
+          "parameter": "Configure report defaults: date ranges, sort order, output options."
+        },
+        {
+          "feature": "Calendar / Time Views",
+          "parameter": "Number of weeks ahead that users can load future data."
+        },
+        {
+          "feature": "Data Review Screens",
+          "parameter": "Lookback period (days), totals display configuration."
+        },
+        {
+          "feature": "Suggestion Engine",
+          "parameter": "Enable defaults, disable inline editing, max results count, max severity."
+        },
+        {
+          "feature": "Trend Analysis",
+          "parameter": "Number of prior periods to display."
+        }
+      ],
+      "access": "Parameter configuration is available only when the associated feature is enabled. A configuration icon appears beside eligible features."
+    },
+    "favorite_features": {
+      "description": "Up to 6 features can be pinned as 'favorites' for a role, appearing on the home screen for quick access.",
+      "config_path": "System Admin > Roles > Favorite Features tab",
+      "default_behavior": "If no favorites are configured, the platform lists features alphabetically.",
+      "constraint": "Only navigation panel features that are enabled for the role are eligible."
+    },
+    "validation": {
+      "description": "The platform prevents saving invalid feature configurations.",
+      "rules": [
+        "Empty container features (enabled but with no child navigation features) are rejected.",
+        "Container features where the role lacks access to the underlying sub-features are rejected.",
+        "Validation error messages specify which features need correction."
+      ]
+    }
+  },
+  "data_authorization": {
+    "description": "Data authorizations (also called access authorizations) define CRUD-level permissions on categories of data within the platform. They operate independently of feature access — a user may have access to a feature but be restricted from certain data within it.",
+    "config_path": "System Admin > Roles > Authorizations tab",
+    "permission_types": [
+      {
+        "permission": "Can Create",
+        "description": "The role can add new records of the associated data type."
+      },
+      {
+        "permission": "Can Read",
+        "description": "The role can view records of the associated data type."
+      },
+      {
+        "permission": "Can Update",
+        "description": "The role can modify existing records of the associated data type."
+      },
+      {
+        "permission": "Can Delete",
+        "description": "The role can remove records of the associated data type."
+      }
+    ],
+    "rules": [
+      "Granting Create, Update, or Delete should always be paired with Read to ensure the user can see the data they are acting on.",
+      "Child roles can only view and modify authorizations that their parent role has been granted.",
+      "A single authorization can impact multiple features. For example, a 'Financial Data' authorization may restrict visibility of monetary fields across several different screens.",
+      "Authorizations also control form-level permissions: a role with Create but not Update can submit new records via a form but cannot edit existing ones.",
+      "Each role can have one, several, or no authorizations for any given data category."
+    ],
+    "scope_models": [
+      {
+        "model": "Administrator View",
+        "description": "Grants access to all records in the system except the administrator's own record and records under their own position in the hierarchy."
+      },
+      {
+        "model": "Supervisor View",
+        "description": "Grants access only to records that fall under the user's own position in the hierarchy (direct and indirect reports)."
+      }
+    ],
+    "combined_scope_note": "Administrators who also occupy a position in the hierarchy typically need both views enabled. The Administrator View covers the broader organization, while the Supervisor View covers their direct subtree."
+  },
+  "api_and_integration_security": {
+    "description": "Security controls governing system-to-system communication, data exchange, and third-party integrations with the platform.",
+    "api_access": {
+      "description": "Controls for securing programmatic access to platform data and services via web service APIs.",
+      "best_practices": [
+        "Create a dedicated non-human account and a dedicated role for each external application that integrates with the platform. Never reuse a human user's account for API access.",
+        "Scope each integration account's role to only the data categories and organizational entities relevant to that integration.",
+        "Use token-based authentication instead of username/password wherever possible to minimize credential exposure.",
+        "Restrict API credentials so they are accessible only to the consuming application or its maintainers.",
+        "Apply IP address restrictions to API endpoints to block requests from unauthorized network origins."
+      ],
+      "ip_restriction_warning": "Adding IP restrictions to API traffic may block platform-hosted integration tools. Verify compatibility before enabling."
+    },
+    "integration_platform_security": {
+      "description": "Controls for the platform's built-in integration orchestration tool (used for inbound/outbound data flows with external systems).",
+      "best_practices": [
+        "Restrict access to the integration platform to administrator roles only.",
+        "Never share credentials of users who have access to integration features.",
+        "Encrypt all outbound data transmissions using PGP encryption (public key configured per integration).",
+        "Use OAuth 2.0 Client Credentials Grant for token-based authentication when sending data to external APIs."
+      ]
+    },
+    "data_export_security": {
+      "description": "Controls for securing structured data exports (XML, CSV, or other formats) that leave the platform.",
+      "best_practices": [
+        "Restrict access to export definition features to administrator roles only.",
+        "Enable encryption on all export pipelines using PGP.",
+        "Configuration path: encryption keys are defined in System Admin > Encryption, then attached to export definitions via export options."
+      ],
+      "encryption_config_flow": [
+        "Define encryption method and key (System Admin > Encryption > Encryption Methods tab).",
+        "Attach encryption method to an export option (Export Definitions > Export Option tab).",
+        "Bind the export option to the relevant export definition (Export Definitions > Export Definition tab)."
+      ]
+    },
+    "field_level_api_access": {
+      "description": "The platform provides granular field-level read permissions for each data element exposed through web service operations. This allows administrators to control exactly which fields an integration account can retrieve, independent of feature-level and data-authorization permissions.",
+      "config_path": "System Admin > Roles > Web Services Field-Level Access tab",
+      "mechanism": "A checkbox tree of all API-exposed data entities and their fields. Unchecking a field removes it from API responses for that role.",
+      "security_note": "This is a critical control for preventing over-exposure of sensitive fields (e.g., financial verification flags) through API channels, even when the integration account has broader read authorization."
+    }
+  },
+  "network_access_management": {
+    "description": "IP-based network restrictions that limit which source addresses can access the platform, providing a network-level security boundary in addition to authentication.",
+    "applicability": [
+      {
+        "scope": "API access",
+        "recommendation": "Strongly recommended. Integration accounts typically originate from fixed IP addresses."
+      },
+      {
+        "scope": "User access",
+        "recommendation": "Use with caution. Only practical when users exclusively access from a known corporate network. Not suitable for remote/mobile workforces."
+      }
+    ],
+    "constraint": "IP restrictions should only be applied where the accessing account originates from a fixed IP address or range.",
+    "warning": "Misconfigured IP restrictions can lock users and integrations out of the platform entirely."
+  },
+  "secure_file_transfer": {
+    "description": "Security controls for SSH File Transfer Protocol (SFTP) accounts used for bulk data exchange with the platform. SFTP accounts are ancillary credentials that must be managed with the same rigor as primary platform accounts.",
+    "best_practices": [
+      "Use strong, unique passwords with a mix of uppercase, lowercase, numbers, and special characters.",
+      "Never share SFTP credentials. Request separate accounts for each user or vendor who needs access.",
+      "Rotate SFTP passwords every 90 days.",
+      "Change SFTP passwords immediately when a user with access leaves the organization or a vendor contract ends.",
+      "Never reuse SFTP passwords across different systems.",
+      "If credentials may have been compromised, request immediate password rotation and audit for unauthorized access.",
+      "Log out after every session to prevent unauthorized access from unattended devices.",
+      "Report suspicious activity (unusual file changes, unexpected logins, out-of-process actions) immediately."
+    ]
+  },
+  "data_security": {
+    "description": "Controls governing the protection, minimization, and lifecycle management of data stored within the platform.",
+    "encryption": {
+      "at_rest": "All stored data is encrypted using industry-standard encryption techniques.",
+      "in_transit": "All data transmitted between clients and the platform is encrypted."
+    },
+    "data_minimization": {
+      "description": "The platform provides data management tools that enable tenants to configure retention periods and automate data purging. Reducing the volume of retained data limits exposure in the event of a security incident.",
+      "config_path": "System Admin > Data Management Center",
+      "recommendation": "Configure retention periods to align with organizational business needs and applicable privacy regulations (GDPR, CCPA, etc.)."
+    },
+    "privacy_tools": {
+      "description": "Built-in features for managing personal data in compliance with data protection regulations.",
+      "capabilities": [
+        "Configurable data retention periods by data category.",
+        "Automated data minimization (purging of expired records).",
+        "Support for data subject access requests.",
+        "Record anonymization capabilities (controlled via role-level flag)."
+      ]
+    }
+  },
+  "organizational_scoping": {
+    "description": "The platform uses a configurable multi-level organizational hierarchy to scope data visibility, feature filtering, approval routing, and record ownership. The hierarchy is the backbone of the security model — it determines which records, which entities, and which data a given user can see.",
+    "hierarchy_model": {
+      "description": "A tree-structured entity model where each node represents an organizational unit. Nodes are assigned a 'level' that defines their role in the hierarchy. Levels do not need to be parallel — sibling nodes at the same depth can have different levels.",
+      "standard_levels": [
+        {
+          "level": "Root",
+          "description": "The single top-level entity. Contains all other levels. Created first.",
+          "required": true
+        },
+        {
+          "level": "Region",
+          "description": "Optional grouping of districts. Common in multi-geography deployments.",
+          "required": false
+        },
+        {
+          "level": "District",
+          "description": "Optional grouping of sites.",
+          "required": false
+        },
+        {
+          "level": "Site",
+          "description": "A leaf-level entity representing a logical or physical location where users and resources operate.",
+          "required": true
+        },
+        {
+          "level": "Unit",
+          "description": "A functional division within a site (e.g., a team, a cost center, a production area). Units are the most granular level used for operational planning.",
+          "required": true
+        },
+        {
+          "level": "Zone",
+          "description": "A logical grouping of units within a site, used for resource allocation and access scoping.",
+          "required": false
+        },
+        {
+          "level": "On-Site Unit",
+          "description": "A composite entity formed by binding a site and a unit (e.g., 'Site A - Finance Unit').",
+          "required": false
+        }
+      ],
+      "custom_levels": "Additional levels can be defined in the Levels tab to extend the hierarchy for specific organizational structures.",
+      "entity_properties": [
+        "Name and Description",
+        "Parent Entity (determines tree position)",
+        "Effective From / Effective To dates",
+        "Reference Code (unique cross-system identifier)",
+        "Level assignment",
+        "Start Day of Week (affects calendar-driven features)",
+        "Ledger Code (for financial system integration)",
+        "Clock Code (for hardware integration)",
+        "Time Zone"
+      ]
+    },
+    "security_implications": [
+      "User data visibility is bounded by the organizational entities they have access to.",
+      "Feature screens are filtered to show only data within the user's organizational scope.",
+      "Approval chains can be driven by the organizational hierarchy (entity-level approval) or by supervisory relationships (supervisor-level approval).",
+      "Legal and compliance configurations are tied to site-level entities.",
+      "Audit records and change history are scoped by entity.",
+      "Users higher in the hierarchy inherit visibility into all descendant entities."
+    ],
+    "entity_lifecycle": {
+      "opening": "An entity can be created with a future effective date, before it is operational.",
+      "closing": "An entity can be closed (inactive but records retained) or end-dated (inactive and hidden from active views).",
+      "moving": "An entity can be relocated under a different parent, effective from a specified date.",
+      "validation": "The platform prevents end-dating an entity if active user assignments or child entities with active assignments exist past the proposed end date."
+    }
+  },
+  "configuration_portability": {
+    "description": "Role configurations can be exported from one platform environment and imported into another, providing a mechanism for promoting configurations across development, staging, and production environments.",
+    "export_format": ".dat file",
+    "max_file_size_mb": 10,
+    "exported_components": [
+      "General role properties",
+      "Feature assignments and feature parameters",
+      "Data authorizations",
+      "API field-level access settings",
+      "New account assignment defaults",
+      "Locale/culture settings"
+    ],
+    "import_behavior": {
+      "create": "If the role's Reference Code does not exist in the target environment, a new role is created.",
+      "update": "If the role's Reference Code already exists, the existing role configuration is overwritten.",
+      "delete": "Deletion of entire roles via import is not supported."
+    },
+    "constraints": [
+      "Only users whose role has no parent (top-level administrators) can perform export/import.",
+      "System-defined roles cannot be exported or imported because they are standardized across all environments.",
+      "Custom workflow definitions and custom reports are not included in the migration.",
+      "Standard reports and standard fixed-format reports are included."
+    ]
+  },
+  "workflow_driven_approvals": {
+    "description": "The platform supports approval workflows that route configuration changes through defined approval chains before they take effect. This is particularly relevant for organizational structure changes (e.g., adding, modifying, or removing positions in a hierarchy).",
+    "workflow_architecture": {
+      "submission": "Users submit changes directly within the platform UI (not via a separate form). The change is held in a pending state until approved.",
+      "approval": "Approvers receive the change request in their notification queue. They can approve or reject but cannot modify the submitted change.",
+      "observer_pattern": "Workflows must include an observer notification node after the final decision node to propagate the outcome back to the system."
+    },
+    "workflow_modes": [
+      {
+        "mode": "Single Workflow",
+        "description": "All changes of a given type flow through one approval workflow. All users with access can submit any type of change.",
+        "configuration": "Associate the workflow with the master change form and assign to appropriate roles."
+      },
+      {
+        "mode": "Edit Modes (Granular Workflows)",
+        "description": "Changes are categorized by type (e.g., create, delete, update specific attributes). Each category can have its own workflow and be assigned to different roles.",
+        "mechanism": "Edit modes are defined as permission sets that control which attributes users can modify. Each edit mode is linked to a separate workflow and assigned to specific roles.",
+        "editable_attributes": [
+          "Active To Date",
+          "Name",
+          "Identifier Number",
+          "Reference Code",
+          "Ledger Code",
+          "Full-Time Equivalent",
+          "Description",
+          "Pool Flag",
+          "Occupant Limit",
+          "Interim Support Flag",
+          "Frozen Flag",
+          "Supervisory Details",
+          "Dotted-Line Relationships",
+          "Business Unit",
+          "Role Assignment",
+          "Active Locations"
+        ]
+      }
+    ],
+    "supported_routing_rules": [
+      "Send to specific user",
+      "Send to submitter",
+      "Send to authority type relative to submitter",
+      "Send to role relative to submitter",
+      "Send to submitter's supervisor",
+      "Send to entity's supervisor",
+      "Relative level of entity's supervisor",
+      "Relative level of submitter's supervisor",
+      "Use effective date for routing"
+    ],
+    "constraints": [
+      "Workflows must not contain process nodes.",
+      "Observer class notification node is required on all output paths after the final decision.",
+      "If workflows are misconfigured, the affected UI is rendered read-only with an error message."
+    ],
+    "security_hardening": {
+      "description": "Workflow configuration has direct security implications. Weak configurations can create exploit vectors where users approve their own changes or sensitive modifications occur without proper oversight.",
+      "anti_patterns": [
+        {
+          "pattern": "Self-Approval",
+          "description": "Routing approval decisions back to the submitter (Send to Submitter) allows a user to approve their own changes, bypassing separation of duties.",
+          "risk": "Critical. Enables unauthorized modifications to sensitive records without independent review.",
+          "remediation": "Route approval decisions to a role relative to the affected record's owner, an authority type, or a specific approver — never to the submitter."
+        }
+      ],
+      "required_notifications": [
+        {
+          "event": "Post-Approval Notification",
+          "description": "After a workflow is approved and processed, the platform must notify the affected record owner so they are aware of the change.",
+          "mechanism": "Enable 'Send to Affected User' on notification nodes following the final decision node.",
+          "rationale": "Without this notification, changes can be made to a user's records without their knowledge."
+        }
+      ]
+    }
+  },
+  "structural_hierarchy_management": {
+    "description": "Beyond the organizational hierarchy used for scoping, the platform supports a functional hierarchy for modeling reporting structures, headcount planning, and resource allocation. This hierarchy is independent of physical locations.",
+    "business_units": {
+      "description": "Business units form a functional structure separate from physical locations. They track headcount metrics (total, filled, vacant) and aggregate metrics up through the tree.",
+      "properties": [
+        {
+          "property": "Name",
+          "required": true
+        },
+        {
+          "property": "Description",
+          "required": false
+        },
+        {
+          "property": "Reference Code",
+          "required": true,
+          "note": "Unique across all business units"
+        },
+        {
+          "property": "Ledger Code",
+          "required": false
+        },
+        {
+          "property": "Active From / Active To",
+          "required": true
+        },
+        {
+          "property": "Parent Business Unit",
+          "required": true
+        }
+      ],
+      "metrics": [
+        "Headcount (total)",
+        "Filled",
+        "Vacant",
+        "Rollup (aggregated from children)"
+      ],
+      "import_format": "XML",
+      "max_import_batch": 500
+    },
+    "positions": {
+      "description": "A position represents a unique approved headcount slot in the organization, defined by a business unit and a role assignment. Positions form a supervisory tree that is independent of the users who occupy them.",
+      "key_properties": [
+        {
+          "property": "Name",
+          "description": "Display name of the position."
+        },
+        {
+          "property": "Position Number",
+          "description": "Unique identifier. Auto-generated if not provided."
+        },
+        {
+          "property": "Reference Code",
+          "description": "Unique cross-system identifier."
+        },
+        {
+          "property": "Ledger Code",
+          "description": "For financial system integration."
+        },
+        {
+          "property": "Full-Time Equivalent",
+          "description": "Value 0.00-1.00 representing workload proportion."
+        },
+        {
+          "property": "Description",
+          "description": "Free-text position description."
+        },
+        {
+          "property": "Pooled",
+          "description": "If true, multiple occupants can be assigned.",
+          "type": "boolean"
+        },
+        {
+          "property": "Occupant Limit",
+          "description": "Maximum occupants for pooled positions."
+        },
+        {
+          "property": "Supports Interim Occupancy",
+          "description": "Whether temporary assignment is allowed.",
+          "type": "boolean"
+        },
+        {
+          "property": "Frozen",
+          "description": "When frozen, no changes or assignments can be made.",
+          "type": "boolean"
+        }
+      ],
+      "relationships": {
+        "solid_line": "Primary supervisory relationship. Defines the parent position (direct supervisor).",
+        "dotted_line": "Alternate supervisory relationship. Can optionally grant the dotted-line supervisor access to the occupant's data.",
+        "effective_dating": "All relationships support effective from/to dates."
+      },
+      "occupancy_model": {
+        "primary": "Each user can have only one primary position at a time. Primary positions cannot have end dates.",
+        "secondary": "Users may hold multiple secondary positions simultaneously.",
+        "interim": "A temporary occupant can be assigned to an already-occupied position. When the interim period ends, the original occupant's assignment resumes.",
+        "overfill": "Allows a brief overlap where two users occupy the same position during a transition period.",
+        "pooled": "A single position can hold multiple occupants up to the defined occupant limit."
+      },
+      "access_control": {
+        "administrator_view": "Access to all positions except the admin's own and those directly beneath.",
+        "supervisor_view": "Access only to positions beneath the user's own in the hierarchy.",
+        "combined": "Administrators who also occupy a position typically need both views."
+      }
+    },
+    "hybrid_model": {
+      "description": "The platform supports a hybrid mode where some users are assigned to positions (structural model) while others retain direct role-based assignments (flat model). This enables phased rollouts.",
+      "constraint": "Users in the structural model cannot report to users in the flat model."
+    }
+  },
+  "user_activity_monitoring": {
+    "description": "Capabilities and practices for monitoring user behavior within the platform to detect unauthorized or suspicious activity.",
+    "suspicious_behavior_indicators": [
+      "Repeated failed login attempts followed by changes to user profile or sensitive record fields.",
+      "A single user account logged in from multiple IP addresses simultaneously."
+    ],
+    "audit_capabilities": {
+      "record_change_audit": {
+        "description": "The platform maintains a historical audit trail of all changes made to user records, including modifications to sensitive fields such as financial account details.",
+        "access": "Available via an Audit tab on individual records."
+      },
+      "session_overview_report": {
+        "description": "A dedicated report providing detailed session information for security investigation and compliance auditing.",
+        "data_fields": [
+          "User roles",
+          "Session type",
+          "Session status",
+          "Login timestamp",
+          "Logout timestamp",
+          "Applicable password policy",
+          "Applicable MFA policy",
+          "User IP address"
+        ],
+        "recommended_review_cadence": "Quarterly or semi-annually"
+      }
+    },
+    "recommended_audit_scope": [
+      "Security events (login failures, lockouts, MFA failures).",
+      "Security policy configuration changes.",
+      "Changes to confidential user information (credentials, contact details, financial accounts).",
+      "Changes to role assignments and privilege escalations."
+    ]
+  },
+  "cross_cutting_patterns": {
+    "reference_codes": {
+      "description": "Nearly every configurable entity in the platform carries a Reference Code — a unique, user-defined string identifier used for cross-system integration, import/export operations, and API interactions.",
+      "constraints": "Must be unique within the entity type. Must not contain special characters (e.g., hyphens). Must not contain spaces."
+    },
+    "effective_dating": {
+      "description": "Most configuration entities support effective dating (Effective From / Effective To), enabling time-bound configuration, future-dated changes, and historical views.",
+      "pattern": "The platform renders active/inactive views based on whether effective dates fall within or outside the current date."
+    },
+    "localization": {
+      "description": "Names and descriptions for key entities (positions, business units) support per-language localization. The platform falls back to the organization's default language when a localization is unavailable.",
+      "behavior": "When a user creates or updates an entity in a non-default language, the change is stored as a localization for that language only."
+    },
+    "audit_trail": {
+      "description": "All entity modifications are logged with who made the change, what was changed, and when. Audit records are viewable in dedicated Audit tabs throughout the platform."
+    },
+    "background_processes": {
+      "description": "Certain administrative operations are handled asynchronously via background jobs (e.g., data synchronization, hierarchy integrity checks, automatic role reassignment on user status change).",
+      "examples": [
+        "User Account Status Job — auto-assigns deactivation role when a user is deactivated.",
+        "Hierarchy Data Integrity Check — identifies structural issues in the organizational tree.",
+        "Hierarchy Data Integrity Fix — resolves issues found by the integrity check.",
+        "Data Synchronization — propagates user name changes and display format changes across the platform."
+      ]
+    },
+    "import_export_pattern": {
+      "description": "The platform follows a consistent import/export pattern across most configuration areas: export a CSV template with headers and existing records, modify offline, and re-import. Import supports add and update operations but never delete.",
+      "supported_format": "CSV",
+      "constraints": [
+        "Field header order must not be changed.",
+        "System records cannot be modified via import.",
+        "Boolean fields expect TRUE or FALSE string values.",
+        "Date fields expect DD/MM/YYYY format.",
+        "Reference codes in relational fields must match existing records."
+      ]
+    }
+  },
+  "security_model_summary": {
+    "access_equation": "Effective Access = Authentication × Role Features ∩ Data Authorizations ∩ Organizational Scope ∩ Field-Level API Filters ∩ Network Restrictions",
+    "layers": [
+      {
+        "layer": 0,
+        "name": "Shared Responsibility",
+        "determines": "What security obligations does the provider fulfill vs. what must the tenant configure and enforce?"
+      },
+      {
+        "layer": 1,
+        "name": "Network Access",
+        "determines": "Is the request originating from an allowed network address? (IP restrictions)"
+      },
+      {
+        "layer": 2,
+        "name": "Authentication",
+        "determines": "Can the user prove their identity? (Native credentials, SSO, hybrid, MFA)"
+      },
+      {
+        "layer": 3,
+        "name": "Role Assignment",
+        "determines": "What role(s) does this user hold? Roles are hierarchical and inherit constraints from parents."
+      },
+      {
+        "layer": 4,
+        "name": "Feature Gating",
+        "determines": "Which application features (screens, modules, tabs) can this role access?"
+      },
+      {
+        "layer": 5,
+        "name": "Data Authorization",
+        "determines": "For the accessible features, what CRUD operations can this role perform on each data category?"
+      },
+      {
+        "layer": 6,
+        "name": "Field-Level API Access",
+        "determines": "For API channels specifically, which individual data fields are exposed to this role?"
+      },
+      {
+        "layer": 7,
+        "name": "Organizational Scope",
+        "determines": "Within the authorized data, which records are visible based on the user's position in the organizational hierarchy?"
+      },
+      {
+        "layer": 8,
+        "name": "Parameterization",
+        "determines": "For accessible features, what behavioral constraints apply? (e.g., time horizons, default views, result limits)"
+      },
+      {
+        "layer": 9,
+        "name": "Monitoring & Audit",
+        "determines": "Is the user's activity being logged, and are anomalous patterns being detected?"
+      }
+    ],
+    "principle": "Security is subtractive by default and defense-in-depth by design. A user has zero access until features, authorizations, and organizational scope are explicitly granted. Child roles can never exceed the permissions of their parent. Multiple independent layers must all permit an action before it succeeds."
+  }
+}
