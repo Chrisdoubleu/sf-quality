@@ -5,3 +5,6 @@ sf-quality-app/
 
 # Local IDE/agent configuration
 .claude/
+
+# Local git worktrees (isolated execution workspaces)
+.worktrees/
