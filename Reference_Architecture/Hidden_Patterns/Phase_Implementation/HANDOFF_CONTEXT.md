@@ -69,10 +69,13 @@ Reference_Architecture/
 │   └── Agent_Orientation_Revised.md  ← Primary agent orientation: stack, constraints, per-repo guidance
 │
 └── Hidden_Patterns/
-    ├── Hidden_Architecture_Patterns_Reverse_Engineered.json   ← 3 reverse-engineered patterns
-    ├── REFINEMENT_PROMPT.md           ← Self-contained prompt used to stress-test Hidden Patterns
-    ├── CODEBASE_REFERENCE.md          ← ★ Actual DDL + SP signatures + phase build specs (read this)
-    └── HANDOFF_CONTEXT.md             ← This file
+    ├── Hidden_Architecture_Patterns_Reverse_Engineered.json   ← Original (junior architect baseline)
+    ├── Hidden_Architecture_Patterns_Refined.json              ← ★ Revised JSON (authoritative)
+    ├── REFINEMENT_REVIEW.md           ← ★ Prose review: blind spots, resolved Qs, T-SQL recs
+    └── Phase_Implementation/
+        ├── REFINEMENT_PROMPT.md       ← Self-contained prompt used to stress-test Hidden Patterns
+        ├── CODEBASE_REFERENCE.md      ← ★ Actual DDL + SP signatures + phase build specs (read this)
+        └── HANDOFF_CONTEXT.md         ← This file
 ```
 
 **Critical read for implementation work:** `Hidden_Patterns/CODEBASE_REFERENCE.md` contains the actual DDL (verbatim from migration files) for every table you will touch in Phases 25, 27, 30, and 32. It includes current column lists, constraint names, SP signatures, guard type registry, idempotency patterns, and exact schema changes each phase must make. Read it before designing any migration.
@@ -158,9 +161,14 @@ The review proposed 10 step states. Premature.
 
 **Deferred:** `Withdrawn` (7), `Invalidated` (8), `Conflict` (9)
 
-### Decision 4: Revised Hidden Patterns JSON was truncated
+### Decision 4: Revised Hidden Patterns JSON is complete
 
-The refinement review produced analysis but the revised JSON was cut off mid-way. **No revised JSON exists yet.** The original `Hidden_Architecture_Patterns_Reverse_Engineered.json` remains the authoritative source. The review analysis (in the message history of the previous session) supplements it with validated inferences and implementation decisions. When GSD agents read phase CONTEXT files, they should reference *both*.
+The refinement review produced both a full prose analysis and a revised JSON. Both are now saved:
+
+- **Prose analysis:** `Hidden_Patterns/REFINEMENT_REVIEW.md` — pattern-by-pattern review, blind spots, resolved open questions, deepened quality mapping, cross-pattern synthesis, and concrete T-SQL architecture recommendations.
+- **Revised JSON:** `Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json` — the full refined version of `Hidden_Architecture_Patterns_Reverse_Engineered.json` with stronger inferences, confidence ratings, alternative explanations, and blind spots incorporated.
+
+The original `Hidden_Architecture_Patterns_Reverse_Engineered.json` is preserved as the baseline (junior architect document). When GSD agents read phase CONTEXT files, they should reference the **refined** JSON + the prose review as the current authoritative source. The original is retained for provenance only.
 
 ---
 
@@ -293,7 +301,7 @@ Currently only 8D gets explicit guided process treatment. CAPAs, Audits, and Cus
 
 ---
 
-## Files Changed in Previous Session (Not Yet Committed)
+## Files Changed in Previous Session (Committed via PR #2)
 
 ```
 deleted:    Reference_Architecture/Briefings/Agent_Orientation_Combined.md
@@ -301,9 +309,15 @@ modified:   Reference_Architecture/Briefings/architectural_briefing.md
 modified:   Reference_Architecture/Pattern_Mapping.md
 modified:   Reference_Architecture/README.md
 modified:   Reference_Architecture/REVIEW.md
-new file:   Reference_Architecture/Hidden_Patterns/REFINEMENT_PROMPT.md
-new file:   Reference_Architecture/Hidden_Patterns/HANDOFF_CONTEXT.md
-new file:   Reference_Architecture/Hidden_Patterns/CODEBASE_REFERENCE.md
+new file:   Reference_Architecture/Hidden_Patterns/Phase_Implementation/REFINEMENT_PROMPT.md
+new file:   Reference_Architecture/Hidden_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md
+new file:   Reference_Architecture/Hidden_Patterns/Phase_Implementation/CODEBASE_REFERENCE.md
 ```
 
-These changes are local and need to be committed before switching contexts.
+## Files Added This Session (Pending Commit)
+
+```
+new file:   Reference_Architecture/Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json
+new file:   Reference_Architecture/Hidden_Patterns/REFINEMENT_REVIEW.md
+modified:   Reference_Architecture/Hidden_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md
+```
