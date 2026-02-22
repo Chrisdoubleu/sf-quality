@@ -60,12 +60,12 @@ Existing implementations are fair game for improvement. If our RLS could be stre
 
 | Order | File | Content |
 |-------|------|---------|
-| 1 | This file | Orientation and codebase context |
-| 2 | `Platform_System_Architecture_Technical_Patterns.json` | Pure engineering patterns — no domain language. Design patterns, data structures, algorithms. Start here. |
-| 3 | `Security_Role_Architecture_Agnostic.json` | 10-layer security architecture: RBAC, feature gating, field-level access, org hierarchy scoping |
-| 4 | `Workflow_Engine_Architecture_Agnostic.json` | DAG-based orchestration: typed nodes, expression DSL, dynamic routing, event chaining |
-| 5 | `API_Integration_Architecture_Agnostic.json` | REST API patterns: entity model, delta sync, two-phase retrieval, event notifications |
-| 6 | `architectural_briefing.md` | Narrative overview connecting the three spec files |
+| 1 | `Briefings/Agent_Orientation_Combined.md` | Orientation and codebase context (this file) |
+| 2 | `Specs/Platform_System_Architecture_Technical_Patterns.json` | Pure engineering patterns — no domain language. Design patterns, data structures, algorithms. Start here. |
+| 3 | `Specs/Security_Role_Architecture_Agnostic.json` | 10-layer security architecture: RBAC, feature gating, field-level access, org hierarchy scoping |
+| 4 | `Specs/Workflow_Engine_Architecture_Agnostic.json` | DAG-based orchestration: typed nodes, expression DSL, dynamic routing, event chaining |
+| 5 | `Specs/API_Integration_Architecture_Agnostic.json` | REST API patterns: entity model, delta sync, two-phase retrieval, event notifications |
+| 6 | `Briefings/architectural_briefing.md` | Narrative overview of the Security and Workflow specs |
 
 The three spec files describe how principals get access (Security), how state changes flow through approvals (Workflow), and how external systems read and write data (API). The Technical Patterns file synthesizes all three into named engineering patterns.
 
@@ -88,9 +88,9 @@ These reflect architectural decisions and infrastructure realities. They aren't 
 
 | File | Size | Format |
 |------|------|--------|
-| `README_AGENT_ORIENTATION.md` | ~4 KB | Markdown |
-| `Platform_System_Architecture_Technical_Patterns.json` | ~49 KB | JSON |
-| `Security_Role_Architecture_Agnostic.json` | ~61 KB | JSON |
-| `Workflow_Engine_Architecture_Agnostic.json` | ~48 KB | JSON |
-| `API_Integration_Architecture_Agnostic.json` | ~53 KB | JSON |
-| `architectural_briefing.md` | ~19 KB | Markdown |
+| `Briefings/Agent_Orientation_Combined.md` | ~6 KB | Markdown |
+| `Specs/Platform_System_Architecture_Technical_Patterns.json` | ~49 KB | JSON |
+| `Specs/Security_Role_Architecture_Agnostic.json` | ~61 KB | JSON |
+| `Specs/Workflow_Engine_Architecture_Agnostic.json` | ~48 KB | JSON |
+| `Specs/API_Integration_Architecture_Agnostic.json` | ~53 KB | JSON |
+| `Briefings/architectural_briefing.md` | ~19 KB | Markdown |
