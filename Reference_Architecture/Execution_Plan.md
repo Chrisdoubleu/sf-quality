@@ -1,6 +1,7 @@
 # Execution Plan: 46 Reference Architecture Patterns → GSD Workflow
 
 **Date:** 2026-02-21
+**Last Updated:** 2026-02-22
 **Scope:** Translate all 46 patterns from [Pattern_Mapping.md](Pattern_Mapping.md) into actionable GSD phases across sf-quality-db, sf-quality-api, and sf-quality-app.
 
 ### Related Documents
@@ -17,6 +18,8 @@ All documents referenced by this plan live within the `Reference_Architecture/` 
 | Architectural Briefing | [Briefings/architectural_briefing.md](Briefings/architectural_briefing.md) | Narrative overview |
 | Agent Orientation | [Briefings/Agent_Orientation_Revised.md](Briefings/Agent_Orientation_Revised.md) | Stack maturity, constraints, per-repo guidance |
 | Hidden Patterns | [Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json](Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json) | 3 reverse-engineered implicit patterns (authoritative refined version; see _Reverse_Engineered.json for original baseline) |
+| Quality Forms Final Review | [Quality_Forms_Module/03_adjudication/quality-forms-module-final-authoritative-review.md](Quality_Forms_Module/03_adjudication/quality-forms-module-final-authoritative-review.md) | Authoritative go/no-go and blocker checklist for inspection forms |
+| Quality Forms Package | [Quality_Forms_Module/04_packages/quality-inspection-forms-module-package/index.md](Quality_Forms_Module/04_packages/quality-inspection-forms-module-package/index.md) | Implementation package index (DB/API/App inspection artifacts) |
 
 Child repo planning artifacts (referenced but not modified from workspace root):
 
@@ -627,3 +630,98 @@ After all phases complete across all repos:
 4. **API OpenAPI artifact:** Verify version reflects all pattern additions
 5. **Requirements traceability:** Every ARCH-xx, API-INFRA-xx, and APP-xx requirement links to a completed phase or documented deferral
 6. **Cross-repo gates:** Confirm all DB prerequisites landed before their API/App consumers were executed
+
+If Section H is executed, add:
+
+7. **Quality Forms entry-gate audit:** Verify all nine checks in `Quality_Forms_Module/03_adjudication/quality-forms-module-final-authoritative-review.md` "Implementation Start Criteria" are green before opening Quality Forms phases in any child repo.
+
+---
+
+## H. Quality Forms Module Integration (Post-Core Extension Track)
+
+This section weaves `Reference_Architecture/Quality_Forms_Module/` into the master sequence across DB/API/App.
+
+This track is **not** part of the original 46-pattern closure scope. It is a follow-on module track that starts only after core contract-chain prerequisites are met.
+
+### H1. Current Snapshot and Entry Gates
+
+**Current planning snapshot (2026-02-22):**
+- `sf-quality-db`: v2.0 active (Phase 23 next), v3.0 not started
+- `sf-quality-api`: Phase 3 complete, Phase 3.5 next
+- `sf-quality-app`: Phase 1 not started
+- Quality Forms package status: **No-go** (`Quality_Forms_Module/03_adjudication/quality-forms-module-final-authoritative-review.md`)
+
+**Mandatory entry gates before any Quality Forms repo phase opens:**
+1. DB Phase 23 and 24 complete, and DB contract manifest refreshed from live state.
+2. API Phase 3.5 complete (versioned `/v1` surface, audit middleware, hardening in place).
+3. API 50414 handling uses 202 contract semantics (per `API_Integration_Patterns/Phase_Implementation/DECISIONS.md`), and Quality Forms docs are aligned to that behavior.
+4. All nine "Implementation Start Criteria" items in the Quality Forms final review are checked.
+5. Quality Forms API docs are normalized to the active API conventions (`/v1` route versioning, contract-chain publication steps, deterministic error mapping).
+
+### H2. Phase Insertion Strategy Across Repos
+
+Use a dedicated post-core extension wave and insert phased work in each repo roadmap:
+
+| Repo | Inserted Phase(s) | Goal | Hard Dependency |
+|------|-------------------|------|-----------------|
+| `sf-quality-db` | **34-36** (new module wave) | Land inspection schema + seeds + workflow safety fixes + deterministic 29-proc implementation contracts | H1 gates + DB Phase 23/24 complete |
+| `sf-quality-api` | **11-13** (new module wave) | Land 29 inspection endpoints as thin proc gateway, publish OpenAPI artifacts each wave | DB 34-36 contract publication gates |
+| `sf-quality-app` | **11-13** (new module wave) | Land template builder, operator due/fill flow, inspection analytics/attachments UX | API 11-13 OpenAPI gates + App Phase 1-4 baseline |
+
+Recommended DB breakdown:
+- **DB 34:** Blocker closure + migration safety (159 additive constraint, explicit StatusCode contract in 158/160, security seed migration, workflow dispatch/service-context guarantees documented)
+- **DB 35:** Inspection schema rollout and naming/contract corrections from adjudication
+- **DB 36:** Stored procedure implementation hardening (all 29 deterministic contracts), schedule/NCR/attachment integration, performance validation
+
+Recommended API breakdown:
+- **API 11:** Template + inspection instance core endpoints
+- **API 12:** Assignment/scheduling/due queue/reporting endpoints
+- **API 13:** Attachment finalize/SAS orchestration boundaries, SPC extract endpoint, final contract/governance checks
+
+Recommended App breakdown:
+- **App 11:** Template list/editor/publish workflow UX
+- **App 12:** Due queue + inspection fill/submit/review UX
+- **App 13:** Inspection analytics, attachment UX hardening, release governance
+
+### H3. Contract Chain Waves for Quality Forms
+
+Do not execute Quality Forms as one large batch. Use three contract waves:
+
+1. **Wave QF-A (Foundations)**
+   - DB 34 complete -> refresh `db-contract-manifest.json`
+   - API 11 complete -> publish OpenAPI
+   - App 11 complete -> refresh app API snapshot/types
+
+2. **Wave QF-B (Operations)**
+   - DB 35 complete -> refresh manifest
+   - API 12 complete -> publish OpenAPI
+   - App 12 complete -> refresh app snapshot/types
+
+3. **Wave QF-C (Hardening/Analytics)**
+   - DB 36 complete -> refresh manifest
+   - API 13 complete -> publish OpenAPI
+   - App 13 complete -> refresh app snapshot/types
+
+Each wave is blocked until the previous repo in the chain has published its contract artifact.
+
+### H4. Planning Artifacts to Update When Opening the Track
+
+When H2 begins, update child repo planning files (in repo context):
+
+- `../sf-quality-db/.planning/ROADMAP.md`: add DB phases 34-36 under a post-v3 module milestone
+- `../sf-quality-db/.planning/REQUIREMENTS.md`: add Quality Forms requirement IDs mapped to adjudication decisions
+- `../sf-quality-db/.planning/phases/*/`: add DB 34-36 CONTEXT files sourced from Quality Forms package + final adjudication
+- `../sf-quality-api/.planning/ROADMAP.md`: add API phases 11-13 for inspection endpoints
+- `../sf-quality-api/.planning/REQUIREMENTS.md`: add inspection endpoint contract requirements
+- `../sf-quality-api/.planning/phases/*/`: add API 11-13 CONTEXT files based on finalized 29 endpoint contracts
+- `../sf-quality-app/.planning/ROADMAP.md`: add App phases 11-13 for inspection UX
+- `../sf-quality-app/.planning/REQUIREMENTS.md`: add inspection builder/operator analytics UX requirements
+- `../sf-quality-app/.planning/phases/*/`: add App 11-13 CONTEXT files based on finalized API contracts
+
+### H5. Non-Negotiable Quality Forms Alignment Rules
+
+1. Keep SQL authoritative: no business-rule migration into API or app.
+2. Preserve approval semantics: API approval-required responses follow 202 contract handling.
+3. Preserve route governance: inspection endpoints must be versioned under `/v1`.
+4. Enforce contract chain after each wave: DB manifest -> API publish -> App snapshot.
+5. Do not start API/App Quality Forms execution while DB checklist gates are open.
