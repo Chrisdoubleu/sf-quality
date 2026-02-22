@@ -23,17 +23,22 @@ Reference_Architecture/
 │   └── Agent_Orientation_Revised.md   ← Agent orientation with reading order, constraints, per-repo guidance
 │
 ├── Hidden_Patterns/                   ← Reverse-engineered implicit patterns
-│   ├── Hidden_Architecture_Patterns_Reverse_Engineered.json
+│   ├── Hidden_Architecture_Patterns_Reverse_Engineered.json  ← Original (baseline)
+│   ├── Hidden_Architecture_Patterns_Refined.json             ← ★ Revised (authoritative)
+│   ├── REFINEMENT_REVIEW.md           ← ★ Prose review: blind spots, resolved Qs, T-SQL recs
 │   └── Phase_Implementation/          ← DB phase implementation context
 │       ├── CODEBASE_REFERENCE.md
 │       ├── HANDOFF_CONTEXT.md
 │       └── REFINEMENT_PROMPT.md
 │
-├── API_Integration_Patterns/          ← API architecture refinement prompt
+├── API_Integration_Patterns/          ← API architecture refinement prompt + phase decisions
 │   ├── PERSONA_PROMPT.md
-│   └── CODEBASE_REFERENCE.md
+│   ├── CODEBASE_REFERENCE.md
+│   └── Phase_Implementation/          ← Locked decisions + implementation roadmap (phases 3.4-5)
+│       ├── DECISIONS.md               ← 5 locked architectural decisions; 3 open questions blocking Phase 4+
+│       └── HANDOFF_CONTEXT.md         ← Phase-by-phase deliverables for API phases 3.4, 3.5, 4, 4.5, 5
 │
-└── Quality_Forms_Module/              ← Inspection forms module design prompt
+└── Quality_Forms_Module/              ← Inspection forms architecture design [FUTURE MILESTONE — post-v3.0; not yet sequenced into any repo roadmap]
     ├── PERSONA_PROMPT.md              ← Persona, context, deliverables, output format
     └── CODEBASE_REFERENCE.md          ← Verbatim DDL, SP signatures, API/frontend patterns
 ```
@@ -50,7 +55,8 @@ Reference_Architecture/
 | 4 | [Specs/Workflow_Engine_Architecture_Agnostic.json](Specs/Workflow_Engine_Architecture_Agnostic.json) | DAG-based orchestration: typed nodes, expression DSL, dynamic routing, event chaining |
 | 5 | [Specs/API_Integration_Architecture_Agnostic.json](Specs/API_Integration_Architecture_Agnostic.json) | REST API: entity model, delta sync, two-phase retrieval, rate limiting, event notifications |
 | 6 | [Briefings/architectural_briefing.md](Briefings/architectural_briefing.md) | Narrative overview of the Security and Workflow specs (does not cover API or Hidden Patterns) |
-| 7 | [Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json](Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json) | Three implicit patterns: Guided Process Orchestration, Policy Resolution Engine, Data Staging/Edit Mode |
+| 7 | [Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json](Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json) | Three implicit patterns (refined): Guided Process Orchestration, Policy Resolution Engine, Data Staging/Edit Mode — with confidence ratings, alternative explanations, blind spots |
+| 7a | [Hidden_Patterns/REFINEMENT_REVIEW.md](Hidden_Patterns/REFINEMENT_REVIEW.md) | Prose review: inference validation, quality-domain deepening, cross-pattern synthesis, concrete T-SQL recommendations |
 
 ---
 
@@ -66,7 +72,7 @@ Audit of all 46 reference architecture patterns against current sf-quality imple
 Translates all 46 patterns into GSD-executable work:
 
 - **sf-quality-db:** New v3.0 milestone with Phases 25-33 (after v2.0 completes)
-- **sf-quality-api:** Insert Phase 3.5 + expand Phases 4, 7, 9, 10
+- **sf-quality-api:** Quick item Phase 3.4 (middleware plumbing) + Insert Phase 3.5 + expand Phases 4, 7, 9, 10
 - **sf-quality-app:** 6 new requirements + context enrichment in Phases 3, 4, 7, 8, 9, 10
 - Cross-repo dependency map, parallelization tracks, context seeding strategy, verification checklist
 
@@ -106,12 +112,16 @@ These reflect architectural decisions and infrastructure realities. They are not
 | `Briefings/architectural_briefing.md` | ~19 KB | Markdown |
 | `Briefings/Agent_Orientation_Revised.md` | ~14 KB | Markdown |
 | `Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json` | ~39 KB | JSON |
+| `Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json` | ~18 KB | JSON |
+| `Hidden_Patterns/REFINEMENT_REVIEW.md` | ~29 KB | Markdown |
 | `Hidden_Patterns/Phase_Implementation/CODEBASE_REFERENCE.md` | ~42 KB | Markdown |
 | `Hidden_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md` | ~23 KB | Markdown |
 | `Hidden_Patterns/Phase_Implementation/REFINEMENT_PROMPT.md` | ~51 KB | Markdown |
 | `API_Integration_Patterns/PERSONA_PROMPT.md` | ~13 KB | Markdown |
 | `API_Integration_Patterns/CODEBASE_REFERENCE.md` | ~25 KB | Markdown |
+| `API_Integration_Patterns/Phase_Implementation/DECISIONS.md` | ~4 KB | Markdown |
+| `API_Integration_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md` | ~10 KB | Markdown |
 | `Quality_Forms_Module/PERSONA_PROMPT.md` | ~28 KB | Markdown |
 | `Quality_Forms_Module/CODEBASE_REFERENCE.md` | ~35 KB | Markdown |
 
-**Total: ~588 KB of structured architectural knowledge + execution planning.**
+**Total: ~635 KB of structured architectural knowledge + execution planning.**

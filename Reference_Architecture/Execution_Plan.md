@@ -16,7 +16,7 @@ All documents referenced by this plan live within the `Reference_Architecture/` 
 | API Architecture | [Specs/API_Integration_Architecture_Agnostic.json](Specs/API_Integration_Architecture_Agnostic.json) | REST API integration spec |
 | Architectural Briefing | [Briefings/architectural_briefing.md](Briefings/architectural_briefing.md) | Narrative overview |
 | Agent Orientation | [Briefings/Agent_Orientation_Revised.md](Briefings/Agent_Orientation_Revised.md) | Stack maturity, constraints, per-repo guidance |
-| Hidden Patterns | [Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json](Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json) | 3 reverse-engineered implicit patterns |
+| Hidden Patterns | [Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json](Hidden_Patterns/Hidden_Architecture_Patterns_Refined.json) | 3 reverse-engineered implicit patterns (authoritative refined version; see _Reverse_Engineered.json for original baseline) |
 
 Child repo planning artifacts (referenced but not modified from workspace root):
 
@@ -419,8 +419,8 @@ Phases 23-24 in sf-quality-db must ship before v3.0 begins.
 **Manifest prerequisite:** The `db-contract-manifest.json` is currently v1.0.0 and does not reflect the 9 knowledge views and 1 advisory procedure added in Phase 21. Refresh the manifest to reflect Phase 21 additions before v3.0 work begins, so that API phase planners have an accurate contract surface.
 
 ```
-sf-quality-db: /gsd:plan-phase 23  →  /gsd:execute-phase 23
-sf-quality-db: /gsd:plan-phase 24  →  /gsd:execute-phase 24
+sf-quality-db: /gsd:discuss-phase 23  →  /gsd:plan-phase 23  →  /gsd:execute-phase 23
+sf-quality-db: /gsd:discuss-phase 24  →  /gsd:plan-phase 24  →  /gsd:execute-phase 24
 sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json to reflect Phase 21-24 additions"
 sf-quality-db: /gsd:complete-milestone  (archives v2.0; Phase 22 deferred — see above)
 ```
@@ -448,6 +448,24 @@ sf-quality-db: /gsd:execute-phase 29
 sf-quality-db: /gsd:verify-work 29     (acceptance: audit.ApiCallLog exists, @AsOfUtc on key procs, tree helpers callable)
 sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json for Phase 29 additions"
 ```
+
+### Step 2.5: sf-quality-api — Phase 3.4 Plumbing Fixes (Prerequisite for 3.5)
+
+Before inserting Phase 3.5, confirm whether Phase 3.4 middleware changes were already completed as part of Phase 3, or execute as a quick item:
+
+```
+sf-quality-api: Check git log — if CorrelationIdMiddleware GUID enforcement, SqlErrorNumber
+                stash on ErrorHandlingMiddleware, and 50414→HTTP 202 handler are already
+                present, skip this step.
+
+sf-quality-api: /gsd:quick "Phase 3.4: Middleware plumbing — enforce GUID correlation IDs,
+                stash SqlErrorNumber on ErrorHandlingMiddleware, add 50414→HTTP 202 mapping,
+                remove 50414 from SqlErrorMapper"
+```
+
+**Source:** [API_Integration_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md](API_Integration_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md)
+
+**Note:** No DB migration required for Phase 3.4 — these are middleware-only changes.
 
 ### Step 3: sf-quality-api — Insert Phase 3.5 and Execute
 
