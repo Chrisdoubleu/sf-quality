@@ -19,9 +19,8 @@ Reference_Architecture/
 │   └── API_Integration_Architecture_Agnostic.json
 │
 ├── Briefings/                         ← Narrative orientation documents
-│   ├── architectural_briefing.md      ← Human-readable overview connecting all specs
-│   ├── Agent_Orientation_Combined.md  ← Condensed agent orientation (quick-load contexts where 14 KB is too much)
-│   └── Agent_Orientation_Revised.md   ← Expanded agent orientation with reading order
+│   ├── architectural_briefing.md      ← Narrative overview of Security and Workflow specs
+│   └── Agent_Orientation_Revised.md   ← Agent orientation with reading order, constraints, per-repo guidance
 │
 └── Hidden_Patterns/                   ← Reverse-engineered implicit patterns
     └── Hidden_Architecture_Patterns_Reverse_Engineered.json
@@ -49,7 +48,7 @@ Reference_Architecture/
 Audit of all 46 reference architecture patterns against current sf-quality implementation. Each pattern is classified by repo (DB/API/App/Cross-Repo), impact level, and action type (Strengthen Existing, Net New, Inform Planning). Includes code evidence citations, gap descriptions, and recommended approaches.
 
 - 24 DB patterns, 12 API patterns, 9 App patterns, 1 Cross-Repo pattern
-- Appendix A lists 8 skipped patterns with rationale
+- Appendix A lists 12 skipped patterns with rationale
 
 ### [Execution_Plan.md](Execution_Plan.md)
 Translates all 46 patterns into GSD-executable work:
@@ -93,8 +92,7 @@ These reflect architectural decisions and infrastructure realities. They are not
 | `Specs/Workflow_Engine_Architecture_Agnostic.json` | ~48 KB | JSON |
 | `Specs/API_Integration_Architecture_Agnostic.json` | ~53 KB | JSON |
 | `Briefings/architectural_briefing.md` | ~19 KB | Markdown |
-| `Briefings/Agent_Orientation_Combined.md` | ~6 KB | Markdown |
 | `Briefings/Agent_Orientation_Revised.md` | ~14 KB | Markdown |
 | `Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json` | ~39 KB | JSON |
 
-**Total: ~377 KB of structured architectural knowledge + execution planning.**
+**Total: ~371 KB of structured architectural knowledge + execution planning.**

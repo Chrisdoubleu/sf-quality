@@ -17,7 +17,7 @@
   - `sf-quality-db` — 133 migrations (001–130 including 086a and 126a–d), 80 published procedures, 36 published views per `db-contract-manifest.json` v1.0.0. Note: Phase 21 (migrations 122–130) adds 9 knowledge views and 1 advisory procedure not yet reflected in the v1.0.0 manifest; actual counts are 81 procedures and 45 views.
   - `sf-quality-api` — 10 C# source files, 27 endpoints (25 NCR + 2 diagnostics), Phase 3 of 10 complete, `api-openapi.publish.json` v0.2.0.
   - `sf-quality-app` — 51 planning files, 0 runtime source files. Phase 1 of 10 not started. `api-openapi.snapshot.json` v0.1.0 (behind API publish v0.2.0).
-- **Constraints enforced from** `Briefings/Agent_Orientation_Combined.md`: SQL-first business logic, thin Dapper API, single-tenant scope, Azure App Service runtime.
+- **Constraints enforced from** `Briefings/Agent_Orientation_Revised.md`: SQL-first business logic, thin Dapper API, single-tenant scope, Azure App Service runtime.
 
 **Classification key:**
 - **Strengthen Existing** — Pattern is present in usable form, but has clear hardening/coverage gaps.
@@ -28,7 +28,7 @@
 - **v1 (initial):** 36 patterns from two independent analyses.
 - **v2 (first re-audit):** Corrected classifications, normalized JSON path citations, added 6 missing patterns. Total: 42.
 - **v3:** Full re-read of all four JSON specs and architectural briefing. Systematic rescan of all three repos (133 DB migrations, 10 API source files, 51 app planning files). All 42 entries audited: every `$.json_path` verified against source JSON, every migration/file citation verified against filesystem, every classification re-evaluated. No entries removed. 2 applicable missing patterns added; 2 Appendix A exclusions added. No cosmetic-only changes. **Updated pattern count: 44.**
-- **v4 (this revision):** Cross-referenced three reverse-engineered hidden architecture patterns (`Reference_Architecture_Package/Hidden_Architecture_Patterns_Reverse_Engineered.json`) — Guided Process Orchestration, Policy Resolution Engine, Data Staging and Edit Mode Architecture. Five existing entries enriched with deeper context from hidden patterns (#2, #6, #12, #14, #31). Two new entries added for genuinely distinct architectural concepts not covered by existing entries: Multi-Party Entity Lifecycle Tracking (#23) and Optimistic Commit Mode for Safety-Critical Transitions (#24). Three Appendix A exclusions added for hidden pattern sub-patterns that exceed single-tenant scope. **Updated pattern count: 46.**
+- **v4 (this revision):** Cross-referenced three reverse-engineered hidden architecture patterns (`Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json`) — Guided Process Orchestration, Policy Resolution Engine, Data Staging and Edit Mode Architecture. Five existing entries enriched with deeper context from hidden patterns (#2, #6, #12, #14, #31). Two new entries added for genuinely distinct architectural concepts not covered by existing entries: Multi-Party Entity Lifecycle Tracking (#23) and Optimistic Commit Mode for Safety-Critical Transitions (#24). Three Appendix A exclusions added for hidden pattern sub-patterns that exceed single-tenant scope. **Updated pattern count: 46.**
 
 Patterns that do not fit a single-tenant Azure App Service quality-management system are listed in Appendix A.
 
