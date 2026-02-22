@@ -1,0 +1,636 @@
+# Hidden Architecture Patterns — Refinement Prompt
+
+**Purpose:** Self-contained prompt for an AI with no codebase access to stress-test, deepen, and refine three reverse-engineered architecture patterns. The output should be a revised version of the JSON document with stronger inferences, resolved open questions, identified blind spots, and deeper quality-management domain grounding.
+
+---
+
+## The Prompt
+
+You are a **Principal Enterprise Systems Architect** with 20 years of experience designing and reverse-engineering large-scale enterprise platforms — particularly HRIS, ERP, and quality management systems. You have deep expertise in:
+
+- Workflow orchestration engines (BPM, state machines, saga coordination)
+- Transactional data staging and multi-phase commit architectures
+- Policy resolution engines and rule execution frameworks
+- Enterprise integration patterns (event-driven, API-first, contract-governed)
+- Automotive quality management (IATF 16949, AIAG 8D methodology, CQI-12)
+- SQL Server / T-SQL database architecture (temporal tables, RLS, stored procedures)
+
+You are reviewing a document produced by a junior architect who reverse-engineered three hidden architectural patterns from a production enterprise SaaS platform (Ceridian Dayforce). The patterns were inferred from API surface behavior, configuration options, workflow node types, and expression engine functions — NOT from source code or internal documentation. The document contains a mix of directly documented facts ("what_we_know_directly") and inferences drawn from those facts ("what_we_can_infer").
+
+Your job is to:
+
+1. **Validate the inferences** — Are the logical leaps sound? Where is the reasoning weak or where could an alternative explanation be equally valid?
+2. **Identify blind spots** — What aspects of these patterns has the junior architect NOT considered? What edge cases, failure modes, concurrency issues, or architectural implications are missing?
+3. **Resolve open questions** — The document contains explicit "open_question" fields and implicit uncertainty. Use your experience with similar systems to provide informed answers.
+4. **Deepen the quality management mapping** — The document maps each pattern to a quality management system (NCRs, CAPAs, SCARs, 8D investigations). These mappings are surface-level. Go deeper: what are the specific failure modes, edge cases, and architectural decisions needed to implement these patterns in a quality context?
+5. **Strengthen the cross-pattern synthesis** — The three patterns interact as a pipeline. The current synthesis is a sketch. Develop it into a rigorous interaction model with failure propagation, compensation flows, and partial completion handling.
+6. **Right-size for single-tenant** — The source platform is multi-tenant SaaS. The target system is a single-tenant Azure SQL + C# API + Next.js app for one automotive manufacturing company. What simplifications are appropriate? What complexity should be preserved?
+
+### Output Format
+
+Produce your analysis as a structured document with these sections:
+
+```
+## Pattern 1: Guided Process Orchestration — Review
+
+### Inference Validation
+[For each inference in the document, state whether you agree/disagree/partially agree, and why]
+
+### Blind Spots Identified
+[What the junior architect missed]
+
+### Open Questions Resolved
+[Your informed answers to the explicit and implicit open questions]
+
+### Deepened Quality Management Mapping
+[More rigorous 8D investigation mapping with edge cases and failure modes]
+
+### Single-Tenant Right-Sizing
+[What to keep, what to simplify, what to drop]
+
+---
+
+## Pattern 2: Policy Resolution Engine — Review
+
+[Same structure]
+
+---
+
+## Pattern 3: Data Staging and Edit Mode Architecture — Review
+
+[Same structure]
+
+---
+
+## Cross-Pattern Synthesis — Review
+
+### Interaction Model Gaps
+[What's missing from the pipeline description]
+
+### Failure Propagation Analysis
+[What happens when each layer fails — how does it affect upstream and downstream]
+
+### Compensation and Rollback Flows
+[Detailed compensation patterns for each failure mode]
+
+### Concurrency and Conflict Resolution
+[What happens when multiple users stage changes to the same entity simultaneously]
+
+### Partial Completion Scenarios
+[What happens when a guided process is abandoned mid-way, or a policy changes while staging is in progress]
+
+---
+
+## New Inferences
+[Patterns or implications the junior architect didn't extract but should have, based on the evidence provided]
+
+---
+
+## Revised Quality Management Architecture Recommendations
+[Your recommended architecture for implementing these patterns in the target system, incorporating all findings above. Be specific: table names, column names, stored procedure signatures, SQL patterns.]
+```
+
+---
+
+## Context: The Target System
+
+**Domain:** Quality management for automotive manufacturing. Governed by IATF 16949 and CQI-12 standards. Core entities:
+
+- **NCR (Non-Conformance Report):** Documents a quality defect. Has a lifecycle: Draft → Submitted → Investigation → Disposition → Verification → Closed. Contains containment actions, root cause analysis, corrective actions, and customer notifications.
+- **CAPA (Corrective and Preventive Action):** Long-running improvement initiative spawned from NCRs. Has severity-based SLA timelines (30/60/90 days). Tracks effectiveness verification.
+- **SCAR (Supplier Corrective Action Request):** Cross-organizational process where the customer team defines defect requirements and the supplier provides root cause and corrective actions. Two parties, each with independent deliverables.
+- **8D Investigation:** Structured 8-discipline methodology (D1-D8) for root cause analysis. Each discipline has its own deliverables and may have its own approval chain.
+- **Audit Finding:** Formal observation from internal or external quality audit. Triggers CAPAs for systemic issues.
+
+**Technology stack:**
+
+| Layer | Technology | State |
+|-------|-----------|-------|
+| Database | T-SQL stored procedures on Azure SQL Server | Mature. 81 procedures, 45 views, 133 migrations. Row-level security, workflow state machine, approval chains, audit logging all implemented. |
+| API | C# / ASP.NET Core 9, Dapper (thin pass-through) | Early development. 27 endpoints. The API calls stored procedures — no business logic in C#. |
+| UI | TypeScript / Next.js 15, React 19 | Planning only. No source code yet. |
+
+**Architecture constraints (non-negotiable):**
+
+- Business logic lives in T-SQL stored procedures. Do not recommend moving logic to C#.
+- Single-tenant system for one company. Multi-tenant isolation patterns do not apply.
+- Azure App Service deployment. No service bus, no message broker, no container orchestration.
+- The data model is strongly typed. No EAV / tenant-configurable schema.
+- Dapper ORM (micro-ORM). No Entity Framework.
+
+**What already exists in the database (relevant to these patterns):**
+
+Workflow engine:
+- `workflow.WorkflowProcess` — workflow definitions with states/transitions
+- `workflow.WorkflowState` — states in the workflow graph
+- `workflow.WorkflowTransition` — transitions with guard expressions
+- `workflow.GuardDefinition` — reusable guard definitions (planned, Phase 25)
+- `workflow.ApprovalChain` / `workflow.ApprovalStep` / `workflow.ApprovalRecord` — approval infrastructure
+- `workflow.PendingApprovalTransition` — tracks pending approval state (has `Expired` status but no timeout scheduler)
+- `workflow.SlaConfiguration` — SLA timelines per workflow/state
+- `workflow.usp_TransitionState` — executes state transitions with guard evaluation
+- `workflow.usp_ProcessApprovalStep` — processes approval decisions with separation-of-duties enforcement (error 50413)
+
+8D Investigation:
+- `rca.EightDReport` — parent investigation record
+- `rca.EightDStep` — per-discipline record with `StepNumber` (1-8), currently has `IsComplete BIT` (planned enhancement: StepStatus enum with NotStarted/InProgress/Complete/Skipped/Blocked)
+
+SCAR:
+- `quality.SupplierCar` — SCAR record with `IssuedById`, `VerifiedById`, `ClosedById` (different users per phase, but single linear `StatusCodeId`)
+- Planned enhancement: `CustomerResponseStatus` / `SupplierResponseStatus` columns for per-party state tracking
+
+Audit infrastructure:
+- `audit.AuditLog` — universal change audit with triggers on all tables
+- `audit.ApiCallLog` — API call logging (planned, Phase 29)
+- Temporal tables with `HISTORY_RETENTION_PERIOD = 7 YEARS`
+
+SLA and escalation:
+- `workflow.SlaConfiguration` — SLA timelines per state
+- `workflow.usp_EvaluateEscalationRules` — batch escalation processor
+- `dbo.CustomerQualityRule` — effective-dated, priority-ranked rule resolution per customer
+
+Reference data:
+- `dbo.LookupCategory` / `dbo.LookupValue` — generic reference data
+- `dbo.RecordRetentionPolicy` — retention policy metadata
+
+---
+
+## The Document to Review
+
+Below is the complete JSON document produced by the junior architect. Review every section systematically.
+
+```json
+{
+  "document_metadata": {
+    "title": "Hidden Architecture Patterns — Reverse-Engineered from Configuration Behavior and API Surface",
+    "purpose": "Three architectural subsystems that are not explicitly documented but can be inferred from how the platform's configuration, API payloads, data structures, and behavioral constraints operate. These represent the deeper engineering that the public-facing technical docs only hint at.",
+    "method": "Interpretive reverse-engineering: examining API response structures, workflow node behaviors, expression engine functions, data model relationships, and configuration options to deduce the underlying system design.",
+    "derived_from": [
+      "Dayforce Web Services Introduction Guide (R2025.2.1)",
+      "Security_Role_Architecture_Agnostic.json",
+      "Workflow_Engine_Architecture_Agnostic.json",
+      "API_Integration_Architecture_Agnostic.json"
+    ]
+  },
+
+  "pattern_1_guided_process_orchestration": {
+    "summary": "A multi-step, multi-form orchestration engine that bundles related data entry forms into a sequenced experience with per-step workflow binding, skip logic, lifecycle tracking, and a system-generated monitoring workflow that tracks the completion state of the entire bundle as a unit.",
+
+    "what_we_know_directly": {
+      "source": "Workflow_Engine_Architecture_Agnostic.json → guided_processes",
+      "facts": [
+        "A guided process bundles multiple forms into a single step-by-step experience",
+        "Each form in the bundle can have its own workflow, with a default workflow for unassigned forms",
+        "Forms are presented in a configurable order (move up/down)",
+        "Individual forms can be marked as skippable",
+        "The guided process has three modes: Read Only, Edit, and New",
+        "A system-generated monitoring workflow tracks completion of ALL forms as a unit",
+        "States are tracked: Open (in progress), Completed (all forms processed)",
+        "Each form's submission and processing status is logged in the monitoring workflow history",
+        "A summary dialog shows: guided process name, submission date, total forms, forms completed, forms skipped",
+        "Guided processes must be published before becoming active",
+        "Once published, the reference code becomes immutable",
+        "Properties: name (required), reference_code (required, immutable after publish), description, mode, effective_from, effective_to"
+      ]
+    },
+
+    "what_we_can_infer": {
+
+      "orchestration_layer_architecture": {
+        "inference": "The guided process is a SEPARATE orchestration layer that sits ABOVE the workflow engine, not inside it.",
+        "evidence": [
+          "Each form within the guided process has its own workflow. This means the guided process doesn't execute as a single workflow graph — it orchestrates MULTIPLE independent workflow executions.",
+          "The 'system-generated monitoring workflow' is described as automatically tracking completion. This implies the platform generates a meta-workflow at publish time that subscribes to the completion events of each child form's workflow.",
+          "The guided process has its own lifecycle (Draft → Published) independent of any individual workflow's lifecycle (Draft → Active → System).",
+          "The guided process has effective dating (effective_from/to) independent of any workflow's effective dating."
+        ],
+        "deduced_architecture": "Two-tier orchestration: the guided process acts as a conductor that spawns and monitors child workflow executions. The conductor doesn't control the internal graph logic of any child workflow — it only knows whether each step completed, was skipped, or is still pending. This is a saga coordinator pattern."
+      },
+
+      "state_machine_per_step": {
+        "inference": "Each step (form) within the guided process has its own independent state machine with at least 4 states.",
+        "evidence": [
+          "The summary dialog tracks 'forms completed' and 'forms skipped' as separate counts, implying distinct terminal states per form.",
+          "Forms can be skipped, meaning there's an explicit Skip state that differs from Not Started and Completed.",
+          "The monitoring workflow logs 'each form's submission and processing status,' implying per-form status tracking."
+        ],
+        "deduced_states": [
+          "Not Started — form has not been opened by the user",
+          "In Progress — form has been opened but not submitted (or submitted but workflow not yet complete)",
+          "Completed — form submitted AND its associated workflow has reached a terminal node",
+          "Skipped — user explicitly bypassed this form"
+        ],
+        "possible_additional_states": [
+          "Rejected — form submitted but workflow rejected it (returns to In Progress?)",
+          "Blocked — form cannot proceed because a prerequisite form hasn't completed"
+        ]
+      },
+
+      "dependency_and_ordering_model": {
+        "inference": "The ordering is presentation-order only, not a hard dependency chain. Steps can be skipped without blocking subsequent steps.",
+        "evidence": [
+          "Skippable forms are configured individually, implying the engine must handle out-of-sequence completion.",
+          "The description says 'forms are presented in configured order' but doesn't say 'must be completed in order.'",
+          "Read Only mode exists, implying some guided processes are purely informational walkthroughs."
+        ],
+        "open_question": "Can a non-skippable form block progression to the next form? The documentation doesn't say. In a true wizard, yes. In a parallel-completion model, no. The existence of 'move up/down' ordering suggests sequential presentation but possibly not sequential enforcement."
+      },
+
+      "mode_architecture": {
+        "inference": "The three modes (Read Only, Edit, New) control how the underlying data layer behaves for ALL forms in the bundle.",
+        "evidence": [
+          "Modes are set at the guided process level, not per-form, implying a shared data context.",
+          "New mode implies the guided process creates a new entity (or set of entities) that doesn't exist yet.",
+          "Edit mode implies the forms modify an existing entity's attributes.",
+          "Read Only implies the forms are populated from existing data but accept no input."
+        ],
+        "deduced_architecture": "The mode acts as a global parameter passed to every form's workflow in the bundle. In New mode, the first form's Process node likely creates the root entity, and subsequent forms create subordinate records attached to that root. In Edit mode, all forms operate against an existing entity identified at the start of the process."
+      },
+
+      "monitoring_workflow_architecture": {
+        "inference": "The system-generated monitoring workflow is an automatically constructed workflow graph that subscribes to domain events from each child form's workflow.",
+        "evidence": [
+          "It's 'system-generated' — administrators don't build it. It's created automatically when the guided process is published.",
+          "It tracks completion of ALL forms 'as a unit.' This means it has awareness of every child workflow's terminal state.",
+          "The event system documentation shows that completed workflows can fire events that trigger secondary workflows. The monitoring workflow likely subscribes to these completion events."
+        ],
+        "deduced_architecture": "At publish time, the platform generates a monitoring graph with N condition nodes (one per form), each listening for a completion event from the corresponding form's workflow. When all conditions are satisfied (or all non-skippable forms are complete/skipped), the monitoring workflow transitions to Completed. This is a join/barrier pattern — the monitoring workflow acts as a synchronization barrier for the saga."
+      },
+
+      "relevance_to_quality_management": {
+        "pattern": "8D Investigation as Guided Process",
+        "mapping": {
+          "guided_process": "8D Investigation",
+          "mode": "New (creating a new investigation) or Edit (revising an existing one)",
+          "forms_in_sequence": [
+            "D1: Team Formation (select investigation team members)",
+            "D2: Problem Description (define the nonconformance being investigated)",
+            "D3: Containment Actions (interim actions to prevent further impact)",
+            "D4: Root Cause Analysis (identify contributing factors)",
+            "D5: Corrective Actions (permanent fixes)",
+            "D6: Implementation Verification (confirm corrective actions are in place)",
+            "D7: Preventive Actions (systemic changes to prevent recurrence)",
+            "D8: Team Recognition / Closure (close the investigation)"
+          ],
+          "per_form_workflow": "Each D-step can have its own approval workflow. D3 (containment) may need immediate supervisor approval. D4 (root cause) may need Quality Engineer approval. D5 (corrective actions) may need cross-functional sign-off.",
+          "skip_logic": "D8 (recognition) could be skippable. D3 (containment) could be skippable if the defect was caught before any product shipped.",
+          "monitoring_workflow": "A meta-workflow tracks which D-steps are complete and triggers escalation if the overall investigation exceeds its deadline."
+        }
+      }
+    }
+  },
+
+  "pattern_2_policy_resolution_engine": {
+    "summary": "A generalized engine that resolves 'which configured rule set applies to this entity right now?' when multiple overlapping policies could match. The engine uses a combination of entity-to-policy assignment, effective dating, priority ranking, and hierarchy-derived context to determine the single effective policy.",
+
+    "what_we_know_directly": {
+      "explicit_policy_types_documented": [
+        {
+          "type": "Password Policy",
+          "assignment": "One per role (required, auto-populated with default on role creation)",
+          "resolution": "Multiple policies coexist. Each has a priority number. Platform sorts by strength (highest priority first) and applies the strongest matching policy.",
+          "source": "Security_Role_Architecture_Agnostic.json → password_policies"
+        },
+        {
+          "type": "Pay Policy",
+          "assignment": "Referenced as a search parameter on the Employee XRefCodes endpoint. Supports ContextDate (point-in-time resolution).",
+          "evidence": "payPolicyXRefCode search parameter with note: 'Use a ContextDate value to search for employees with a given pay policy as of a point in time.'",
+          "source": "Web Services Guide → Employee search parameters"
+        },
+        {
+          "type": "Payroll Policy",
+          "assignment": "Referenced identically to Pay Policy — searchable, ContextDate-aware.",
+          "source": "Web Services Guide → Employee search parameters"
+        },
+        {
+          "type": "Onboarding Policy",
+          "assignment": "Listed as a subordinate resource of Employee (read and write). Multiple assignments possible per employee.",
+          "source": "Web Services Guide → Employee subordinate resources"
+        },
+        {
+          "type": "Time Entry Policy",
+          "assignment": "Implied by the raw punch data description: 'Raw clock entry data refers to employee clock entry records BEFORE any manager edits or time entry policy rules are applied.'",
+          "source": "Web Services Guide → EmployeeRawPunches"
+        },
+        {
+          "type": "Entitlement Policy",
+          "assignment": "Implied by balance transaction description: 'balances incremented by entitlement policies.'",
+          "source": "Web Services Guide → Employee Balance Transactions"
+        }
+      ],
+
+      "common_characteristics": [
+        "All policy types are referenced by XRefCode (tenant-configurable identifiers)",
+        "All policy assignments support effective dating (ContextDate resolution)",
+        "All policy types appear as either employee search parameters or subordinate resources",
+        "Multiple policies of the same type can coexist in the system"
+      ]
+    },
+
+    "what_we_can_infer": {
+
+      "generalized_policy_resolution_architecture": {
+        "inference": "There is a single generalized policy resolution pattern used across all policy types, not separate implementations per type.",
+        "evidence": [
+          "Every policy type follows the same structural pattern: XRefCode-identified, effective-dated, assigned to entities via subordinate resource collections.",
+          "The ContextDate parameter works identically across all policy-related queries, suggesting a shared temporal resolution engine.",
+          "The password policy explicitly documents priority-based resolution. The other policy types don't document their resolution mechanism, but the consistent API surface implies the same engine."
+        ],
+        "deduced_architecture": {
+          "resolution_algorithm": [
+            "1. IDENTIFY CANDIDATES: Query all policy assignments for the target entity (employee/role/org unit) where the assignment is effective as of the evaluation date.",
+            "2. FILTER BY SCOPE: Narrow candidates based on the entity's current context — organizational unit, work assignment, employment status, location.",
+            "3. RESOLVE CONFLICTS: When multiple candidates remain, apply the resolution strategy:",
+            "   - Priority-ranked (explicit for password policies): highest priority wins",
+            "   - Most-specific-match (inferred for pay/payroll policies): assignment closest to the entity in the hierarchy wins",
+            "   - Most-recent-effective (inferred for entitlement policies): latest effective start date wins",
+            "4. RETURN EFFECTIVE POLICY: The single winning policy is applied to the entity for the evaluation context."
+          ],
+          "key_insight": "The resolution is ALWAYS point-in-time. There is no concept of 'the policy' — only 'the policy effective as of date X.' This means the resolution engine must re-evaluate on every request, because the answer can change based on the evaluation date."
+        }
+      },
+
+      "policy_as_rule_container": {
+        "inference": "A policy is not a single rule — it's a CONTAINER of rules that are applied as a unit. The policy resolution determines which container applies; the rules within the container then execute.",
+        "evidence": [
+          "Password policy contains: complexity rules, rotation rules, lockout rules, default password generation rules, history rules — all bundled together.",
+          "Time entry policy 'rules' (plural) are referenced as being 'applied' to raw clock data — implying the policy contains multiple processing rules.",
+          "Entitlement policies 'increment' balances — implying the policy contains accrual calculation rules (rate, frequency, caps, carryover).",
+          "The Process node in the workflow engine has a 'function_parameters' property with options like 'Approved', 'Presave', 'Rejected' — these are policy-like behavior modifiers applied at execution time."
+        ],
+        "deduced_architecture": "Two-level structure: (1) Policy Definition — a named, XRefCode-identified container with effective dating and assignment rules, and (2) Policy Rules — the actual computational logic within the container (validation rules, calculation formulas, threshold values, behavioral flags). The resolution engine only operates at level 1. Once the effective policy is resolved, the rules within it are executed by the appropriate domain engine (payroll calculator, time entry processor, accrual engine, etc.)."
+      },
+
+      "assignment_chain_architecture": {
+        "inference": "Policies are assigned through a hierarchy chain, not directly to individual entities. The resolution walks the chain to find the applicable policy.",
+        "evidence": [
+          "Password policy is assigned to ROLE, not to individual user. The user inherits the policy via their role assignment.",
+          "Pay policy and payroll policy are searchable as employee attributes but are likely assigned at the work assignment or pay group level (the WorkAssignment entity contains PayType, PayGroup, PayClass references).",
+          "Onboarding policy is listed as a direct employee subordinate resource, but the 'first-day guided process' reference implies it's triggered by employment status transitions, not manually assigned.",
+          "The expression engine's IdFromXref function can look up 'Policy configuration entities' — implying policies are registered in a central store, not embedded in entities."
+        ],
+        "deduced_assignment_chain": [
+          "Entity (Employee) → Work Assignment → Pay Group → Pay Policy",
+          "Entity (Employee) → Role → Password Policy",
+          "Entity (Employee) → Employment Status → Onboarding Policy",
+          "Entity (Employee) → Work Assignment → Location → Time Entry Policy",
+          "Entity (Employee) → Work Assignment → Entitlement Policy (or Pay Group → Entitlement Policy)"
+        ],
+        "key_insight": "The policy assignment is INDIRECT. You don't assign a pay policy to an employee — you assign the employee to a pay group, and the pay group determines the pay policy. This indirection means changing a pay group's policy propagates to all employees in that group without touching individual records."
+      },
+
+      "raw_to_processed_pipeline_as_policy_execution": {
+        "inference": "The EmployeeRawPunch → EmployeePunch transformation is a visible example of policy execution. Raw data enters the system, the policy resolution engine determines which rules apply, and the rules transform raw data into processed data.",
+        "evidence": [
+          "EmployeeRawPunches are described as 'before any manager edits or time entry policy rules are applied.'",
+          "EmployeePunches are the post-processing result.",
+          "Raw punches have a PunchState enum: ALL, REJECTED, PROCESSED — indicating the policy engine classifies raw data into accept/reject categories.",
+          "The raw-to-processed transformation is a pipeline: (1) raw clock data arrives, (2) time entry policy rules are resolved for the employee, (3) rules are applied (rounding, grace periods, break deductions, overtime classification), (4) processed punch records are created."
+        ],
+        "deduced_pipeline": {
+          "stages": [
+            "RAW: Data enters system as-is from the source (clock, import, manual entry)",
+            "POLICY RESOLUTION: Engine determines which policy container applies to this entity at this point in time",
+            "RULE EXECUTION: Rules within the resolved policy transform the raw data (validate, classify, calculate, enrich)",
+            "PROCESSED: Transformed data is committed to the processed entity store",
+            "REJECTED: Data that fails policy rules is flagged but preserved for review"
+          ],
+          "pattern_name": "Policy-Driven Data Processing Pipeline"
+        }
+      },
+
+      "relevance_to_quality_management": {
+        "pattern": "Configurable Quality Rule Resolution",
+        "applications": [
+          {
+            "scenario": "Inspection frequency by customer/part/defect type",
+            "implementation": "Define inspection policies as rule containers. Assign policies to customer-part combinations via a hierarchy chain. The resolution engine determines which inspection frequency applies when a new lot arrives."
+          },
+          {
+            "scenario": "CAPA escalation timelines",
+            "implementation": "Define CAPA timeline policies (30-day, 60-day, 90-day) as containers. Assign to defect severity levels. When a CAPA is created, the engine resolves the applicable timeline policy based on the NCR's severity and customer."
+          },
+          {
+            "scenario": "Supplier scoring thresholds",
+            "implementation": "Define scoring policies per commodity/part family. The engine resolves which thresholds trigger a SCAR based on the supplier's commodity assignment."
+          }
+        ]
+      }
+    }
+  },
+
+  "pattern_3_data_staging_and_edit_mode_architecture": {
+    "summary": "A transactional staging layer where form submissions create PENDING data that exists in a separate state from committed data, flows through a workflow approval chain, and only becomes 'real' (committed to the production data store) when a Process node fires in the workflow graph. Multiple pending changes can coexist for the same entity, and the expression engine can evaluate both pending AND committed state.",
+
+    "what_we_know_directly": {
+      "explicit_evidence": [
+        {
+          "fact": "The Process node 'commits the data changes contained in the form to the system. This is the node that makes the submitted data real by persisting it.'",
+          "source": "Workflow_Engine_Architecture_Agnostic.json → node_types.process",
+          "implication": "Data is NOT committed when the form is submitted. It's committed when the workflow reaches a Process node. Between submission and processing, the data exists in an uncommitted state."
+        },
+        {
+          "fact": "The Process node has function_parameters: Approved, None, Presave, Rejected",
+          "source": "Workflow_Engine_Architecture_Agnostic.json → node_types.process.properties",
+          "implication": "Presave is a distinct commit mode — it persists data BEFORE the approval decision. This means the engine supports two commit timing patterns: pre-approval commit (Presave) and post-approval commit (Approved)."
+        },
+        {
+          "fact": "Workflow validation notifications send 'the full XML content for the workflow transaction' to external systems BECAUSE 'the detail for this event type hasn't yet been committed to the database.'",
+          "source": "Web Services Guide → Workflow Validation, paragraph 454",
+          "implication": "The platform explicitly acknowledges that workflow transaction data exists in a staging area, not in the production tables, during the approval process. The XML content IS the staged data."
+        },
+        {
+          "fact": "'Updates made using employee data mapping rules are processed after workflow completes and as data is committed to the database.'",
+          "source": "Web Services Guide → Workflow Validation, paragraph 451",
+          "implication": "There's a post-commit hook system. Data mapping rules execute AFTER the Process node commits, implying a commit event pipeline: Stage → Workflow → Process Node → Commit → Post-Commit Hooks."
+        },
+        {
+          "fact": "The expression engine has UpdateStatus flags on list items: None, Insert, Update, Delete",
+          "source": "Workflow_Engine_Architecture_Agnostic.json → expression_engine.list_operations.update_status_evaluation",
+          "implication": "The workflow engine tracks WHAT TYPE of change is being made to each record. This metadata exists on the staged data, not on committed records. The expression engine can branch based on change type."
+        },
+        {
+          "fact": "HasCurrentPrimaryChanged(sessionId, entityId, submittedList) — 'Returns true if the primary assignment record has changed compared to the current database state.'",
+          "source": "Workflow_Engine_Architecture_Agnostic.json → expression_engine.named_functions",
+          "implication": "The expression engine can COMPARE staged data against committed data. The sessionId parameter implies staged data is scoped to a session/transaction context."
+        },
+        {
+          "fact": "LoadIfEmpty loads data 'from the database when the form does not contain a corresponding input field.' If the form DOES contain the field, 'the expression evaluates the form value regardless of the loading mode.'",
+          "source": "Workflow_Engine_Architecture_Agnostic.json → expression_engine.named_functions.LoadIfEmpty",
+          "implication": "The expression engine has a dual data source: (1) the staged form data (takes priority), and (2) the committed database state (fallback). This confirms a read-through pattern where staged data overlays committed data."
+        },
+        {
+          "fact": "Edit Modes are 'defined as permission sets that control which attributes users can modify. Each edit mode is linked to a separate workflow and assigned to specific roles.'",
+          "source": "Security_Role_Architecture_Agnostic.json → workflow_driven_approvals.workflow_modes",
+          "implication": "Edit modes are not just UI restrictions — they're distinct data staging contexts. Each edit mode defines WHICH FIELDS can be staged, and each triggers a DIFFERENT workflow. This means the staging layer supports partial entity staging (not all-or-nothing)."
+        },
+        {
+          "fact": "Edit mode editable attributes include: Active To Date, Name, Identifier, Reference Code, Ledger Code, FTE, Description, Supervisory Details, Dotted-Line Relationships, Business Unit, Role Assignment, Active Locations",
+          "source": "Security_Role_Architecture_Agnostic.json → workflow_driven_approvals.workflow_modes",
+          "implication": "These are individually gatable fields. The staging layer knows at the field level which fields are part of the pending change and which are untouched."
+        },
+        {
+          "fact": "The Put Workflow Validation Action 'doesn't allow the requester to alter the XML data.'",
+          "source": "Web Services Guide → Workflow Validation, paragraph 459",
+          "implication": "Staged data is IMMUTABLE once submitted. External systems can accept/reject the staged data but cannot modify it. If changes are needed, the workflow must route back to the submitter for revision."
+        },
+        {
+          "fact": "Time Away requests have statuses: APPROVED, PENDING, CANCELED, DENIED, CANCELPENDING",
+          "source": "Web Services Guide → Time Away From Work",
+          "implication": "PENDING and CANCELPENDING are staging states visible through the API. The API can filter by these states, meaning staged (pending) data is queryable alongside committed (approved) data — but through explicit status filtering."
+        },
+        {
+          "fact": "I-9 orders have statuses: SENT TO EMPLOYEE, PENDING EMPLOYER, COMPLETED, DECLINED BY EMPLOYEE, PENDING EMPLOYEE",
+          "source": "Web Services Guide → I9 Orders",
+          "implication": "Multi-party staging. The same record can be pending at different parties (employee vs. employer). The state transition depends on which party acts."
+        },
+        {
+          "fact": "The IsValidateOnly parameter 'specifies that all validations need to be performed without committing any changes.'",
+          "source": "Web Services Guide → every write endpoint",
+          "implication": "The validation engine operates against the staging layer. Data can be validated in the staging context without touching the production store. This is a dry-run through the entire validation pipeline including business rules."
+        }
+      ]
+    },
+
+    "what_we_can_infer": {
+
+      "staging_layer_architecture": {
+        "inference": "The platform maintains a separate transactional staging store where pending changes live until workflow completion.",
+        "deduced_architecture": {
+          "components": [
+            {
+              "component": "Staging Store",
+              "description": "A separate data area (likely a set of staging tables or a transaction log) that holds submitted form data as serialized payloads (the XML content referenced in workflow validation). Each staged record is identified by a session/transaction ID and linked to a workflow execution instance.",
+              "key_properties": [
+                "Scoped to a workflow execution (sessionId parameter on expression functions)",
+                "Contains per-field change metadata (UpdateStatus: Insert, Update, Delete, None)",
+                "Immutable after submission (cannot be modified by external systems or downstream approvers)",
+                "Queryable by the expression engine for conditional branching",
+                "Serializable to XML for external validation",
+                "Discardable on workflow rejection (staged data is never committed)"
+              ]
+            },
+            {
+              "component": "Committed Store",
+              "description": "The production database tables where 'real' data lives. The expression engine accesses this via LoadIfEmpty and HasCurrentPrimaryChanged. The Process node's commit operation moves data from the staging store to the committed store.",
+              "relationship_to_staging": "The committed store is the fallback data source. When the expression engine evaluates a field, it checks the staging store first; if the field isn't in the staged data, it falls through to the committed store."
+            },
+            {
+              "component": "Commit Engine",
+              "description": "The Process node's execution logic that atomically transfers staged data to the committed store. Supports three commit modes: Approved (post-approval commit), Presave (pre-approval commit), and Rejected (discard staged data or mark as rejected).",
+              "post_commit_hooks": "After commit, data mapping rules execute as a secondary transformation pass on the newly committed data."
+            },
+            {
+              "component": "Staging Query Interface",
+              "description": "The expression engine functions that read from the staging context: direct field references (<<FieldName>>), list operations with UpdateStatus filtering, HasCurrentPrimaryChanged for staged-vs-committed comparison, and LoadIfEmpty for committed-store fallback."
+            }
+          ],
+
+          "data_flow": [
+            "1. USER SUBMITS FORM → Data is serialized and written to the staging store. A workflow execution is initiated.",
+            "2. WORKFLOW EVALUATES → Expression engine reads staged data (with committed data fallback). Routing resolves recipients. Condition nodes branch based on staged field values.",
+            "3. APPROVER REVIEWS → Approver sees the staged data rendered in a form (possibly a different form via Decision node override). They cannot modify the staged data.",
+            "4. EXTERNAL VALIDATION (optional) → Staged data serialized to XML and sent to external system. External system returns Accept/Reject but cannot modify the data.",
+            "5. PROCESS NODE FIRES → Staged data is atomically committed to the production store (Approved mode) or discarded (Rejected mode). In Presave mode, commit happens before the approval decision.",
+            "6. POST-COMMIT HOOKS → Data mapping rules execute against the newly committed data.",
+            "7. EVENT EMISSION → Domain events fire, potentially triggering downstream workflow executions."
+          ]
+        }
+      },
+
+      "presave_vs_approved_commit_patterns": {
+        "inference": "Presave mode is for scenarios where the data must be visible in the production store BEFORE the approval decision, while Approved mode is for scenarios where data should only become real after approval.",
+        "deduced_use_cases": {
+          "presave": "The system needs to allocate a resource or reserve a slot before an approver decides. Example: creating a position record so that headcount planning reflects the pending position, even though the position hasn't been approved yet. The data is committed (visible) but flagged as pending approval.",
+          "approved": "Standard approval flow. Data only becomes real after the workflow reaches a Process(Approved) node. If rejected, the staged data is discarded with no trace in the production store.",
+          "rejected": "Explicit rejection processing. May trigger notification, logging, or cleanup operations before discarding the staged data."
+        },
+        "key_insight": "This dual-mode commit architecture means the platform supports BOTH optimistic staging (commit first, approve later) and pessimistic staging (approve first, commit later) depending on the workflow configuration."
+      },
+
+      "partial_entity_staging": {
+        "inference": "The edit mode architecture enables field-level staging granularity — not just whole-entity staging.",
+        "evidence": "Edit modes define which specific attributes can be modified. Each edit mode has its own workflow. Different roles can have different edit modes for the same entity type.",
+        "deduced_architecture": "When a user opens an entity in a specific edit mode, the staging layer creates a change record that contains ONLY the fields defined in that edit mode. Unchanged fields are not part of the staged data. The expression engine uses LoadIfEmpty to fill in the gaps from the committed store when evaluating conditions. This enables concurrent staging: two different users can have pending changes to different fields of the same entity, each in their own edit mode with their own workflow."
+      },
+
+      "multi_party_staging": {
+        "inference": "For cross-organizational processes, the staging layer supports per-party state tracking.",
+        "evidence": "I-9 orders have PENDING EMPLOYER and PENDING EMPLOYEE states, meaning the same record can be 'pending' at different parties simultaneously. The state transition depends on which party acts.",
+        "deduced_architecture": "The staging state machine is parameterized by party. Each party has its own state within the overall record lifecycle. The record transitions to 'committed/completed' only when all required parties have moved through their pending states. This is a distributed staging pattern where the commit barrier requires multi-party consensus."
+      },
+
+      "relevance_to_quality_management": {
+        "applications": [
+          {
+            "scenario": "NCR Investigation Staging",
+            "description": "A quality engineer spends 3 days building a root cause analysis. During this time, other users viewing the NCR see the last committed state (containment actions complete, investigation in progress). The engineer's work-in-progress root cause analysis lives in the staging layer. When they submit it, the workflow routes it to the Quality Manager for approval. Only when approved does the root cause analysis become the committed record.",
+            "pattern": "Pessimistic staging (Approved mode) — investigation data only becomes real after approval."
+          },
+          {
+            "scenario": "Containment Action with Immediate Visibility",
+            "description": "When a defect is found on the production line, a containment action (quarantine the lot, sort suspect parts) needs to be visible IMMEDIATELY to production supervisors, even before the Quality Manager approves the formal NCR. The containment action uses Presave mode — it commits to the production store immediately and a parallel approval workflow runs.",
+            "pattern": "Optimistic staging (Presave mode) — containment is committed first, approved later."
+          },
+          {
+            "scenario": "SCAR Cross-Organizational Staging",
+            "description": "A SCAR (Supplier Corrective Action Request) involves data from both the customer (your company) and the supplier. Your quality team fills in the defect description and containment requirements. The supplier fills in the root cause analysis and corrective action plan. Each party has their own pending state. The SCAR is only 'complete' when both parties have submitted and both submissions have been approved.",
+            "pattern": "Multi-party staging with per-party state machines."
+          },
+          {
+            "scenario": "Edit Mode for NCR Severity Reclassification",
+            "description": "Reclassifying an NCR's severity (e.g., from Minor to Major) has different approval requirements than updating containment actions. Severity reclassification should route to the Quality Director; containment updates should route to the Quality Manager. Edit modes enable this: 'Severity Edit' mode triggers Workflow A (Director approval), 'Containment Edit' mode triggers Workflow B (Manager approval). Both can be pending simultaneously.",
+            "pattern": "Partial entity staging with per-field-group workflows."
+          }
+        ]
+      }
+    }
+  },
+
+  "cross_pattern_synthesis": {
+    "how_the_three_patterns_interact": {
+      "description": "These three patterns are not independent — they form a layered processing pipeline that handles complex multi-step, policy-governed, approval-gated data transformations.",
+      "pipeline": [
+        "GUIDED PROCESS (orchestration layer) → Defines the sequence of data entry steps and tracks overall completion",
+        "    ↓ spawns per-step",
+        "DATA STAGING (transactional layer) → Each step's form submission creates staged data that coexists with committed data",
+        "    ↓ evaluated by",
+        "POLICY RESOLUTION (rule layer) → Determines which validation rules, routing rules, and processing rules apply to the staged data",
+        "    ↓ drives",
+        "WORKFLOW ENGINE (approval layer) → Routes staged data through approval chains, with branching driven by policy-resolved rules",
+        "    ↓ triggers",
+        "COMMIT (persistence layer) → Process node atomically moves staged data to committed store, fires post-commit hooks and domain events"
+      ]
+    },
+
+    "composite_example": {
+      "scenario": "New Employee Onboarding (the platform's most complex guided process)",
+      "flow": [
+        "1. GUIDED PROCESS: 'New Hire Onboarding' bundles 8 forms (personal info, tax, direct deposit, benefits, emergency contacts, equipment, handbook acknowledgment, I-9). Mode: New.",
+        "2. STAGING: Employee submits personal info form → data staged. Tax form → staged. Each form's data is independently staged.",
+        "3. POLICY RESOLUTION: Which onboarding policy applies? Resolved from the employee's hire location + employment status. The policy determines which forms are required vs. skippable.",
+        "4. WORKFLOW: Personal info form triggers Workflow A (auto-approved). Benefits form triggers Workflow B (requires HR approval because policy resolution determined this employee is benefits-eligible). I-9 triggers Workflow C (multi-party: employee fills Section 1, employer fills Section 2).",
+        "5. COMMIT: Each form commits independently as its workflow completes. The monitoring workflow tracks overall progress.",
+        "6. The guided process reaches 'Completed' when all required forms are committed."
+      ],
+      "quality_management_analog": "New NCR Processing bundles forms for: initial defect report, containment actions, material disposition, root cause investigation, corrective actions, customer notification, effectiveness verification, and closure. Each step has its own approval chain, and the monitoring workflow tracks the NCR through its entire lifecycle."
+    }
+  }
+}
+```
+
+---
+
+## Key Areas Requiring Your Deepest Attention
+
+1. **Pattern 3 concurrent staging conflicts:** Two users modify different fields of the same NCR simultaneously (one updates containment, another updates severity). Both are in the approval pipeline. What happens when the first one commits and changes the entity state that the second one's guard expressions evaluated against? The document doesn't address this.
+
+2. **Presave compensation completeness:** When a presave (optimistic commit) is later rejected, the document says "compensating transition reverses the entity to its prior state." But what if downstream actions already occurred based on the presave data? (E.g., production supervisor already acted on the containment action.) What's the compensation scope?
+
+3. **Policy resolution in quality context — is it overengineered?** The source platform has hundreds of policy types for an HRIS. A quality management system might only need 3-4 policy types (CAPA timelines, notification SLAs, inspection frequencies, escalation rules). Is a generalized policy resolution engine justified, or should these be handled as direct configuration lookups?
+
+4. **8D as guided process — does the mapping hold under real AIAG constraints?** The AIAG 8D methodology has specific inter-step dependencies (you can't meaningfully do D5 corrective actions without D4 root cause). The document's open question about sequential enforcement is critical here.
+
+5. **Single-tenant simplification boundaries:** Where does removing multi-tenancy actually change the architecture, versus just removing a parameter? For example, the staging layer's session-scoped isolation might simplify if there's no risk of cross-tenant data leakage, but the concurrency model doesn't change.
+
+Take your time. Be thorough. Challenge every inference. The output of your review will directly inform the implementation of 9 database phases, each containing 2-5 migrations of T-SQL stored procedures, tables, and views.

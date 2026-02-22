@@ -230,6 +230,8 @@ The security architecture (Document 1) and the workflow engine (Document 2) are 
 
 ## Database Architecture Patterns Implied
 
+> **Scope note:** The patterns below are implied by the reference platform (a multi-tenant SaaS system). Several do not apply to sf-quality's single-tenant constraints — specifically multi-tenant schema isolation, polymorphic entity properties (EAV), and application-layer encryption. See `README.md` constraints and `Pattern_Mapping.md` Appendix A for the authoritative exclusion list. The remaining patterns (temporal modeling, tree structures, audit tables, reference codes, junction tables, graph storage, state machines) are directly applicable.
+
 These documents imply a specific database architecture an agent should understand:
 
 - **Multi-tenant schema** with tenant isolation at the organizational hierarchy level

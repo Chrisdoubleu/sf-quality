@@ -260,15 +260,15 @@ These claims were cross-checked and confirmed:
 
 ## Summary of Recommended Actions
 
-| # | Action | Priority | Effort |
-|---|--------|----------|--------|
-| 1 | Fix stale file paths in Pattern_Mapping.md + both Agent_Orientation files | High | Small |
-| 2 | Update architectural_briefing.md scope or redescribe it accurately | Medium | Medium |
-| 3 | Add manifest refresh steps between DB phases with cross-repo gates | High | Small |
-| 4 | Add per-phase verification criteria + integrate `/gsd:verify-work` into workflow | Medium | Medium |
-| 5 | Specify CONTEXT file authorship in the GSD workflow sequence | Medium | Small |
-| 6 | Resolve app requirement ID collisions | Low-Med | Small |
-| 7 | Add timing/dependency notes to Quick items (#23, #18) | Low-Med | Small |
-| 8 | Remove or justify Agent_Orientation_Combined.md | Low | Small |
-| 9 | Add cross-repo amendment protocol | Low | Small |
-| 10 | Consolidate Phase 22 deferral narrative | Low | Small |
+| # | Action | Priority | Effort | Status |
+|---|--------|----------|--------|--------|
+| 1 | Fix stale file paths in Pattern_Mapping.md + both Agent_Orientation files | High | Small | RESOLVED (c82c10d + follow-up: v4 revision path fixed, Combined.md ref → Revised.md) |
+| 2 | Update architectural_briefing.md scope or redescribe it accurately | Medium | Medium | RESOLVED (reading order already noted "Does not cover API or Hidden Patterns"; scope note added to "Database Architecture Patterns Implied" section) |
+| 3 | Add manifest refresh steps between DB phases with cross-repo gates | High | Small | RESOLVED (c82c10d: Steps 2, 4, 5, 6 now include manifest refresh after cross-repo-visible phases) |
+| 4 | Add per-phase verification criteria + integrate `/gsd:verify-work` into workflow | Medium | Medium | RESOLVED (c82c10d: acceptance criteria added to Phases 25-29, 32; verify-work steps in Steps 2, 4) |
+| 5 | Specify CONTEXT file authorship in the GSD workflow sequence | Medium | Small | RESOLVED (c82c10d: Section D2 specifies `/gsd:discuss-phase` creates CONTEXT files) |
+| 6 | Resolve app requirement ID collisions | Low-Med | Small | RESOLVED (c82c10d: renumbered to APP-AUTH-04/05, APP-FORM-03, APP-TRACE-02) |
+| 7 | Add timing/dependency notes to Quick items (#23, #18) | Low-Med | Small | RESOLVED (c82c10d: #23 prerequisite note added, #18 "run early" note added) |
+| 8 | Remove or justify Agent_Orientation_Combined.md | Low | Small | RESOLVED (removed — strict subset of Revised.md with no unique content) |
+| 9 | Add cross-repo amendment protocol | Low | Small | RESOLVED (c82c10d: Section C now includes Cross-Repo Amendment Protocol) |
+| 10 | Consolidate Phase 22 deferral narrative | Low | Small | RESOLVED (c82c10d: consolidated in Step 0 with back-references) |
