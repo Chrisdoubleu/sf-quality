@@ -22,8 +22,20 @@ Reference_Architecture/
 │   ├── architectural_briefing.md      ← Narrative overview of Security and Workflow specs
 │   └── Agent_Orientation_Revised.md   ← Agent orientation with reading order, constraints, per-repo guidance
 │
-└── Hidden_Patterns/                   ← Reverse-engineered implicit patterns
-    └── Hidden_Architecture_Patterns_Reverse_Engineered.json
+├── Hidden_Patterns/                   ← Reverse-engineered implicit patterns
+│   ├── Hidden_Architecture_Patterns_Reverse_Engineered.json
+│   └── Phase_Implementation/          ← DB phase implementation context
+│       ├── CODEBASE_REFERENCE.md
+│       ├── HANDOFF_CONTEXT.md
+│       └── REFINEMENT_PROMPT.md
+│
+├── API_Integration_Patterns/          ← API architecture refinement prompt
+│   ├── PERSONA_PROMPT.md
+│   └── CODEBASE_REFERENCE.md
+│
+└── Quality_Forms_Module/              ← Inspection forms module design prompt
+    ├── PERSONA_PROMPT.md              ← Persona, context, deliverables, output format
+    └── CODEBASE_REFERENCE.md          ← Verbatim DDL, SP signatures, API/frontend patterns
 ```
 
 ---
@@ -94,5 +106,12 @@ These reflect architectural decisions and infrastructure realities. They are not
 | `Briefings/architectural_briefing.md` | ~19 KB | Markdown |
 | `Briefings/Agent_Orientation_Revised.md` | ~14 KB | Markdown |
 | `Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json` | ~39 KB | JSON |
+| `Hidden_Patterns/Phase_Implementation/CODEBASE_REFERENCE.md` | ~42 KB | Markdown |
+| `Hidden_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md` | ~23 KB | Markdown |
+| `Hidden_Patterns/Phase_Implementation/REFINEMENT_PROMPT.md` | ~51 KB | Markdown |
+| `API_Integration_Patterns/PERSONA_PROMPT.md` | ~13 KB | Markdown |
+| `API_Integration_Patterns/CODEBASE_REFERENCE.md` | ~25 KB | Markdown |
+| `Quality_Forms_Module/PERSONA_PROMPT.md` | ~28 KB | Markdown |
+| `Quality_Forms_Module/CODEBASE_REFERENCE.md` | ~35 KB | Markdown |
 
-**Total: ~371 KB of structured architectural knowledge + execution planning.**
+**Total: ~588 KB of structured architectural knowledge + execution planning.**

@@ -1,0 +1,463 @@
+{
+  "document_metadata": {
+    "title": "Hidden Architecture Patterns — Reverse-Engineered from Configuration Behavior and API Surface (Refined Review)",
+    "purpose": "Refined inferences and implementation guidance for three hidden architectural subsystems inferred from API/config behavior, with deeper quality-management grounding and single-tenant right-sizing for an automotive QMS target system.",
+    "method": "Interpretive reverse-engineering with explicit confidence ratings, alternative explanations, and failure-mode analysis; mapped to NCR/CAPA/SCAR/8D domain constraints.",
+    "derived_from": [
+      "Dayforce Web Services Introduction Guide (R2025.2.1)",
+      "Security_Role_Architecture_Agnostic.json",
+      "Workflow_Engine_Architecture_Agnostic.json",
+      "API_Integration_Architecture_Agnostic.json"
+    ]
+  },
+
+  "pattern_1_guided_process_orchestration": {
+    "summary": "A multi-step orchestration experience that bundles related forms/steps into a sequenced UX, while coordinating per-step workflows/approvals and tracking overall completion as a unit via a monitoring/join mechanism.",
+
+    "what_we_know_directly": {
+      "source": "Workflow_Engine_Architecture_Agnostic.json → guided_processes",
+      "facts": [
+        "A guided process bundles multiple forms into a single step-by-step experience",
+        "Each form in the bundle can have its own workflow, with a default workflow for unassigned forms",
+        "Forms are presented in a configurable order (move up/down)",
+        "Individual forms can be marked as skippable",
+        "The guided process has three modes: Read Only, Edit, and New",
+        "A system-generated monitoring workflow tracks completion of ALL forms as a unit",
+        "States are tracked: Open (in progress), Completed (all forms processed)",
+        "Each form's submission and processing status is logged in the monitoring workflow history",
+        "A summary dialog shows: guided process name, submission date, total forms, forms completed, forms skipped",
+        "Guided processes must be published before becoming active",
+        "Once published, the reference code becomes immutable",
+        "Properties: name (required), reference_code (required, immutable after publish), description, mode, effective_from, effective_to"
+      ]
+    },
+
+    "what_we_can_infer": {
+      "orchestration_layer_architecture": {
+        "inference": "Guided process is a logical orchestration layer that coordinates multiple per-step workflow executions and tracks overall completion as a unit.",
+        "confidence": "High",
+        "evidence": [
+          "Each form can have its own workflow (multiple independent workflow executions)",
+          "There is a separate monitoring mechanism tracking all forms as a unit",
+          "Guided process has lifecycle and effective dating separate from child workflows"
+        ],
+        "alternative_explanations": [
+          "The guided process may be implemented as a generated workflow definition within the same workflow engine (template pattern), rather than a separate runtime service."
+        ],
+        "deduced_architecture": "Two-tier coordination model: a parent instance tracks step completion/skip state and acts as a join/barrier, while each step runs its own workflow/approval logic."
+      },
+
+      "state_machine_per_step": {
+        "inference": "Each guided-process step requires a state model that distinguishes user-entry completion, approval pending, commit completion, skip, and return-for-changes.",
+        "confidence": "High",
+        "evidence": [
+          "Monitoring history logs both submission and processing status",
+          "Completed vs skipped counts are tracked explicitly"
+        ],
+        "deduced_states": [
+          "NotStarted",
+          "InProgress",
+          "Submitted",
+          "PendingApproval",
+          "Committed",
+          "Skipped",
+          "ReturnedForChanges"
+        ],
+        "notes": [
+          "A 4-state model (NotStarted/InProgress/Completed/Skipped) is insufficient for approval-driven processes because it collapses Submitted vs Approved/Committed and cannot represent ReturnedForChanges."
+        ]
+      },
+
+      "dependency_and_ordering_model": {
+        "inference": "Presentation order and enforcement dependencies are separate concepts: order controls UX; prerequisites control whether a step can be submitted/committed and whether the overall process can complete.",
+        "confidence": "Medium",
+        "evidence": [
+          "Move up/down ordering implies a sequential UX",
+          "Skippable flags imply not all steps are required to complete",
+          "Overall 'Completed' implies required-steps gating exists somewhere"
+        ],
+        "resolved_open_question": {
+          "question": "Can a non-skippable form block progression to the next form?",
+          "answer": "For dependency-heavy processes (e.g., 8D), enforce prerequisites at submission/commit boundaries rather than blocking navigation. A non-skippable (or prerequisite) step must block (a) submitting downstream steps that depend on it and (b) marking the overall guided process completed."
+        },
+        "recommended_model": {
+          "prerequisites": "Explicit prerequisite graph (not merely StepNumber-1)",
+          "completion_gate": "All required steps must be Committed or explicitly Skipped with reason/authorization",
+          "navigation": "Allow viewing later steps, but block submit/commit if prerequisites unmet"
+        }
+      },
+
+      "mode_architecture": {
+        "inference": "Mode is a guided-process-level parameter that establishes the shared data context for all steps (create new root vs edit existing vs read-only).",
+        "confidence": "Medium",
+        "evidence": [
+          "Mode is set at guided process definition level, not per form",
+          "New vs Edit implies different root-entity behavior"
+        ],
+        "alternative_explanations": [
+          "Some guided processes may mix create-on-first-step with edit-on-subsequent-steps while still being labeled 'New'."
+        ],
+        "deduced_architecture": "Mode establishes a root entity identity context passed through steps; steps may create or update subordinate records attached to the root."
+      },
+
+      "monitoring_workflow_architecture": {
+        "inference": "The monitoring mechanism implements a join/barrier over child step outcomes and records a human-auditable progress history.",
+        "confidence": "High",
+        "evidence": [
+          "System-generated monitoring workflow",
+          "Tracks completion of ALL forms as a unit",
+          "Logs per-form submission/processing status"
+        ],
+        "implementation_possibilities": [
+          "Event-driven subscription to child workflow terminal events",
+          "Synchronous updates to a progress table at each child workflow terminal node",
+          "Polling-based evaluation of step status"
+        ],
+        "key_property": "Barrier/join semantics: overall completes only when required steps are resolved (Committed/Skipped)."
+      },
+
+      "blind_spots_and_failure_modes": [
+        "Returned-for-changes loops must be explicit; otherwise approvals can't push work back without corrupting history",
+        "Abandoned guided processes require reminders/escalations and explicit cancel/close behavior",
+        "Step ownership and contributor roles must be modeled; not every step is edited by the same user",
+        "Definition/version pinning is mandatory so in-flight investigations are stable even if step definitions evolve"
+      ],
+
+      "relevance_to_quality_management": {
+        "pattern": "8D Investigation as Guided Process",
+        "mapping": {
+          "guided_process": "8D Investigation",
+          "mode": "New (create EightDReport) or Edit (revise in-flight report)",
+          "steps": [
+            {
+              "step": "D1 Team Formation",
+              "deliverables": ["Team members", "Owners", "Plant/customer linkage"],
+              "common_failures": ["No accountable owner", "Missing supplier participation when required"]
+            },
+            {
+              "step": "D2 Problem Description",
+              "deliverables": ["Defect definition", "Traceability", "Evidence"],
+              "common_failures": ["Insufficient traceability", "No escape point identified"]
+            },
+            {
+              "step": "D3 Containment Actions",
+              "deliverables": ["Quarantine/sort actions", "Immediate visibility", "Containment verification"],
+              "common_failures": ["Containment not executed", "Containment needs visibility before approval"],
+              "commit_timing_note": "Often requires presave/provisional commit with separate approval trail."
+            },
+            {
+              "step": "D4 Root Cause Analysis",
+              "deliverables": ["Evidence-backed root + escape cause", "5-Why/Ishikawa outputs"],
+              "common_failures": ["Jumping to fixes without evidence"],
+              "prerequisites": ["D3 committed or authorized skip"]
+            },
+            {
+              "step": "D5 Corrective Actions",
+              "deliverables": ["Action plan linked to root causes", "Owners/due dates"],
+              "prerequisites": ["D4 committed"]
+            },
+            {
+              "step": "D6 Implementation Verification",
+              "deliverables": ["Implementation proof", "Verification results"],
+              "prerequisites": ["D5 committed"]
+            },
+            {
+              "step": "D7 Prevent Recurrence",
+              "deliverables": ["Systemic changes", "Doc/control plan updates"],
+              "prerequisites": ["D6 committed"]
+            },
+            {
+              "step": "D8 Closure / Recognition",
+              "deliverables": ["Closure notes", "Lessons learned"],
+              "skippable": true,
+              "skip_controls": ["Reason required", "Authorized skipper required"]
+            }
+          ],
+          "per_step_approval": "Each step can route to its own approval chain; rejected steps must move to ReturnedForChanges with resubmission producing a new immutable staged payload.",
+          "monitoring": "Overall progress derived from per-step state and used to enforce closure guards and SLA escalation."
+        }
+      },
+
+      "single_tenant_right_sizing": {
+        "keep": [
+          "Prerequisite enforcement",
+          "7-state per-step tracking including ReturnedForChanges",
+          "DefinitionVersion pinning",
+          "Progress summary + progress history",
+          "Approval chains/SoD where required"
+        ],
+        "simplify": [
+          "Replace complex system-generated monitoring workflows with computed progress views/tables if desired",
+          "Treat 'publish' as 'active version' without multi-tenant governance overhead"
+        ],
+        "drop": [
+          "Tenant isolation complexity",
+          "Overly generic configurability where only one company uses the system"
+        ]
+      }
+    }
+  },
+
+  "pattern_2_policy_resolution_engine": {
+    "summary": "An effective-dated, conflict-resolving policy selection pattern that determines which configured rule set applies for a given entity/context at a given point in time, using specificity and priority rules.",
+
+    "what_we_know_directly": {
+      "explicit_policy_types_documented": [
+        {
+          "type": "Password Policy",
+          "assignment": "One per role (required, auto-populated with default on role creation)",
+          "resolution": "Multiple policies coexist. Each has a priority number. Platform sorts by strength (highest priority first) and applies the strongest matching policy.",
+          "source": "Security_Role_Architecture_Agnostic.json → password_policies"
+        },
+        {
+          "type": "Pay Policy",
+          "assignment": "Referenced as a search parameter on the Employee XRefCodes endpoint. Supports ContextDate (point-in-time resolution).",
+          "evidence": "payPolicyXRefCode search parameter with note: 'Use a ContextDate value to search for employees with a given pay policy as of a point in time.'",
+          "source": "Web Services Guide → Employee search parameters"
+        },
+        {
+          "type": "Payroll Policy",
+          "assignment": "Referenced identically to Pay Policy — searchable, ContextDate-aware.",
+          "source": "Web Services Guide → Employee search parameters"
+        },
+        {
+          "type": "Onboarding Policy",
+          "assignment": "Listed as a subordinate resource of Employee (read and write). Multiple assignments possible per employee.",
+          "source": "Web Services Guide → Employee subordinate resources"
+        },
+        {
+          "type": "Time Entry Policy",
+          "assignment": "Implied by the raw punch data description: 'Raw clock entry data refers to employee clock entry records BEFORE any manager edits or time entry policy rules are applied.'",
+          "source": "Web Services Guide → EmployeeRawPunches"
+        },
+        {
+          "type": "Entitlement Policy",
+          "assignment": "Implied by balance transaction description: 'balances incremented by entitlement policies.'",
+          "source": "Web Services Guide → Employee Balance Transactions"
+        }
+      ],
+      "common_characteristics": [
+        "All policy types are referenced by XRefCode (tenant-configurable identifiers)",
+        "All policy assignments support effective dating (ContextDate resolution)",
+        "Multiple policies of the same type can coexist in the system"
+      ]
+    },
+
+    "what_we_can_infer": {
+      "generalized_policy_resolution_architecture": {
+        "inference": "There is a shared policy model (effective-dated assignments + identifiers) but resolution may vary by domain; however, all require deterministic conflict resolution.",
+        "confidence": "Medium",
+        "evidence": [
+          "ContextDate behavior appears consistent",
+          "Password policy explicitly documents priority-based resolution"
+        ],
+        "risks": [
+          "Assuming identical resolution logic across policy types may be incorrect; some domains may use specificity-first, others priority-first, and some may be additive."
+        ],
+        "recommended_minimum": {
+          "determinism": "Always define explicit tie-breakers to prevent ambiguous/flickering outcomes",
+          "resolution_axes": ["Specificity", "Priority", "EffectiveFrom recency", "Stable ID tie-break"]
+        }
+      },
+
+      "policy_as_rule_container": {
+        "inference": "Policies are containers of rules; policy resolution selects the container, and domain logic executes the contained rules.",
+        "confidence": "High",
+        "evidence": [
+          "Password policy bundles multiple rule types",
+          "Time entry and entitlement descriptions imply multiple rules per policy"
+        ]
+      },
+
+      "assignment_chain_architecture": {
+        "inference": "Policy applicability is frequently inherited (role/org/work assignment) but should allow explicit exceptions/overrides.",
+        "confidence": "Medium",
+        "evidence": [
+          "Password policy via role inheritance",
+          "Other policies likely derive from work assignment context"
+        ],
+        "recommended_design_note": "Model exception overrides explicitly rather than burying them in procedural logic."
+      },
+
+      "raw_to_processed_pipeline_as_policy_execution": {
+        "inference": "Raw→processed transformations are policy-driven pipelines that preserve rejected inputs for review and audit.",
+        "confidence": "High",
+        "evidence": [
+          "Raw punches exist before rules applied; processed punches exist after",
+          "Rejected vs processed states exist"
+        ]
+      },
+
+      "blind_spots_and_failure_modes": [
+        "Some policy outcomes are additive (multiple recipients/escalations), not single-winner",
+        "No-match and tie behaviors must be defined (default vs error)",
+        "Policy version/pin requirements for audit: record which policy was used at decision time",
+        "Performance requires indexes aligned to effective dating and priority"
+      ],
+
+      "relevance_to_quality_management": {
+        "pattern": "Configurable Quality Rule Resolution",
+        "recommended_policy_types": [
+          "Customer notification & approval rules",
+          "CAPA timeline policy (30/60/90, escalation schedule)",
+          "Inspection frequency/sample size policy",
+          "SCAR trigger policy (repeat issues, supplier score thresholds)"
+        ],
+        "core_resolution_requirements": [
+          "Effective-dated rules for contract drift",
+          "Specificity-before-wildcard matching (e.g., customer+disposition overrides customer-wide)",
+          "Deterministic tie-breakers"
+        ],
+        "avoid_overengineering": "Do not build a general-purpose rule DSL; implement a small set of consistent effective-dated resolver procs over strongly typed policy tables."
+      },
+
+      "single_tenant_right_sizing": {
+        "keep": ["Effective dating", "Priority/specificity conflict resolution", "Auditability (which policy applied)"],
+        "simplify": ["No tenant dimension; fewer policy dimensions"],
+        "drop": ["Tenant-configurable schema (EAV) and arbitrary expression-language engines"]
+      }
+    }
+  },
+
+  "pattern_3_data_staging_and_edit_mode_architecture": {
+    "summary": "A staged change architecture where form submissions create immutable pending payloads that flow through approvals and only become committed state when an explicit commit/apply step runs; validate-only runs through the same rules without committing.",
+
+    "what_we_know_directly": {
+      "explicit_evidence": [
+        "Process node commits staged data; data is not committed on submission",
+        "Presave indicates pre-approval commit is supported",
+        "Workflow validation sends full XML payload because data is not committed",
+        "Requester cannot alter the XML payload after submission",
+        "Validate-only executes validations without committing",
+        "Expression engine supports staged-vs-committed comparison (HasCurrentPrimaryChanged) and read-through fallback (LoadIfEmpty)",
+        "UpdateStatus metadata exists for staged list operations"
+      ]
+    },
+
+    "what_we_can_infer": {
+      "staging_layer_architecture": {
+        "inference": "A staging store exists that holds immutable submitted payloads linked to workflow/approval execution, with commit/apply moving changes into committed tables.",
+        "confidence": "High",
+        "deduced_properties": [
+          "Immutable submitted payload",
+          "Linked to a session/transaction context",
+          "Queryable for routing/guards/validation",
+          "Discardable or preserved depending on rejection/audit requirements"
+        ]
+      },
+
+      "presave_vs_approved_commit_patterns": {
+        "inference": "Presave commits data early with a pending/provisional marker; Approved commits only after approval. Rejection of presaved changes must rescind/void rather than attempt silent rollback.",
+        "confidence": "High",
+        "risk_note": "Presave creates downstream operational side effects; compensation must be explicit and auditable."
+      },
+
+      "partial_entity_staging_and_edit_modes": {
+        "inference": "Edit modes support field-group scoped staging with distinct approval flows; concurrent pending edits are possible only with explicit conflict rules.",
+        "confidence": "Medium",
+        "missing_from_original": [
+          "Apply-time revalidation against current committed state",
+          "Conflict detection based on base state/row version or base field values"
+        ]
+      },
+
+      "multi_party_staging": {
+        "inference": "Cross-party processes use party-specific pending states and commit barriers requiring both parties to complete; staged payloads may be per-party.",
+        "confidence": "High"
+      },
+
+      "blind_spots_and_failure_modes": [
+        "Approval apply must revalidate guards/policies due to time delay drift",
+        "Concurrency conflicts must be detected at apply time (stale state / row version / base-field overlap)",
+        "Apply must be idempotent under retries",
+        "Presave rejection must create explicit rescind/supersede trail and follow-up tasks when physical actions may have occurred"
+      ],
+
+      "relevance_to_quality_management": {
+        "applications": [
+          "NCR investigation edits staged for days with return-for-changes loops",
+          "Containment actions need provisional visibility (presave) with rescind-not-revert compensation",
+          "SCAR requires per-party payload + status tracking",
+          "Edit modes map to field-group specific approvals (severity vs containment)"
+        ],
+        "critical_concurrency_answer": "When two pending edits coexist, apply must check whether the assumptions used at staging time still hold; if entity state or targeted fields changed, block apply and require resubmission."
+      },
+
+      "single_tenant_right_sizing": {
+        "keep": ["Immutable staged payload", "Validate-only path", "Apply-time conflict checks", "Rescind-not-revert for presave"],
+        "simplify": ["No tenant partitioning"],
+        "do_not_simplify_away": ["Concurrency handling and apply-time revalidation (single tenant still needs these)"]
+      }
+    }
+  },
+
+  "cross_pattern_synthesis": {
+    "how_the_three_patterns_interact": {
+      "description": "The combined system forms a controlled pipeline: guided process tracks multi-step progress; each step submits staged payloads; policies determine required steps/approvals/SLAs; workflow approvals gate apply/commit; apply revalidates against current state to prevent stale approvals.",
+      "pipeline": [
+        "Guided Process Instance (step progress + prerequisites + overall completion gate)",
+        "  -> Step Submission creates immutable staged payload (Pending change-set / workflow transaction)",
+        "  -> Policy Resolution determines required steps, approval chains, SLA timers, escalation rules",
+        "  -> Approval Engine routes to approvers; rejection returns for changes; timeouts expire and escalate",
+        "  -> Apply/Commit runs in a transaction, revalidates state/policy, detects conflicts, then commits",
+        "  -> Post-commit hooks (notifications/escalations/audit) run idempotently"
+      ]
+    },
+
+    "interaction_model_gaps_addressed": {
+      "missing_artifacts_in_original": [
+        "Correlation IDs linking guided process instance, step instance, staged payload, approvals, and final commit",
+        "Apply-time revalidation and stale-approval blocking",
+        "Explicit compensation rules for presave side effects",
+        "Explicit concurrency strategy (serialize vs field-group merge)",
+        "Partial completion handling (abandonment, policy drift, definition drift)"
+      ]
+    },
+
+    "failure_propagation_analysis": {
+      "guided_process_failures": [
+        "Step not submitted -> process remains Open; SLA reminders/escalations fire",
+        "Improper skip -> closure guard blocks closing parent record"
+      ],
+      "staging_failures": [
+        "Validation failure -> no pending approval created; remain InProgress",
+        "Apply conflict -> move to ReturnedForChanges with conflict reason"
+      ],
+      "policy_failures": [
+        "No policy match -> default or error depending on rule criticality",
+        "Ambiguous tie -> deterministic winner + warning or hard error for high-stakes policies"
+      ],
+      "approval_failures": [
+        "Timeout -> Expired status + escalation",
+        "Stale approval -> block apply and require resubmission"
+      ]
+    },
+
+    "compensation_and_rollback_flows": {
+      "approved_mode": "Reject/return discards staged payload from becoming committed; payload and decision remain auditable.",
+      "presave_mode": "Reject rescinds/voids provisional data; never silent rollback; create explicit follow-up tasks for real-world actions."
+    },
+
+    "concurrency_and_conflict_resolution": {
+      "recommended_rules": [
+        "Revalidate at apply time using current committed state",
+        "Detect conflicts via base state + row version and/or base-field overlap checks",
+        "If conflict, block apply and return for changes (do not auto-merge unless overlap rules are provably safe)"
+      ],
+      "partial_field_group_merge_note": "Allow parallel edits only when change-set type has explicit base-field overlap detection; otherwise serialize per entity."
+    },
+
+    "partial_completion_scenarios": {
+      "abandonment": [
+        "Track LastActivityAt; escalate after thresholds",
+        "Allow explicit cancel with reason; preserve history"
+      ],
+      "policy_change_mid_staging": [
+        "Re-resolve policy at apply time; if materially different, block apply and require resubmission"
+      ],
+      "definition_change_mid_staging": [
+        "Pin DefinitionVersion at instance creation; never hot-swap definitions on in-flight guided processes"
+      ]
+    }
+  }
+}
