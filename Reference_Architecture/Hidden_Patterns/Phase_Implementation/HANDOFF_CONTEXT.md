@@ -71,8 +71,11 @@ Reference_Architecture/
 └── Hidden_Patterns/
     ├── Hidden_Architecture_Patterns_Reverse_Engineered.json   ← 3 reverse-engineered patterns
     ├── REFINEMENT_PROMPT.md           ← Self-contained prompt used to stress-test Hidden Patterns
+    ├── CODEBASE_REFERENCE.md          ← ★ Actual DDL + SP signatures + phase build specs (read this)
     └── HANDOFF_CONTEXT.md             ← This file
 ```
+
+**Critical read for implementation work:** `Hidden_Patterns/CODEBASE_REFERENCE.md` contains the actual DDL (verbatim from migration files) for every table you will touch in Phases 25, 27, 30, and 32. It includes current column lists, constraint names, SP signatures, guard type registry, idempotency patterns, and exact schema changes each phase must make. Read it before designing any migration.
 
 **What the Execution Plan covers:**
 - `sf-quality-db` v3.0 milestone: Phases 25-33 (after v2.0 completes with Phases 23-24)
@@ -300,6 +303,7 @@ modified:   Reference_Architecture/README.md
 modified:   Reference_Architecture/REVIEW.md
 new file:   Reference_Architecture/Hidden_Patterns/REFINEMENT_PROMPT.md
 new file:   Reference_Architecture/Hidden_Patterns/HANDOFF_CONTEXT.md
+new file:   Reference_Architecture/Hidden_Patterns/CODEBASE_REFERENCE.md
 ```
 
 These changes are local and need to be committed before switching contexts.
