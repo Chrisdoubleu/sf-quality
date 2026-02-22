@@ -29,12 +29,12 @@ Before you read the architecture files, understand what you're looking at and wh
 
 | Order | File | What It Teaches You |
 |-------|------|---------------------|
-| 1 | `README_AGENT_ORIENTATION.md` | You're reading it. Context, stack, and instructions. |
-| 2 | `Platform_System_Architecture_Technical_Patterns.json` | **Start here.** Synthesized engineering patterns — design patterns, data structures, infrastructure decisions — with no domain language. |
-| 3 | `Security_Role_Architecture_Agnostic.json` | Deep dive: layered security pipeline, RBAC tree, feature gating, field-level access, org hierarchy scoping. |
-| 4 | `Workflow_Engine_Architecture_Agnostic.json` | Deep dive: DAG-based orchestration, typed node system, expression DSL, dynamic routing, event chaining. |
-| 5 | `API_Integration_Architecture_Agnostic.json` | Deep dive: REST patterns, delta sync, entity model, two-phase retrieval, rate limiting, event notifications. |
-| 6 | `architectural_briefing.md` | Human-readable narrative connecting all four specifications. Good for quick orientation. |
+| 1 | `Briefings/Agent_Orientation_Revised.md` | You're reading it. Context, stack, and instructions. |
+| 2 | `Specs/Platform_System_Architecture_Technical_Patterns.json` | **Start here.** Synthesized engineering patterns — design patterns, data structures, infrastructure decisions — with no domain language. |
+| 3 | `Specs/Security_Role_Architecture_Agnostic.json` | Deep dive: layered security pipeline, RBAC tree, feature gating, field-level access, org hierarchy scoping. |
+| 4 | `Specs/Workflow_Engine_Architecture_Agnostic.json` | Deep dive: DAG-based orchestration, typed node system, expression DSL, dynamic routing, event chaining. |
+| 5 | `Specs/API_Integration_Architecture_Agnostic.json` | Deep dive: REST patterns, delta sync, entity model, two-phase retrieval, rate limiting, event notifications. |
+| 6 | `Briefings/architectural_briefing.md` | Narrative overview of the Security and Workflow specs. Does not cover API or Hidden Patterns. |
 
 ### How The Files Relate
 
@@ -175,11 +175,11 @@ The contract governance chain is working and validated by CI. Do not propose rea
 
 | File | Size | Format |
 |------|------|--------|
-| `README_AGENT_ORIENTATION.md` | ~10 KB | Markdown |
-| `Platform_System_Architecture_Technical_Patterns.json` | ~49 KB | JSON |
-| `Security_Role_Architecture_Agnostic.json` | ~61 KB | JSON |
-| `Workflow_Engine_Architecture_Agnostic.json` | ~48 KB | JSON |
-| `API_Integration_Architecture_Agnostic.json` | ~53 KB | JSON |
-| `architectural_briefing.md` | ~19 KB | Markdown |
+| `Briefings/Agent_Orientation_Revised.md` | ~14 KB | Markdown |
+| `Specs/Platform_System_Architecture_Technical_Patterns.json` | ~49 KB | JSON |
+| `Specs/Security_Role_Architecture_Agnostic.json` | ~61 KB | JSON |
+| `Specs/Workflow_Engine_Architecture_Agnostic.json` | ~48 KB | JSON |
+| `Specs/API_Integration_Architecture_Agnostic.json` | ~53 KB | JSON |
+| `Briefings/architectural_briefing.md` | ~19 KB | Markdown |
 
 **Total: ~240 KB of structured architectural knowledge.**

@@ -7,17 +7,17 @@
 ## Method and Constraints
 
 - **Reference sources re-read from scratch:**
-  - `Reference_Architecture_Package/Platform_System_Architecture_Technical_Patterns.json`
-  - `Reference_Architecture_Package/Security_Role_Architecture_Agnostic.json`
-  - `Reference_Architecture_Package/Workflow_Engine_Architecture_Agnostic.json`
-  - `Reference_Architecture_Package/API_Integration_Architecture_Agnostic.json`
-  - `Reference_Architecture_Package/architectural_briefing.md`
-  - `Reference_Architecture_Package/Hidden_Architecture_Patterns_Reverse_Engineered.json` (v4: three reverse-engineered patterns)
+  - `Specs/Platform_System_Architecture_Technical_Patterns.json`
+  - `Specs/Security_Role_Architecture_Agnostic.json`
+  - `Specs/Workflow_Engine_Architecture_Agnostic.json`
+  - `Specs/API_Integration_Architecture_Agnostic.json`
+  - `Briefings/architectural_briefing.md`
+  - `Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json` (v4: three reverse-engineered patterns)
 - **Codebase rescanned:**
   - `sf-quality-db` — 133 migrations (001–130 including 086a and 126a–d), 80 published procedures, 36 published views per `db-contract-manifest.json` v1.0.0. Note: Phase 21 (migrations 122–130) adds 9 knowledge views and 1 advisory procedure not yet reflected in the v1.0.0 manifest; actual counts are 81 procedures and 45 views.
   - `sf-quality-api` — 10 C# source files, 27 endpoints (25 NCR + 2 diagnostics), Phase 3 of 10 complete, `api-openapi.publish.json` v0.2.0.
   - `sf-quality-app` — 51 planning files, 0 runtime source files. Phase 1 of 10 not started. `api-openapi.snapshot.json` v0.1.0 (behind API publish v0.2.0).
-- **Constraints enforced from** `README_AGENT_ORIENTATION_COMBINED.md`: SQL-first business logic, thin Dapper API, single-tenant scope, Azure App Service runtime.
+- **Constraints enforced from** `Briefings/Agent_Orientation_Combined.md`: SQL-first business logic, thin Dapper API, single-tenant scope, Azure App Service runtime.
 
 **Classification key:**
 - **Strengthen Existing** — Pattern is present in usable form, but has clear hardening/coverage gaps.

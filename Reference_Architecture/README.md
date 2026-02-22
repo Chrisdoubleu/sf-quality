@@ -20,7 +20,7 @@ Reference_Architecture/
 │
 ├── Briefings/                         ← Narrative orientation documents
 │   ├── architectural_briefing.md      ← Human-readable overview connecting all specs
-│   ├── Agent_Orientation_Combined.md  ← Condensed agent orientation
+│   ├── Agent_Orientation_Combined.md  ← Condensed agent orientation (quick-load contexts where 14 KB is too much)
 │   └── Agent_Orientation_Revised.md   ← Expanded agent orientation with reading order
 │
 └── Hidden_Patterns/                   ← Reverse-engineered implicit patterns
@@ -38,7 +38,7 @@ Reference_Architecture/
 | 3 | [Specs/Security_Role_Architecture_Agnostic.json](Specs/Security_Role_Architecture_Agnostic.json) | 10-layer security: RBAC, feature gating, field-level access, org hierarchy scoping |
 | 4 | [Specs/Workflow_Engine_Architecture_Agnostic.json](Specs/Workflow_Engine_Architecture_Agnostic.json) | DAG-based orchestration: typed nodes, expression DSL, dynamic routing, event chaining |
 | 5 | [Specs/API_Integration_Architecture_Agnostic.json](Specs/API_Integration_Architecture_Agnostic.json) | REST API: entity model, delta sync, two-phase retrieval, rate limiting, event notifications |
-| 6 | [Briefings/architectural_briefing.md](Briefings/architectural_briefing.md) | Narrative overview connecting the three spec files |
+| 6 | [Briefings/architectural_briefing.md](Briefings/architectural_briefing.md) | Narrative overview of the Security and Workflow specs (does not cover API or Hidden Patterns) |
 | 7 | [Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json](Hidden_Patterns/Hidden_Architecture_Patterns_Reverse_Engineered.json) | Three implicit patterns: Guided Process Orchestration, Policy Resolution Engine, Data Staging/Edit Mode |
 
 ---

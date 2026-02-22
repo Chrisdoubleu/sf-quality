@@ -48,9 +48,9 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 
 **Decision:** Create new v3.0 milestone "Architectural Hardening and Platform Maturation"
 
-**Rationale:** v2.0 ("Quality Intelligence Platform") has 2 active remaining phases (23-24) with tightly scoped requirements (governance, incoming substrate). Phase 22 (analytics + security grants) is DEFERRED — schema still evolving, no consumers, role architecture not locked. SEC-01 grants ship inline with future migrations as needed. The 24 DB patterns represent a different initiative — making what exists production-grade. Absorbing them into v2.0 would dilute its narrative and bloat requirements from 37 to 60+. v3.0 begins after v2.0 ships.
+**Rationale:** v2.0 ("Quality Intelligence Platform") has 2 active remaining phases (23-24) with tightly scoped requirements (governance, incoming substrate). Phase 22 is DEFERRED (see Step 0 for full deferral context). The 24 DB patterns represent a different initiative — making what exists production-grade. Absorbing them into v2.0 would dilute its narrative and bloat requirements from 37 to 60+. v3.0 begins after v2.0 ships.
 
-**Note:** Pattern #5 (audit.vw_SuspiciousActivity) was previously considered for optional absorption into Phase 22 (analytics). With Phase 22 deferred, Pattern #5 stays in v3.0 Phase 29 (Audit Infrastructure) where it naturally groups with ApiCallLog, temporal queries, and tree helpers — all audit schema work with no analytics schema dependency.
+**Note:** Pattern #5 (audit.vw_SuspiciousActivity) was previously considered for Phase 22 (analytics). With Phase 22 deferred (Step 0), Pattern #5 stays in v3.0 Phase 29 where it naturally groups with ApiCallLog, temporal queries, and tree helpers — all audit schema work with no analytics schema dependency.
 
 | Phase | Name | Patterns | Type | Size |
 |-------|------|----------|------|------|
@@ -65,6 +65,10 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 | 33 | Data Lifecycle and Bulk Operations | #16 Retention/Purging, #24 Bulk Import | Strengthen+New | Medium |
 | Quick | Document Storage Contract | #23 | Strengthen | Small |
 | Quick | Composite Aggregate Expansion | #18 | Strengthen | Small |
+
+**Quick item notes:**
+- **#23 (Document Storage):** Prerequisite: pending storage decision must be resolved first. Workspace memory notes "SharePoint references: decision pending on document storage — do not clean up yet." Cannot execute until storage contract direction is confirmed.
+- **#18 (Composite Aggregate):** No dependencies. Consider executing before or concurrent with DB Phase 29 (first executed phase) so that the `expand` parameter is available for API Phase 4 pagination/query infrastructure planning.
 | DEFER | Organizational Scoping | #21 (no concrete gap) | — | — |
 
 #### Phase 25: Workflow Engine Foundation Hardening
@@ -80,6 +84,12 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 
 **Dependencies:** None (foundation for 26-28)
 
+**Acceptance criteria (gate for Phase 26):**
+1. `workflow.GuardDefinition` table exists and is queryable with seeded guard definitions
+2. `rca.EightDStep` has `StepStatus` column with non-zero default behavior
+3. `rca.vw_EightDCompletionStatus` returns non-null aggregated results
+4. `workflow.WorkflowProcessVersion` table exists with activation window columns
+
 #### Phase 26: Authorization and Approval Pipeline
 
 **Patterns:** #1, #7, #6
@@ -93,6 +103,11 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 
 **Dependencies:** Phase 25 (guard definitions)
 
+**Acceptance criteria (gate for Phase 27):**
+1. `dbo.Role.ParentRoleId` column exists with subtractive-inheritance validator callable
+2. `security.vw_EffectiveCrudMatrix` returns role x data x CRUD results
+3. `workflow.usp_ResolveApprovers` resolves dynamic approvers for a test transition
+
 #### Phase 27: Approval Lifecycle and Timeout Processing
 
 **Patterns:** #3, #20
@@ -105,6 +120,11 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 - Compensated status + compensating transition logic for rejected presave
 
 **Dependencies:** Phase 25, Phase 26
+
+**Acceptance criteria (gate for Phase 28):**
+1. `workflow.usp_ProcessPendingApprovalTimeouts` processes expired approvals
+2. Presave transitions on `IsPresave=1` commit entity state immediately and create pending approval
+3. Rejected presave creates compensating transition reverting entity state
 
 #### Phase 28: Event-Driven Chaining and Notifications
 
@@ -129,6 +149,11 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 - Cycle-detection checks for all parent-child structures
 
 **Dependencies:** None (independent track — must complete before API Phase 3.5)
+
+**Acceptance criteria (gate for API Phase 3.5):**
+1. `audit.ApiCallLog` table exists with all specified columns
+2. At least one read proc accepts `@AsOfUtc DATETIME2 = NULL` and returns temporal results
+3. `dbo.usp_GetTreeAncestors`/`dbo.usp_GetTreeDescendants` callable on existing hierarchies
 
 #### Phase 30: SLA Enforcement and Background Jobs
 
@@ -166,6 +191,11 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 - `security.usp_ExportConfiguration`/`usp_ImportConfiguration` with upsert semantics
 
 **Dependencies:** Phase 25 (validate-only on transition procs needs stable workflow foundation)
+
+**Acceptance criteria (gate for API Phase 7):**
+1. At least 3 write procs accept `@IsValidateOnly BIT = 0` and return validation resultsets on rollback
+2. Canonical lookup views exist per domain (DefectType, Severity, Disposition)
+3. `security.usp_ExportConfiguration` produces a portable JSON-compatible resultset
 
 #### Phase 33: Data Lifecycle and Bulk Operations
 
@@ -245,24 +275,26 @@ All 9 app patterns are "Inform Planning." They map to existing phases via requir
 
 | Pattern | Target Phase | Enrichment |
 |---------|-------------|------------|
-| #37 Feature Tree | Phase 3 (Auth) + Phase 7 | New req APP-AUTH-01: Feature entitlement tree from API |
-| #38 Org Scope | Phase 3 (Auth) | New req APP-AUTH-02: Plant-scope selector from RLS |
+| #37 Feature Tree | Phase 3 (Auth) + Phase 7 | New req APP-AUTH-04: Feature entitlement tree from API |
+| #38 Org Scope | Phase 3 (Auth) | New req APP-AUTH-05: Plant-scope selector from RLS |
 | #39 Workflow Viz | Phase 7 (Workflow) | Enrich 07-CONTEXT: visual progress from workflow state machine |
 | #40 Dashboards | Phase 9 | Enrich 09-CONTEXT: role-scoped parameterized widgets |
 | #41 Knowledge | Phase 8 | Enrich 08-CONTEXT: in-form knowledge panels |
 | #42 Notifications | Phase 7 | Enrich 07-CONTEXT: notification inbox (may defer to Phase 10) |
 | #43 Audit Trail | Phase 8 | Enrich 08-CONTEXT: entity audit timeline component |
-| #44 Form Preflight | Phase 4 (Forms) | New req APP-FORM-01: server-validated preflight via validate-only |
+| #44 Form Preflight | Phase 4 (Forms) | New req APP-FORM-03: server-validated preflight via validate-only |
 | #45 Drift Controls | Phase 10 | Enrich 10-CONTEXT: automated snapshot refresh + breaking-change detection |
 
 **New requirements for REQUIREMENTS.md:**
 
-- **APP-AUTH-01:** Feature entitlement tree governs UI action visibility
-- **APP-AUTH-02:** Plant scope filtering reflects API-authorized scope
+Note: IDs are numbered to avoid collision with existing APP-AUTH-01 through APP-AUTH-03, APP-FORM-01/02, and APP-TRACE-01 already in REQUIREMENTS.md.
+
+- **APP-AUTH-04:** Feature entitlement tree governs UI action visibility
+- **APP-AUTH-05:** Plant scope filtering reflects API-authorized scope
 - **APP-WORKFLOW-03:** Workflow state visualization from API state machine
 - **APP-WORKFLOW-04:** Notification inbox from API notification queue
-- **APP-FORM-01:** Write forms support server-validated preflight
-- **APP-TRACE-01:** Audit trail timeline from API audit data
+- **APP-FORM-03:** Write forms support server-validated preflight
+- **APP-TRACE-02:** Audit trail timeline from API audit data
 
 ---
 
@@ -299,6 +331,17 @@ DB Phase 31 (SCAR party status)
   └→ API Phase 5 (SCAR endpoints)
 ```
 
+### Cross-Repo Amendment Protocol
+
+If an API phase discovers that a prerequisite DB schema needs modification (e.g., API Phase 3.5 finds `audit.ApiCallLog` needs an additional column):
+
+1. **Pause** the API phase at the discovery point
+2. **Switch to sf-quality-db** and run `/gsd:quick "Hotfix migration: [description of schema change]"`
+3. **Refresh** `db-contract-manifest.json` to reflect the hotfix
+4. **Resume** the API phase with the updated schema available
+
+This keeps schema changes in the DB repo (where they belong), maintains the contract chain, and avoids cross-repo file modifications. Hotfix migrations follow the same idempotent migration pattern as all other DB migrations.
+
 **Parallelization Opportunities:**
 
 - DB Phases 29, 31, 33 are independent — can run in any order or interleaved
@@ -317,7 +360,13 @@ Do NOT copy pattern mapping or spec files into each repo's `.planning/` folder. 
 - **Per-phase distillation:** Each phase CONTEXT file gets only the specific patterns, recommended approaches, migration citations, and proc signatures relevant to that phase — distilled from [Pattern_Mapping.md](Pattern_Mapping.md), not copy-pasted wholesale
 - **Traceability:** Each phase CONTEXT references patterns by number (e.g., "Implements Pattern #14 — Validate-Only / Dry-Run Mode") with a pointer to `sf-quality/Reference_Architecture/Pattern_Mapping.md` for full context
 
-### D2. Phase Context File Template
+### D2. Phase Context File Authorship
+
+**Who creates them:** The `/gsd:discuss-phase` agent creates the phase CONTEXT file as its primary output. During discuss-phase, the agent should read the relevant patterns from `Reference_Architecture/Pattern_Mapping.md` and create the phase CONTEXT file using the template below, including the specific schema content from Section D4.
+
+**When they're created:** Before `/gsd:plan-phase` runs. For phases that skip discuss (Phases 31, 33), the user creates a minimal CONTEXT file from the template before invoking `/gsd:plan-phase`.
+
+### Phase Context File Template
 
 Each new phase CONTEXT file should include:
 
@@ -361,14 +410,19 @@ These patterns contain precise schema recommendations that must be in CONTEXT fi
 
 ## E. GSD Workflow Sequence
 
-### Step 0: Prerequisites — Complete v2.0 First
+### Step 0: Prerequisites — Complete v2.0 and Refresh Manifest
 
-Phases 23-24 in sf-quality-db must ship before v3.0 begins. Phase 22 (Analytics Foundation and Security) is DEFERRED — preconditions not met (schema evolving, no consumers, role architecture not locked). See `sf-quality-db/.planning/phases/22-analytics-foundation-security/22-DEFERRAL.md`.
+Phases 23-24 in sf-quality-db must ship before v3.0 begins.
+
+**Phase 22 deferral (consolidated context):** Phase 22 "Analytics Foundation and Security" is DEFERRED. Preconditions not met: schema is still evolving across v2.0 phases, no analytics consumers exist, and the role architecture is not locked for security grant generation. The SEC-01 requirement (security grants) is not part of Pattern #21 — SEC-01 ships inline with future migrations that add grant-requiring objects. Pattern #21 (Organizational Scoping) is independently deferred in v3.0 (Section B1) because there is no concrete gap beyond the current plant-level model. Full deferral rationale: `sf-quality-db/.planning/phases/22-analytics-foundation-security/22-DEFERRAL.md`.
+
+**Manifest prerequisite:** The `db-contract-manifest.json` is currently v1.0.0 and does not reflect the 9 knowledge views and 1 advisory procedure added in Phase 21. Refresh the manifest to reflect Phase 21 additions before v3.0 work begins, so that API phase planners have an accurate contract surface.
 
 ```
 sf-quality-db: /gsd:plan-phase 23  →  /gsd:execute-phase 23
 sf-quality-db: /gsd:plan-phase 24  →  /gsd:execute-phase 24
-sf-quality-db: /gsd:complete-milestone  (archives v2.0; Phase 22 deferred to post-v2.0)
+sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json to reflect Phase 21-24 additions"
+sf-quality-db: /gsd:complete-milestone  (archives v2.0; Phase 22 deferred — see above)
 ```
 
 ### Step 1: sf-quality-db — Initialize v3.0 Milestone
@@ -391,6 +445,8 @@ Phase 29 contains `audit.ApiCallLog` which API Phase 3.5 depends on. Execute thi
 sf-quality-db: /gsd:discuss-phase 29   (gather context for audit/temporal/tree work)
 sf-quality-db: /gsd:plan-phase 29
 sf-quality-db: /gsd:execute-phase 29
+sf-quality-db: /gsd:verify-work 29     (acceptance: audit.ApiCallLog exists, @AsOfUtc on key procs, tree helpers callable)
+sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json for Phase 29 additions"
 ```
 
 ### Step 3: sf-quality-api — Insert Phase 3.5 and Execute
@@ -410,13 +466,20 @@ Can interleave with API Phase 4-6 execution:
 
 ```
 sf-quality-db: /gsd:discuss-phase 25  →  /gsd:plan-phase 25  →  /gsd:execute-phase 25
+sf-quality-db: /gsd:verify-work 25    (acceptance: guard definitions table queryable, EightDStep has StepStatus, vw_EightDCompletionStatus returns results)
 sf-quality-db: /gsd:discuss-phase 26  →  /gsd:plan-phase 26  →  /gsd:execute-phase 26
+sf-quality-db: /gsd:verify-work 26    (acceptance: ParentRoleId + validator exist, vw_EffectiveCrudMatrix queryable, usp_ResolveApprovers callable)
 sf-quality-db: /gsd:discuss-phase 27  →  /gsd:plan-phase 27  →  /gsd:execute-phase 27
+sf-quality-db: /gsd:verify-work 27    (acceptance: timeout processor runs, presave transitions commit immediately, compensated status on rejection)
 sf-quality-db: /gsd:discuss-phase 28  →  /gsd:plan-phase 28  →  /gsd:execute-phase 28
+sf-quality-db: /gsd:verify-work 28    (acceptance: NotificationQueue writes on approval, outbox covers CAPA/SCAR)
+sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json for Phases 25-28 additions"
 sf-quality-db: /gsd:discuss-phase 30  →  /gsd:plan-phase 30  →  /gsd:execute-phase 30
 ```
 
 **Note:** Use `/gsd:discuss-phase` before `/gsd:plan-phase` for all phases — these are complex, multi-pattern phases where the planner needs domain context gathering.
+
+**Note:** Verification (`/gsd:verify-work`) runs after each phase in the dependency chain to catch issues before dependents begin. The manifest refresh after Phase 28 covers all cross-repo-visible artifacts from Phases 25-28.
 
 ### Step 5: sf-quality-db — Independent Tracks (Phases 31, 32, 33)
 
@@ -424,18 +487,28 @@ Can execute in any order; 31 and 33 can interleave with Step 4:
 
 ```
 sf-quality-db: /gsd:plan-phase 31  →  /gsd:execute-phase 31
+sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json for Phase 31 SCAR party status additions"
 sf-quality-db: /gsd:discuss-phase 32  →  /gsd:plan-phase 32  →  /gsd:execute-phase 32
+sf-quality-db: /gsd:quick "Refresh db-contract-manifest.json for Phase 32 validate-only procs"
 sf-quality-db: /gsd:plan-phase 33  →  /gsd:execute-phase 33
 ```
 
 Phase 32 gets `/gsd:discuss-phase` because validate-only is a cross-cutting pattern touching 6+ procs.
 Phases 31 and 33 are straightforward enough to skip discuss.
+Manifest refreshes after Phases 31 and 32 because both introduce cross-repo-visible artifacts (SCAR party status → API Phase 5; validate-only procs → API Phase 7).
 
 ### Step 6: sf-quality-db — Quick Items
 
+**#18 should run early** (before or alongside Step 2) so API Phase 4 can consume the `expand` parameter:
+
 ```
-sf-quality-db: /gsd:quick "Formalize document storage contract (#23)"
 sf-quality-db: /gsd:quick "Add expand parameters to NCR detail proc (#18)"
+```
+
+**#23 runs when ready** — blocked until the document storage decision is resolved:
+
+```
+sf-quality-db: /gsd:quick "Formalize document storage contract (#23)"   (prerequisite: storage decision confirmed)
 ```
 
 ### Step 7: sf-quality-db — Complete v3.0
@@ -516,7 +589,7 @@ Cross-track gates:
 
 | File | Action |
 |------|--------|
-| `../sf-quality-app/.planning/REQUIREMENTS.md` | Add 6 new requirements (APP-AUTH-01/02, APP-WORKFLOW-03/04, APP-FORM-01, APP-TRACE-01) |
+| `../sf-quality-app/.planning/REQUIREMENTS.md` | Add 6 new requirements (APP-AUTH-04/05, APP-WORKFLOW-03/04, APP-FORM-03, APP-TRACE-02) |
 | `../sf-quality-app/.planning/phases/03-easy-auth-session/03-CONTEXT.md` | Enrich with feature entitlement + org scope patterns |
 | `../sf-quality-app/.planning/phases/04-lookup-driven-forms/04-CONTEXT.md` | Enrich with server-validated form preflight |
 | `../sf-quality-app/.planning/phases/07-workflow-approvals/07-CONTEXT.md` | Enrich with workflow visualization, notification inbox |
@@ -532,7 +605,7 @@ After all phases complete across all repos:
 
 1. **Pattern coverage audit:** Walk all 46 patterns in [Pattern_Mapping.md](Pattern_Mapping.md) and verify each has either: a completed phase, a `/gsd:quick` execution, a documented deferral, or enriched requirements/context
 2. **Contract chain integrity:** Run `Invoke-CycleChecks.ps1` in both API and App repos to confirm no drift
-3. **DB contract manifest:** Update `../sf-quality-db/.planning/contracts/db-contract-manifest.json` to reflect all new procs/views from v3.0
+3. **DB contract manifest:** Verify `../sf-quality-db/.planning/contracts/db-contract-manifest.json` reflects all new procs/views from v3.0 (incremental refreshes happen after Phases 29, 28, 31, and 32 per the workflow sequence — this step confirms completeness)
 4. **API OpenAPI artifact:** Verify version reflects all pattern additions
 5. **Requirements traceability:** Every ARCH-xx, API-INFRA-xx, and APP-xx requirement links to a completed phase or documented deferral
 6. **Cross-repo gates:** Confirm all DB prerequisites landed before their API/App consumers were executed
