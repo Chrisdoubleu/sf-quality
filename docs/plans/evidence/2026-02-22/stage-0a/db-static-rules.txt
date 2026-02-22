@@ -1,0 +1,11 @@
+
+========================================
+SQL Static Rules
+========================================
+Repository: C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-db
+Migrations: C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-db\database\\migrations
+
+Checked 133 migration files.
+Rule1 scan set (070+): 65 files.
+
+Static rules PASSED (0 violations).

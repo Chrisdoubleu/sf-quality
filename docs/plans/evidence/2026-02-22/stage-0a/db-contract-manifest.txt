@@ -1,0 +1,6 @@
+Contract manifest exported: C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-db\.planning\contracts\.tmp-db-contract-manifest.json
+  Procedures: 80
+  Views: 36
+DB contract manifest validation PASSED.
+  Procedures: 80
+  Views: 36
