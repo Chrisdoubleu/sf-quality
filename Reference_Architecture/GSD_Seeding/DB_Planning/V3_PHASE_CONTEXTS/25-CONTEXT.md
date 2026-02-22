@@ -129,3 +129,8 @@ CREATE TABLE workflow.WorkflowProcessVersion (
 3. `rca.vw_EightDCompletionStatus` returns non-null aggregated results for any `EightDReportId`
 4. `workflow.WorkflowProcessVersion` table exists with activation window columns
 5. `Invoke-CycleChecks.ps1` passes
+
+## Reconciliation Addendum (2026-02-22)
+
+- Phase 25 is the primary delivery phase for `STRUCT-01` (workflow adapter split), `STRUCT-02` (foreign status-write removal), and `STRUCT-03` (cross-schema DML boundary guard).
+- Plan/verify evidence for this phase must reference both `ARCH-*` and `STRUCT-*` IDs where applicable.

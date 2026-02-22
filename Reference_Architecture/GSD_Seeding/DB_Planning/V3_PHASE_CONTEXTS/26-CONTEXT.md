@@ -123,3 +123,8 @@ ALTER TABLE workflow.WorkflowTransition ADD
 3. `workflow.usp_ResolveApprovers` callable and returns approver list for a test transition
 4. `workflow.usp_EnforceSeparationOfDuties` callable and integrated into `workflow.usp_ProcessApprovalStep`
 5. `Invoke-CycleChecks.ps1` passes
+
+## Reconciliation Addendum (2026-02-22)
+
+- Phase 26 feeds a decision-gated Phase 26.1 branch for ABAC deepening; implement/defer is governed by ADR checklist outcomes.
+- If any ABAC trigger is true, Phase 26.1 executes with deny-path verification before downstream consumer phases proceed.

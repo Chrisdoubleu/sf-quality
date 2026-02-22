@@ -725,3 +725,11 @@ When H2 begins, update child repo planning files (in repo context):
 3. Preserve route governance: inspection endpoints must be versioned under `/v1`.
 4. Enforce contract chain after each wave: DB manifest -> API publish -> App snapshot.
 5. Do not start API/App Quality Forms execution while DB checklist gates are open.
+
+## Reconciliation Addendum (2026-02-22)
+
+- Namespace split: keep `ARCH-*` and add `STRUCT-01` through `STRUCT-10` for structural-remediation tracking.
+- Phase 25 is expanded to explicitly cover `STRUCT-01`, `STRUCT-02`, and `STRUCT-03` boundary hardening outcomes.
+- Phase 26.1 is inserted as an ABAC deepening branch controlled by an explicit decision gate.
+- API Phase 3.6 is inserted for ports/adapters refactoring and endpoint SQL boundary cleanup.
+- Pre-QF entry requires `STRUCT-10` inspection FK policy approval and stage-gate linkage.

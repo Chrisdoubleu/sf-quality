@@ -157,3 +157,17 @@ Append the following block to the end of `REQUIREMENTS.md`, after the existing v
 | ARCH-21 | 32 | Pending |
 | ARCH-22 | 33 | Pending |
 | ARCH-23 | 33 | Pending |
+
+## STRUCT Namespace Additions (2026-02-22)
+
+Introduce and map structural-remediation IDs alongside existing `ARCH-*` requirements:
+- `STRUCT-01` Workflow transition adapter-proc split
+- `STRUCT-02` Remove direct foreign-context status writes
+- `STRUCT-03` Cross-schema DML guard + allowlist
+- `STRUCT-04` Generic outbox/event substrate
+- `STRUCT-05` NCR compatibility window during outbox migration
+- `STRUCT-06` Event subscription + internal notification queue
+- `STRUCT-07` Department/jurisdiction ABAC expansion
+- `STRUCT-08` Same-plant cross-department deny-path tests
+- `STRUCT-09` API ports/adapters and endpoint SQL boundary removal (API Phase 3.6)
+- `STRUCT-10` Inspection hard-FK vs soft-reference policy gate before QF entry
