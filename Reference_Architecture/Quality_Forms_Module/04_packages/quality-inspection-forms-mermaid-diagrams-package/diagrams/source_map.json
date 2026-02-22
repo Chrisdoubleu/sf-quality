@@ -1,0 +1,47 @@
+{
+  "generated_at_utc": "2026-02-22T13:23:13Z",
+  "source_package_zip": "quality-inspection-forms-module-package.zip",
+  "diagram_count": 4,
+  "diagrams": [
+    {
+      "id": "01",
+      "slug": "er_inspection_forms",
+      "name": "Inspection Forms ER Diagram",
+      "type": "erDiagram",
+      "source_doc": "docs/01_database_schema_design.md",
+      "source_heading": "## Entity Relationship Overview",
+      "md_file": "diagrams/01_er_inspection_forms.md",
+      "mmd_file": "diagrams/01_er_inspection_forms.mmd"
+    },
+    {
+      "id": "02",
+      "slug": "sequence_template_publish",
+      "name": "Template Publish Flow (Approval + Workflow)",
+      "type": "sequenceDiagram",
+      "source_doc": "docs/05_integration_architecture.md",
+      "source_heading": "## Integration: Template \u2192 Approval \u2192 Publish",
+      "md_file": "diagrams/02_sequence_template_publish.md",
+      "mmd_file": "diagrams/02_sequence_template_publish.mmd"
+    },
+    {
+      "id": "03",
+      "slug": "sequence_due_queue",
+      "name": "Scheduling Due Queue Flow (v1 manual ProductionRun)",
+      "type": "sequenceDiagram",
+      "source_doc": "docs/05_integration_architecture.md",
+      "source_heading": "## Integration: Scheduling \u2192 Due Queue (v1 manual production run)",
+      "md_file": "diagrams/03_sequence_due_queue.md",
+      "mmd_file": "diagrams/03_sequence_due_queue.mmd"
+    },
+    {
+      "id": "04",
+      "slug": "sequence_submit_to_ncr",
+      "name": "Submit Inspection \u2192 Evaluate \u2192 Optional NCR Auto-Create",
+      "type": "sequenceDiagram",
+      "source_doc": "docs/05_integration_architecture.md",
+      "source_heading": "## Integration: Submit Inspection \u2192 Evaluate \u2192 Optional NCR auto-create",
+      "md_file": "diagrams/04_sequence_submit_to_ncr.md",
+      "mmd_file": "diagrams/04_sequence_submit_to_ncr.mmd"
+    }
+  ]
+}

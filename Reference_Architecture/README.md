@@ -38,9 +38,36 @@ Reference_Architecture/
 │       ├── DECISIONS.md               ← 5 locked architectural decisions; 3 open questions blocking Phase 4+
 │       └── HANDOFF_CONTEXT.md         ← Phase-by-phase deliverables for API phases 3.4, 3.5, 4, 4.5, 5
 │
-└── Quality_Forms_Module/              ← Inspection forms architecture design [FUTURE MILESTONE — post-v3.0; not yet sequenced into any repo roadmap]
-    ├── PERSONA_PROMPT.md              ← Persona, context, deliverables, output format
-    └── CODEBASE_REFERENCE.md          ← Verbatim DDL, SP signatures, API/frontend patterns
+├── Quality_Forms_Module/              ← Inspection forms architecture design + adjudication package (sequenced via Execution_Plan Section H)
+│   ├── README.md                      ← Module index + reading order
+│   ├── PATH_CHANGES.md                ← Old → new path map after reorganization
+│   ├── 00_ground_truth/               ← CODEBASE_REFERENCE, PERSONA_PROMPT, live validation notes
+│   ├── 01_reviews/                    ← Independent review artifacts
+│   ├── 02_synthesis/                  ← Comparative syntheses
+│   ├── 03_adjudication/               ← Final authoritative ruling
+│   └── 04_packages/                   ← Module package + mermaid diagrams package
+│
+└── GSD_Seeding/                       ← ★ Pre-drafted content for applying execution plan to child repos
+    ├── PREPARATION_GUIDE.md           ← Master orchestration guide: current state, step order, dependency gates
+    ├── OPERATIONS_DASHBOARD.md        ← Live cross-repo status, gate ledger, and command execution log
+    ├── PHASE_PACKET_CHECKLIST.md      ← Mandatory intake/discuss/plan/execute/verify checklist
+    ├── DB_Planning/
+    │   ├── REQUIREMENTS_ADDITIONS.md  ← ARCH-01..23 requirements (append to db REQUIREMENTS.md)
+    │   ├── ROADMAP_V3_SECTION.md      ← v3.0 milestone section (append to db ROADMAP.md)
+    │   ├── PROJECT_V3_SECTION.md      ← v3.0 narrative (append to db PROJECT.md)
+    │   ├── PHASE_23_24_ENRICHMENTS.md ← Specific scope for imminent Phases 23 and 24
+    │   └── V3_PHASE_CONTEXTS/         ← Pre-drafted CONTEXT files for all 9 v3.0 phases
+    │       ├── 25-CONTEXT.md          ← Workflow Engine Foundation Hardening
+    │       ├── 26-CONTEXT.md          ← Authorization and Approval Pipeline
+    │       ├── 27-CONTEXT.md          ← Approval Lifecycle and Timeout Processing
+    │       ├── 28-CONTEXT.md          ← Event-Driven Chaining and Notifications
+    │       ├── 29-CONTEXT.md          ← Audit Infrastructure and Temporal Query (EXECUTE FIRST)
+    │       ├── 30-CONTEXT.md          ← SLA Enforcement and Background Jobs
+    │       ├── 31-CONTEXT.md          ← Multi-Party Entity Lifecycle
+    │       ├── 32-CONTEXT.md          ← Validate-Only and Reference Data
+    │       └── 33-CONTEXT.md          ← Data Lifecycle and Bulk Operations
+    └── APP_Planning/
+        └── PHASE_CONTEXT_ENRICHMENTS.md  ← Pattern enrichments for App Phases 3, 4, 7, 8, 9, 10
 ```
 
 ---
@@ -62,6 +89,9 @@ Reference_Architecture/
 
 ## Key Documents
 
+### [Quality_Forms_Module/PATH_CHANGES.md](Quality_Forms_Module/PATH_CHANGES.md)
+Path change map for the Quality Forms module reorganization (old location → new location). Use this if links/bookmarks still point to pre-reorg paths.
+
 ### [Pattern_Mapping.md](Pattern_Mapping.md)
 Audit of all 46 reference architecture patterns against current sf-quality implementation. Each pattern is classified by repo (DB/API/App/Cross-Repo), impact level, and action type (Strengthen Existing, Net New, Inform Planning). Includes code evidence citations, gap descriptions, and recommended approaches.
 
@@ -74,6 +104,7 @@ Translates all 46 patterns into GSD-executable work:
 - **sf-quality-db:** New v3.0 milestone with Phases 25-33 (after v2.0 completes)
 - **sf-quality-api:** Quick item Phase 3.4 (middleware plumbing) + Insert Phase 3.5 + expand Phases 4, 7, 9, 10
 - **sf-quality-app:** 6 new requirements + context enrichment in Phases 3, 4, 7, 8, 9, 10
+- **Quality Forms extension track:** Post-core sequencing across DB/API/App with explicit entry gates and contract waves (Section H)
 - Cross-repo dependency map, parallelization tracks, context seeding strategy, verification checklist
 
 ---
@@ -121,7 +152,19 @@ These reflect architectural decisions and infrastructure realities. They are not
 | `API_Integration_Patterns/CODEBASE_REFERENCE.md` | ~25 KB | Markdown |
 | `API_Integration_Patterns/Phase_Implementation/DECISIONS.md` | ~4 KB | Markdown |
 | `API_Integration_Patterns/Phase_Implementation/HANDOFF_CONTEXT.md` | ~10 KB | Markdown |
-| `Quality_Forms_Module/PERSONA_PROMPT.md` | ~28 KB | Markdown |
-| `Quality_Forms_Module/CODEBASE_REFERENCE.md` | ~35 KB | Markdown |
+| `Quality_Forms_Module/README.md` | ~2 KB | Markdown |
+| `Quality_Forms_Module/PATH_CHANGES.md` | ~3 KB | Markdown |
+| `Quality_Forms_Module/00_ground_truth/PERSONA_PROMPT.md` | ~28 KB | Markdown |
+| `Quality_Forms_Module/00_ground_truth/CODEBASE_REFERENCE.md` | ~35 KB | Markdown |
 
-**Total: ~635 KB of structured architectural knowledge + execution planning.**
+| `GSD_Seeding/PREPARATION_GUIDE.md` | ~5 KB | Markdown |
+| `GSD_Seeding/OPERATIONS_DASHBOARD.md` | ~5 KB | Markdown |
+| `GSD_Seeding/PHASE_PACKET_CHECKLIST.md` | ~4 KB | Markdown |
+| `GSD_Seeding/DB_Planning/REQUIREMENTS_ADDITIONS.md` | ~6 KB | Markdown |
+| `GSD_Seeding/DB_Planning/ROADMAP_V3_SECTION.md` | ~8 KB | Markdown |
+| `GSD_Seeding/DB_Planning/PROJECT_V3_SECTION.md` | ~4 KB | Markdown |
+| `GSD_Seeding/DB_Planning/PHASE_23_24_ENRICHMENTS.md` | ~4 KB | Markdown |
+| `GSD_Seeding/DB_Planning/V3_PHASE_CONTEXTS/` (9 files) | ~50 KB | Markdown |
+| `GSD_Seeding/APP_Planning/PHASE_CONTEXT_ENRICHMENTS.md` | ~8 KB | Markdown |
+
+**Total: ~730 KB of structured architectural knowledge, execution planning, and GSD seeding content.**
