@@ -28,7 +28,7 @@ pwsh Setup.ps1
 
 | Repo | Owns | Tech Stack | Status |
 |------|------|-----------|--------|
-| **sf-quality-db** | Schema, stored procedures, views, RLS, workflow gates | T-SQL, PowerShell | Production (v1.0 shipped, v1.1 in progress) |
+| **sf-quality-db** | Schema, stored procedures, views, RLS, workflow gates | T-SQL, PowerShell | Active (v1.0 shipped, v1.1 shipped 2026-02-17, v2.0 active — Phase 21.1 complete, Phase 23 next) |
 | **sf-quality-api** | HTTP endpoints, auth boundary, SQL error mapping | C# / ASP.NET Core 9, Dapper | Early development (Phase 2 of 10) |
 | **sf-quality-app** | UI, forms, dashboards, user workflows | TypeScript / Next.js 15, React 19 | Planning (no source yet) |
 
