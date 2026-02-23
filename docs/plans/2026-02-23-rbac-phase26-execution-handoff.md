@@ -1,7 +1,7 @@
 # RBAC Phase 26 Execution Handoff (2026-02-23)
 
 ## Purpose
-Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, and Slice 04 mutation hardening.
+Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, Slice 04 mutation hardening, and Slice 05 CRUD surface hardening.
 
 ## Completed in This Session
 
@@ -12,16 +12,17 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
 - DB repo (`sf-quality-db`): `8b38cb3`
   - `.planning/phases/26-authorization-and-approval-pipeline/26-CONTEXT.md`
   - RBAC alignment addendum and decision defaults.
-- API repo (`sf-quality-api`): `a2af90a`
-  - Extended alias-resolution + permission-gate + deterministic policy envelope to remaining NCR mutation endpoints:
-    - `/v1/ncr/{id}/containment`
-    - `/v1/ncr/{id}/documents`
-    - `/v1/ncr/{id}/notes`
-  - Added regression tests for OpenAPI publication coverage (`PolicyEnvelope` + `x-entitlement`) across covered transition/mutation routes.
-  - OpenAPI publish updated to `0.6.0`.
-- App repo (`sf-quality-app`): `54a6131`
-  - Synced API contract snapshot to `0.6.0` with mutation + transition envelope coverage.
-  - Updated app state API contract version to `0.6.0`.
+- API repo (`sf-quality-api`): `7e31ae6`
+  - Extended alias-resolution + permission-gate + deterministic policy envelope to NCR CRUD mutation endpoints:
+    - `POST /v1/ncr`
+    - `POST /v1/ncr/full`
+    - `PUT /v1/ncr/{id}`
+    - `DELETE /v1/ncr/{id}`
+  - Added/extended regression tests for capability wiring and OpenAPI publication coverage (`PolicyEnvelope` + `x-entitlement`) across CRUD + mutation + transition routes.
+  - OpenAPI publish updated to `0.7.0`.
+- App repo (`sf-quality-app`): `b65b5b3`
+  - Synced API contract snapshot to `0.7.0` with CRUD + mutation + transition envelope coverage.
+  - Updated app state API contract version to `0.7.0`.
 
 ### 2) Verification and review
 - `dotnet test` in API passed (`35` passed, `0` failed).
@@ -41,17 +42,17 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
 - Preserve deny-by-default for unresolved capability aliases.
 
 ## Next Execution Target (for new chat)
-Execute Phase 26 Slice 05 CRUD surface hardening (low churn):
-1. Extend deterministic policy-envelope coverage to NCR CRUD mutation endpoints (`/ncr`, `/ncr/full`, `PUT /ncr/{id}`, `DELETE /ncr/{id}`) using explicit capability IDs and deny-by-default behavior.
-2. Add/extend publication tests to validate `PolicyEnvelope` + `x-entitlement` metadata across all covered mutation/transition routes.
-3. Publish next OpenAPI patch version and sync app snapshot.
+Execute Phase 26 Slice 06 alias-map explicitness hardening (low churn, producer-first):
+1. Promote newly-used NCR capability IDs (`F-NCR.CREATE`, `F-NCR.EDIT-DRAFT`, `F-NCR.WITHDRAW-DRAFT`) from module-fallback behavior to explicit component alias entries in DB-owned `rbac-capability-alias-map` artifact.
+2. Sync API/App alias-map snapshots and extend resolver tests to assert component-source resolution for those IDs.
+3. Keep deny-by-default behavior intact for unresolved/deferred modules and keep ABAC deferred.
 
 ---
 
 ## Paste-Ready New Chat Prompt
 
 ```text
-Continue RBAC Phase 26 execution from current pushed Slice 04 mutation-hardening state; do not repeat full-repo discovery.
+Continue RBAC Phase 26 execution from current pushed Slice 05 CRUD-hardening state; do not repeat full-repo discovery.
 
 Load this handoff first:
 - C:/Dev/sf-quality/.worktrees/workspace-remediation-2026-02-22/docs/plans/2026-02-23-rbac-phase26-execution-handoff.md
@@ -59,8 +60,8 @@ Load this handoff first:
 Commit anchors already pushed:
 - sf-quality: 739e10e
 - sf-quality-db: 8b38cb3
-- sf-quality-api: a2af90a
-- sf-quality-app: 54a6131
+- sf-quality-api: 7e31ae6
+- sf-quality-app: b65b5b3
 
 Required skill sequence:
 1. Invoke `using-superpowers` first.
@@ -75,25 +76,24 @@ Execution constraints:
 3. Preserve producer-first contract-chain gating (DB -> API -> App).
 4. Preserve explicit-grant runtime model and deny-by-default behavior.
 
-Execution scope for Slice 05:
-A) API runtime propagation
-- Apply capability alias resolution + permission gate + deterministic policy envelope to NCR CRUD mutation endpoints:
-  - `CreateNcrQuick`
-  - `CreateNcr`
-  - `UpdateNcr`
-  - `DeleteNcr`
-- Keep DB policy authority in SQL; API maps and forwards deterministic envelope only.
+Execution scope for Slice 06:
+A) DB producer contract artifact
+- Update `sf-quality-db/.planning/contracts/rbac-capability-alias-map.json`:
+  - add explicit `componentAliases` entries for:
+    - `F-NCR.CREATE`
+    - `F-NCR.EDIT-DRAFT`
+    - `F-NCR.WITHDRAW-DRAFT`
+- Preserve existing module aliases and deny/deferred behavior.
+- Keep ABAC decision defer unchanged.
 
-B) OpenAPI + App sync
-- Update `.planning/contracts/api-openapi.publish.json` with newly-covered CRUD operation response/envelope metadata.
-- Bump API `info.version` patch.
-- Sync `sf-quality-app/.planning/contracts/api-openapi.snapshot.json`.
-- Update API/App `.planning/STATE.md` contract version lines.
+B) API/App snapshot sync
+- Sync API snapshot: `sf-quality-api/.planning/contracts/rbac-capability-alias-map.snapshot.json`.
+- Sync App snapshot: `sf-quality-app/.planning/contracts/rbac-capability-alias-map.snapshot.json`.
+- Update `.planning/STATE.md` notes only if artifact version lines require reconciliation.
 
 C) Tests
-- Add/extend API tests to assert:
-  - capability IDs are wired for covered mutation handlers
-  - OpenAPI publish includes `PolicyEnvelope` + `x-entitlement` for all covered mutation/transition routes
+- Extend API resolver tests to assert explicit capabilities resolve with `ResolutionSource = component`.
+- Keep permission-gate runtime behavior and deterministic envelope shape unchanged.
 
 D) Verification
 - `dotnet test` (API)
