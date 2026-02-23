@@ -1,0 +1,9 @@
+
+========================================
+Enforcement Registry Validation
+========================================
+Repository: C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-db
+CheckGlobalGsd: False
+Skipping local global-GSD marker checks. Use -CheckGlobalGsd to enable.
+
+Enforcement registry validation PASSED.

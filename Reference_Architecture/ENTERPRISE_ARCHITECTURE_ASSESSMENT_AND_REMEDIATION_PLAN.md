@@ -385,3 +385,11 @@ The system is on a pragmatic enterprise trajectory, but currently sits at:
 - **Low-to-moderate alignment** with strict hexagonal goals.
 
 The remediation sequence above is authoritative because it addresses the highest coupling risks first, preserves operational behavior, and incrementally introduces stronger boundaries, richer ABAC scope control, and cleaner ports/adapters without requiring destabilizing rewrites.
+
+## Reconciliation Addendum (2026-02-22)
+
+- Structural remediation requirements are tracked under `STRUCT-01..10` to avoid collision with existing `ARCH-*` IDs.
+- DB Phase 25 now explicitly anchors `STRUCT-01`/`STRUCT-02`/`STRUCT-03` outcomes.
+- ABAC deepening is controlled by a dedicated Phase 26.1 decision gate and dated ADR path.
+- API Phase 3.6 is recognized as the required ports/adapters insertion before broader API continuation.
+- Quality Forms entry gating includes explicit `STRUCT-10` FK policy closure.

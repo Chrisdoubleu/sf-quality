@@ -634,6 +634,7 @@ After all phases complete across all repos:
 If Section H is executed, add:
 
 7. **Quality Forms entry-gate audit:** Verify all nine checks in `Quality_Forms_Module/03_adjudication/quality-forms-module-final-authoritative-review.md` "Implementation Start Criteria" are green before opening Quality Forms phases in any child repo.
+8. **STRUCT-10 FK policy audit:** Verify `Quality_Forms_Module/04_packages/quality-inspection-forms-module-package/docs/08_inspection_fk_policy.md` is approved and referenced before opening Quality Forms phases.
 
 ---
 
@@ -657,6 +658,7 @@ This track is **not** part of the original 46-pattern closure scope. It is a fol
 3. API 50414 handling uses 202 contract semantics (per `API_Integration_Patterns/Phase_Implementation/DECISIONS.md`), and Quality Forms docs are aligned to that behavior.
 4. All nine "Implementation Start Criteria" items in the Quality Forms final review are checked.
 5. Quality Forms API docs are normalized to the active API conventions (`/v1` route versioning, contract-chain publication steps, deterministic error mapping).
+6. STRUCT-10 inspection FK policy is approved in `Quality_Forms_Module/04_packages/quality-inspection-forms-module-package/docs/08_inspection_fk_policy.md`.
 
 ### H2. Phase Insertion Strategy Across Repos
 
@@ -725,3 +727,11 @@ When H2 begins, update child repo planning files (in repo context):
 3. Preserve route governance: inspection endpoints must be versioned under `/v1`.
 4. Enforce contract chain after each wave: DB manifest -> API publish -> App snapshot.
 5. Do not start API/App Quality Forms execution while DB checklist gates are open.
+
+## Reconciliation Addendum (2026-02-22)
+
+- Namespace split: keep `ARCH-*` and add `STRUCT-01` through `STRUCT-10` for structural-remediation tracking.
+- Phase 25 is expanded to explicitly cover `STRUCT-01`, `STRUCT-02`, and `STRUCT-03` boundary hardening outcomes.
+- Phase 26.1 is inserted as an ABAC deepening branch controlled by an explicit decision gate.
+- API Phase 3.6 is inserted for ports/adapters refactoring and endpoint SQL boundary cleanup.
+- Pre-QF entry requires `STRUCT-10` inspection FK policy approval and stage-gate linkage.
