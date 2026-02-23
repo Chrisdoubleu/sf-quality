@@ -98,18 +98,19 @@ The [Pattern Mapping](Pattern_Mapping.md) identifies 46 patterns (24 DB, 12 API,
 **Patterns:** #1, #7, #6
 
 **Deliverables:**
-- `dbo.Role.ParentRoleId` + subtractive-inheritance validator
-- `security.vw_EffectiveCrudMatrix` diagnostic view
-- Centralized SoD helper (`workflow.usp_EnforceSeparationOfDuties`)
-- Resolver proc `workflow.usp_ResolveApprovers` for dynamic routing
-- Field-change-detection guard expression syntax on `workflow.WorkflowTransition`
+- Business-role overlay mapping between RBAC package capability IDs (`F-*`) and runtime permission codes (`WF.*`) with deterministic alias resolution.
+- Delegation hierarchy metadata for role-assignment authority only (no runtime permission inheritance).
+- `security.vw_EffectiveCrudMatrix` diagnostic view (effective grants + deny reasons + merged constraints).
+- Centralized SoD helper (`workflow.usp_EnforceSeparationOfDuties`) with explicit waiver checks.
+- Resolver proc `workflow.usp_ResolveApprovers` for dynamic routing using explicit grants and scope constraints.
 
 **Dependencies:** Phase 25 (guard definitions)
 
 **Acceptance criteria (gate for Phase 27):**
-1. `dbo.Role.ParentRoleId` column exists with subtractive-inheritance validator callable
-2. `security.vw_EffectiveCrudMatrix` returns role x data x CRUD results
-3. `workflow.usp_ResolveApprovers` resolves dynamic approvers for a test transition
+1. Capability alias mapping resolves `F-*` -> `WF.*` deterministically for test transitions.
+2. Permission evaluation remains explicit-grant-only; hierarchy metadata is not used for inherited allow decisions.
+3. `security.vw_EffectiveCrudMatrix` returns role x data x CRUD with deterministic conflict handling.
+4. `workflow.usp_ResolveApprovers` resolves dynamic approvers for a test transition using assignment scope + constraints.
 
 #### Phase 27: Approval Lifecycle and Timeout Processing
 
@@ -489,7 +490,7 @@ Can interleave with API Phase 4-6 execution:
 sf-quality-db: /gsd:discuss-phase 25  →  /gsd:plan-phase 25  →  /gsd:execute-phase 25
 sf-quality-db: /gsd:verify-work 25    (acceptance: guard definitions table queryable, EightDStep has StepStatus, vw_EightDCompletionStatus returns results)
 sf-quality-db: /gsd:discuss-phase 26  →  /gsd:plan-phase 26  →  /gsd:execute-phase 26
-sf-quality-db: /gsd:verify-work 26    (acceptance: ParentRoleId + validator exist, vw_EffectiveCrudMatrix queryable, usp_ResolveApprovers callable)
+sf-quality-db: /gsd:verify-work 26    (acceptance: F-* to WF.* alias mapping deterministic, explicit-grant-only evaluation preserved, vw_EffectiveCrudMatrix queryable, usp_ResolveApprovers callable)
 sf-quality-db: /gsd:discuss-phase 27  →  /gsd:plan-phase 27  →  /gsd:execute-phase 27
 sf-quality-db: /gsd:verify-work 27    (acceptance: timeout processor runs, presave transitions commit immediately, compensated status on rejection)
 sf-quality-db: /gsd:discuss-phase 28  →  /gsd:plan-phase 28  →  /gsd:execute-phase 28
