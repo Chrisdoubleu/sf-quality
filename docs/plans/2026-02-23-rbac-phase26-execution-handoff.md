@@ -1,7 +1,7 @@
 # RBAC Phase 26 Execution Handoff (2026-02-23)
 
 ## Purpose
-Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, Slice 04 mutation hardening, and Slice 05 CRUD surface hardening.
+Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, Slice 04 mutation hardening, Slice 05 CRUD surface hardening, and Slice 06 alias-map explicitness hardening.
 
 ## Completed in This Session
 
@@ -9,23 +9,23 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
 - Root repo (`sf-quality`): `739e10e`
   - `Reference_Architecture/Execution_Plan.md`
   - Phase 26 wording aligned to business-layer overlay + explicit-grant runtime model.
-- DB repo (`sf-quality-db`): `8b38cb3`
-  - `.planning/phases/26-authorization-and-approval-pipeline/26-CONTEXT.md`
-  - RBAC alignment addendum and decision defaults.
-- API repo (`sf-quality-api`): `7e31ae6`
-  - Extended alias-resolution + permission-gate + deterministic policy envelope to NCR CRUD mutation endpoints:
-    - `POST /v1/ncr`
-    - `POST /v1/ncr/full`
-    - `PUT /v1/ncr/{id}`
-    - `DELETE /v1/ncr/{id}`
-  - Added/extended regression tests for capability wiring and OpenAPI publication coverage (`PolicyEnvelope` + `x-entitlement`) across CRUD + mutation + transition routes.
-  - OpenAPI publish updated to `0.7.0`.
-- App repo (`sf-quality-app`): `b65b5b3`
-  - Synced API contract snapshot to `0.7.0` with CRUD + mutation + transition envelope coverage.
-  - Updated app state API contract version to `0.7.0`.
+- DB repo (`sf-quality-db`): `4daab11`
+  - Published producer alias-map artifact:
+    - `.planning/contracts/rbac-capability-alias-map.json`
+  - Added explicit component aliases for:
+    - `F-NCR.CREATE`
+    - `F-NCR.EDIT-DRAFT`
+    - `F-NCR.WITHDRAW-DRAFT`
+- API repo (`sf-quality-api`): `ce706d2`
+  - Synced alias-map snapshot:
+    - `.planning/contracts/rbac-capability-alias-map.snapshot.json`
+  - Extended resolver tests to require explicit component-source resolution for CRUD capabilities.
+- App repo (`sf-quality-app`): `2a66503`
+  - Synced alias-map snapshot:
+    - `.planning/contracts/rbac-capability-alias-map.snapshot.json`
 
 ### 2) Verification and review
-- `dotnet test` in API passed (`35` passed, `0` failed).
+- `dotnet test` in API passed (`38` passed, `0` failed).
 - `pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly` passed.
 - Formal review completed with no remaining material findings.
 
@@ -42,26 +42,26 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
 - Preserve deny-by-default for unresolved capability aliases.
 
 ## Next Execution Target (for new chat)
-Execute Phase 26 Slice 06 alias-map explicitness hardening (low churn, producer-first):
-1. Promote newly-used NCR capability IDs (`F-NCR.CREATE`, `F-NCR.EDIT-DRAFT`, `F-NCR.WITHDRAW-DRAFT`) from module-fallback behavior to explicit component alias entries in DB-owned `rbac-capability-alias-map` artifact.
-2. Sync API/App alias-map snapshots and extend resolver tests to assert component-source resolution for those IDs.
-3. Keep deny-by-default behavior intact for unresolved/deferred modules and keep ABAC deferred.
+Execute Phase 26 Slice 07 mutation alias explicitness + naming alignment (low churn, producer-first):
+1. Promote remaining API-used mutation capability IDs from fallback to explicit alias entries (at minimum: `F-NCR.NOTE.ADD`, `F-NCR.DOC.LINK`).
+2. Decide and document naming alignment for document capability (`F-NCR.DOC.LINK` vs RBAC package `F-NCR.DOC.ATTACH`) with backward-compatible alias handling.
+3. Sync API/App alias snapshots and extend resolver tests for explicit component resolution + alias compatibility behavior.
 
 ---
 
 ## Paste-Ready New Chat Prompt
 
 ```text
-Continue RBAC Phase 26 execution from current pushed Slice 05 CRUD-hardening state; do not repeat full-repo discovery.
+Continue RBAC Phase 26 execution from current pushed Slice 06 alias-map-explicitness state; do not repeat full-repo discovery.
 
 Load this handoff first:
 - C:/Dev/sf-quality/.worktrees/workspace-remediation-2026-02-22/docs/plans/2026-02-23-rbac-phase26-execution-handoff.md
 
 Commit anchors already pushed:
-- sf-quality: 739e10e
-- sf-quality-db: 8b38cb3
-- sf-quality-api: 7e31ae6
-- sf-quality-app: b65b5b3
+- sf-quality: 8c7b92a
+- sf-quality-db: 4daab11
+- sf-quality-api: ce706d2
+- sf-quality-app: 2a66503
 
 Required skill sequence:
 1. Invoke `using-superpowers` first.
@@ -76,23 +76,23 @@ Execution constraints:
 3. Preserve producer-first contract-chain gating (DB -> API -> App).
 4. Preserve explicit-grant runtime model and deny-by-default behavior.
 
-Execution scope for Slice 06:
+Execution scope for Slice 07:
 A) DB producer contract artifact
 - Update `sf-quality-db/.planning/contracts/rbac-capability-alias-map.json`:
   - add explicit `componentAliases` entries for:
-    - `F-NCR.CREATE`
-    - `F-NCR.EDIT-DRAFT`
-    - `F-NCR.WITHDRAW-DRAFT`
+    - `F-NCR.NOTE.ADD`
+    - `F-NCR.DOC.LINK` (or canonical `F-NCR.DOC.ATTACH` + compatibility alias decision)
 - Preserve existing module aliases and deny/deferred behavior.
 - Keep ABAC decision defer unchanged.
 
 B) API/App snapshot sync
 - Sync API snapshot: `sf-quality-api/.planning/contracts/rbac-capability-alias-map.snapshot.json`.
 - Sync App snapshot: `sf-quality-app/.planning/contracts/rbac-capability-alias-map.snapshot.json`.
-- Update `.planning/STATE.md` notes only if artifact version lines require reconciliation.
+- Update `.planning/STATE.md` notes only if artifact/version lines require reconciliation.
 
 C) Tests
 - Extend API resolver tests to assert explicit capabilities resolve with `ResolutionSource = component`.
+- Add compatibility assertion for document capability naming decision (`DOC.LINK` and/or `DOC.ATTACH`).
 - Keep permission-gate runtime behavior and deterministic envelope shape unchanged.
 
 D) Verification
