@@ -218,10 +218,27 @@ Capture the full execution scope discussed: immediate infra/auth de-risking plus
 ## Findings Block Template (Use In Every Final Message)
 ```text
 Findings
-- [Medium][Open][FND-20260223-01] <finding text>
-- [Low][Open][FND-20260223-02] <finding text>
+- [Medium][Open][FND-YYYYMMDD-XX] <finding text>
+- [Low][Open][FND-YYYYMMDD-YY] <finding text>
 
 Carry-Forward Coverage
-- FND-20260223-01 -> C:/Dev/sf-quality/docs/plans/<handoff>.md:<line>
-- FND-20260223-02 -> C:/Dev/sf-quality/docs/plans/<handoff>.md:<line>
+- FND-YYYYMMDD-XX -> C:/Dev/sf-quality/docs/plans/<handoff>.md:<line>
+- FND-YYYYMMDD-YY -> C:/Dev/sf-quality/docs/plans/<handoff>.md:<line>
 ```
+
+## Pre-Execution Closeout Snapshot (2026-02-23)
+1. Workspace repo `sf-quality` merged and pushed to `origin/master` at `a0989d5f5118f345916a9478a32aa6082a564200`.
+2. DB repo `sf-quality-db` merged locally to `main` at `2c13db6fbd81a2ce822e90182fe41c064f681f11`.
+3. Direct push to `origin/main` is blocked by repository rule (PR required); branch `phase27/slice01-timeout-contract-local` was pushed and PR opened:
+   - `https://github.com/Chrisdoubleu/sf-quality-db/pull/13`
+4. API/App repos remain clean on `main` baseline (no new local changes).
+
+## Open Findings Carry-Forward
+- [Medium][Open][FND-20260223-01] `sf-quality-db` direct push to `main` is blocked by repository rules; producer baseline integration remains pending until PR `#13` merges.
+- [Low][Open][FND-20260223-02] Local `sf-quality-db/main` remains ahead of `origin/main` by 3 commits while PR `#13` is pending, creating accidental-work risk if new changes are started from local `main` before sync.
+
+## Findings Mapping Table
+| finding_id | severity | status | owner_wave | target_handoff_file | target_line_ref | closure_slice |
+| --- | --- | --- | --- | --- | --- | --- |
+| FND-20260223-01 | Medium | Open | Pre-Execution | C:/Dev/sf-quality/docs/plans/2026-02-23-immediate-deployment-rbac-full-sequence-handoff.md | `Open Findings Carry-Forward` section | Merge after PR #13 |
+| FND-20260223-02 | Low | Open | Pre-Execution | C:/Dev/sf-quality/docs/plans/2026-02-23-immediate-deployment-rbac-full-sequence-handoff.md | `Open Findings Carry-Forward` section | Post-merge sync to `origin/main` |
