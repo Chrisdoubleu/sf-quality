@@ -34,11 +34,18 @@ Hand off to a new execution chat to start Phase 27 (`approval-lifecycle-timeout-
   - `C:/Dev/sf-quality-app/.planning/contracts/api-openapi.snapshot.json`
 
 ## Non-Negotiable Constraints
-1. Do not rerun full remediation or full `.planning` scans.
-2. Preserve ABAC defer decision unless explicit trigger change is evidenced.
-3. Preserve producer-first contract-chain gating (DB -> API -> App).
-4. Preserve explicit-grant runtime model and deny-by-default behavior.
-5. Keep patch set low churn and verification-first.
+1. Do not rerun full remediation scans.
+2. Full planning corpus scans are mandatory before planning and before closeout:
+   - `sf-quality-db/.planning/**` and `sf-quality-db/.planning/phases/**`
+   - `sf-quality-api/.planning/**` and `sf-quality-api/.planning/phases/**`
+   - `sf-quality-app/.planning/**` and `sf-quality-app/.planning/phases/**`
+3. Maintain a Planning Impact Matrix across all reviewed planning/phase files:
+   - `repo`, `file`, `change required?`, `reason`, `owner wave`, `status`
+4. No planning/state/contracts file may be left implicit; each must be updated or marked explicit `no-change` with rationale.
+5. Preserve ABAC defer decision unless explicit trigger change is evidenced.
+6. Preserve producer-first contract-chain gating (DB -> API -> App).
+7. Preserve explicit-grant runtime model and deny-by-default behavior.
+8. Keep patch set low churn and verification-first.
 
 ## Required Skill Sequence For New Chat
 1. Invoke `using-superpowers` first.
@@ -105,15 +112,22 @@ Read-first inputs:
 - C:/Dev/sf-quality-app/.planning/contracts/api-openapi.snapshot.json
 
 Execution constraints:
-1. Do not rerun full remediation or full planning scans.
-2. Preserve ABAC defer decision unless explicit trigger change is evidenced.
-3. Preserve producer-first contract-chain gating (DB -> API -> App).
-4. Preserve explicit-grant runtime model and deny-by-default behavior.
-5. Keep patch set low churn and verification-first.
+1. Do not rerun full remediation scans.
+2. Brainstormer and planner must scan all planning corpus files before planning and before closeout:
+   - sf-quality-db/.planning/** and sf-quality-db/.planning/phases/**
+   - sf-quality-api/.planning/** and sf-quality-api/.planning/phases/**
+   - sf-quality-app/.planning/** and sf-quality-app/.planning/phases/**
+3. Maintain a Planning Impact Matrix (repo/file/change-required/reason/owner-wave/status) and keep it current per wave.
+4. No planning/state/contracts file may be left implicit; each must be either updated or marked explicit no-change with rationale.
+5. Preserve ABAC defer decision unless explicit trigger change is evidenced.
+6. Preserve producer-first contract-chain gating (DB -> API -> App).
+7. Preserve explicit-grant runtime model and deny-by-default behavior.
+8. Keep patch set low churn and verification-first.
 
 Deliverables:
 A) Define and document Phase 27 slice map, then finalize an implementable Slice 01.
 B) Apply Slice 01 DB-first implementation and only required downstream API/App updates.
 C) Run verification (`Invoke-CycleChecks.ps1 -ChangedOnly` in touched repos; include `dotnet test` in API if runtime code changed).
 D) Provide review findings and a follow-up prompt for the next Phase 27 slice.
+E) Include the Planning Impact Matrix showing explicit update/no-change decisions for all reviewed planning/phase files.
 ```
