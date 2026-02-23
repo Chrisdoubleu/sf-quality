@@ -1,14 +1,14 @@
 # RBAC Phase 26 Execution Handoff (2026-02-23)
 
 ## Purpose
-Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, Slice 04 mutation hardening, Slice 05 CRUD surface hardening, Slice 06 alias-map explicitness hardening, and Slice 07 mutation alias explicitness + naming alignment.
+Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, Slice 04 mutation hardening, Slice 05 CRUD surface hardening, Slice 06 alias-map explicitness hardening, Slice 07 mutation alias explicitness + naming alignment, and Slice 08 canonical capability adoption.
 
 ## Completed in This Session
 
 ### 1) Pushed commits
-- Root repo (`sf-quality`): `abc9985`
+- Root repo (`sf-quality`): `de6c02f`
   - `docs/plans/2026-02-23-rbac-phase26-execution-handoff.md`
-  - Rolled handoff forward after Slice 06 completion.
+  - Rolled handoff forward after Slice 07 completion and anchor alignment.
 - DB repo (`sf-quality-db`): `41daace`
   - Updated producer alias-map artifact:
     - `.planning/contracts/rbac-capability-alias-map.json`
@@ -16,14 +16,15 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
     - `F-NCR.NOTE.ADD`
     - `F-NCR.DOC.LINK` (compatibility alias)
     - `F-NCR.DOC.ATTACH` (canonical)
-  - Documented naming alignment rule in `usageRules`.
-- API repo (`sf-quality-api`): `9a88f14`
-  - Synced alias-map snapshot:
-    - `.planning/contracts/rbac-capability-alias-map.snapshot.json`
-  - Extended resolver tests to require explicit component-source resolution for NOTE/DOC mutation capabilities and DOC compatibility alias behavior.
-- App repo (`sf-quality-app`): `c975702`
-  - Synced alias-map snapshot:
-    - `.planning/contracts/rbac-capability-alias-map.snapshot.json`
+  - Documented naming alignment rule in `usageRules` (`DOC.ATTACH` canonical; `DOC.LINK` compatibility).
+- API repo (`sf-quality-api`): `6397e1d`
+  - Adopted canonical document capability ID in API runtime + entitlements:
+    - `F-NCR.DOC.ATTACH` now used by `CreateDocumentAndLinkNcr` route metadata and permission gate.
+  - OpenAPI publish updated to `0.8.0` with canonical document entitlement metadata.
+  - Updated tests to assert canonical route capability ID while preserving alias compatibility assertions.
+- App repo (`sf-quality-app`): `8c79435`
+  - Synced API contract snapshot to `0.8.0` with canonical document capability entitlement metadata.
+  - Updated app state API contract version to `0.8.0`.
 
 ### 2) Verification and review
 - `dotnet test` in API passed (`41` passed, `0` failed).
@@ -43,26 +44,28 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
 - Preserve deny-by-default for unresolved capability aliases.
 
 ## Next Execution Target (for new chat)
-Execute Phase 26 Slice 08 canonical capability adoption (low churn, producer-first):
-1. Adopt canonical document capability ID (`F-NCR.DOC.ATTACH`) in API entitlement metadata and handler capability constants while preserving backward compatibility.
-2. Keep compatibility alias (`F-NCR.DOC.LINK`) in DB alias-map artifact and add explicit tests that both IDs resolve to the same runtime permission.
-3. Update OpenAPI publish/snapshot artifacts only where entitlement capability IDs change; preserve envelope shape and deny-by-default behavior.
+Phase 26 slice stream is complete (Slice 01 through Slice 08).
+
+Next chat should perform closeout:
+1. Final cross-repo review for any residual contract drift and stale planning references.
+2. Confirm no additional Phase 26 slice is required; if required, define a narrowly-scoped Slice 09 from concrete findings only.
+3. Prepare the Phase 26 completion handoff and transition target (next milestone/phase chain).
 
 ---
 
 ## Paste-Ready New Chat Prompt
 
 ```text
-Continue RBAC Phase 26 execution from current pushed Slice 07 alias-alignment state; do not repeat full-repo discovery.
+Finalize RBAC Phase 26 after Slice 08 completion; do not repeat full-repo discovery.
 
 Load this handoff first:
 - C:/Dev/sf-quality/.worktrees/workspace-remediation-2026-02-22/docs/plans/2026-02-23-rbac-phase26-execution-handoff.md
 
 Commit anchors already pushed:
-- sf-quality: abc9985
+- sf-quality: de6c02f
 - sf-quality-db: 41daace
-- sf-quality-api: 9a88f14
-- sf-quality-app: c975702
+- sf-quality-api: 6397e1d
+- sf-quality-app: 8c79435
 
 Required skill sequence:
 1. Invoke `using-superpowers` first.
@@ -77,23 +80,18 @@ Execution constraints:
 3. Preserve producer-first contract-chain gating (DB -> API -> App).
 4. Preserve explicit-grant runtime model and deny-by-default behavior.
 
-Execution scope for Slice 08:
-A) DB producer contract artifact
-- Update `sf-quality-db/.planning/contracts/rbac-capability-alias-map.json`:
-  - retain canonical `F-NCR.DOC.ATTACH` + compatibility `F-NCR.DOC.LINK` entries.
-  - ensure both resolve to the same runtime permission.
-- Preserve existing module aliases and deny/deferred behavior.
-- Keep ABAC decision defer unchanged.
+Execution scope for Phase 26 closeout:
+A) Review + drift audit
+- Re-run targeted planning/contract consistency checks for DB->API->App chain.
+- Identify and document any stale references (versions, capability IDs, or contract notes).
 
-B) API/App snapshot sync
-- Sync API snapshot: `sf-quality-api/.planning/contracts/rbac-capability-alias-map.snapshot.json`.
-- Sync App snapshot: `sf-quality-app/.planning/contracts/rbac-capability-alias-map.snapshot.json`.
-- Update `.planning/STATE.md` notes only if artifact/version lines require reconciliation.
+B) Decision
+- If no material findings: mark Phase 26 complete.
+- If findings exist: define a minimal, concrete Slice 09 with explicit scope and producer-first ordering.
 
-C) Tests
-- Extend API tests to assert API routes use canonical document capability ID in entitlement metadata.
-- Retain/extend resolver compatibility assertions (`DOC.LINK` and `DOC.ATTACH` both explicit component aliases with same runtime permission).
-- Keep permission-gate runtime behavior and deterministic envelope shape unchanged.
+C) Documentation
+- Update handoff to a final Phase 26 closeout state (or Slice 09 kickoff state).
+- Include next execution target beyond Phase 26.
 
 D) Verification
 - `dotnet test` (API)
