@@ -250,7 +250,7 @@ All three repos share:
 | Environment | Server | Database |
 |-------------|--------|----------|
 | Dev | `sql-sf-quality-0b1f-dev.database.windows.net` | `sqldb-quality-core-dev` |
-| Staging | `sql-sf-quality-0b1f-staging.database.windows.net` | `sqldb-quality-core-staging` |
+| Staging | `sql-sf-quality-0b1f-dev.database.windows.net` | `sqldb-quality-core-staging` |
 | Prod | `sql-sf-quality-0b1f-dev.database.windows.net` | `sqldb-quality-core-prod` |
 | Clean | `sql-sf-quality-0b1f-dev.database.windows.net` | `sqldb-quality-core-clean` |
 

@@ -242,3 +242,24 @@ Carry-Forward Coverage
 | --- | --- | --- | --- | --- | --- | --- |
 | FND-20260223-01 | Medium | Open | Pre-Execution | C:/Dev/sf-quality/docs/plans/2026-02-23-immediate-deployment-rbac-full-sequence-handoff.md | `Open Findings Carry-Forward` section | Merge after PR #13 |
 | FND-20260223-02 | Low | Open | Pre-Execution | C:/Dev/sf-quality/docs/plans/2026-02-23-immediate-deployment-rbac-full-sequence-handoff.md | `Open Findings Carry-Forward` section | Post-merge sync to `origin/main` |
+
+## Slice 07 Revalidation Snapshot (2026-02-23)
+
+### Findings
+- [Medium][Open][FND-20260223-01] `sf-quality-db/main` producer baseline integration remains PR-gated pending merge path to `origin/main`.
+- [Low][Open][FND-20260223-02] Local `sf-quality-db/main` remains ahead of `origin/main` by 3 commits, preserving accidental-work drift risk.
+- [Medium][Closed][FND-20260223-03] Processor adoption dependency (raw apply/ack bypass risk) for integration runtime role was closed by wrapper-first execute posture hardening and bootstrap direct-bypass checks.
+- [Low][Open][FND-20260223-04] `workflow.usp_CheckApprovalTimeoutProcessorBootstrap` still requires deployment-runtime execution as the target automation principal to produce effective readiness evidence.
+
+### Open Findings Carry-Forward (Slice 07)
+- [Medium][Open][FND-20260223-01] Carry forward to Slice 07 execution handoff until PR-gated baseline merge/sync is complete.
+- [Low][Open][FND-20260223-02] Carry forward to Slice 07 execution handoff until local/remote main drift is resolved.
+- [Low][Open][FND-20260223-04] Carry forward to Slice 07 execution handoff until bootstrap self-check evidence is captured as target automation principal.
+
+### Findings Mapping Table (Slice 07)
+| finding_id | severity | status | owner_wave | target_handoff_file | target_line_ref | closure_slice |
+| --- | --- | --- | --- | --- | --- | --- |
+| FND-20260223-01 | Medium | Open | Slice 07 | C:/Dev/sf-quality/docs/plans/2026-02-23-phase27-slice07-execution-handoff.md | `Open Findings Carry-Forward` section | Slice 08 (post-PR merge/sync) |
+| FND-20260223-02 | Low | Open | Slice 07 | C:/Dev/sf-quality/docs/plans/2026-02-23-phase27-slice07-execution-handoff.md | `Open Findings Carry-Forward` section | Slice 08 (main/origin sync) |
+| FND-20260223-03 | Medium | Closed | Slice 07 | C:/Dev/sf-quality/docs/plans/2026-02-23-phase27-slice07-execution-handoff.md | `Findings Revalidation` section | Closed in Slice 07 |
+| FND-20260223-04 | Low | Open | Slice 07 | C:/Dev/sf-quality/docs/plans/2026-02-23-phase27-slice07-execution-handoff.md | `Open Findings Carry-Forward` section | Slice 08 (runtime bootstrap evidence) |
