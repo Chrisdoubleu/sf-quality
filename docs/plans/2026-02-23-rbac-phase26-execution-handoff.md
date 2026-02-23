@@ -1,14 +1,14 @@
 # RBAC Phase 26 Execution Handoff (2026-02-23)
 
 ## Purpose
-Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runtime integration, Slice 03 transition propagation, Slice 04 mutation hardening, Slice 05 CRUD surface hardening, Slice 06 alias-map explicitness hardening, Slice 07 mutation alias explicitness + naming alignment, and Slice 08 canonical capability adoption.
+Close out Phase 26 after completing Slice 01 through Slice 08 and recording final review + transition target.
 
 ## Completed in This Session
 
 ### 1) Pushed commits
-- Root repo (`sf-quality`): `08fd024`
+- Root repo (`sf-quality`): `3d87931`
   - `docs/plans/2026-02-23-rbac-phase26-execution-handoff.md`
-  - Rolled handoff forward after Slice 07 completion and anchor alignment.
+  - Rolled handoff forward after Slice 08 completion and anchor alignment.
 - DB repo (`sf-quality-db`): `41daace`
   - Updated producer alias-map artifact:
     - `.planning/contracts/rbac-capability-alias-map.json`
@@ -44,25 +44,37 @@ Hand off after completing Phase 26 Slice 01 contract publication, Slice 02 runti
 - Preserve deny-by-default for unresolved capability aliases.
 
 ## Next Execution Target (for new chat)
-Phase 26 slice stream is complete (Slice 01 through Slice 08).
+Phase 26 is complete (Slice 01 through Slice 08).
 
-Next chat should perform closeout:
-1. Final cross-repo review for any residual contract drift and stale planning references.
-2. Confirm no additional Phase 26 slice is required; if required, define a narrowly-scoped Slice 09 from concrete findings only.
-3. Prepare the Phase 26 completion handoff and transition target (next milestone/phase chain).
+Closeout decision:
+1. No Slice 09 is required from current evidence.
+2. No material contract drift was found in DB->API->App checks.
+3. Transition to next chain target: DB Phase 27 (`Approval Lifecycle and Timeout Processing`) under producer-first gating.
+
+Residual pre-existing local drift (documented, out of scope for Phase 26 closeout):
+1. `sf-quality-db/.planning/contracts/README.md`
+2. `sf-quality-db/.planning/phases/26-authorization-and-approval-pipeline/26-CONTEXT.md`
+3. `sf-quality-db/.planning/contracts/deny-reason-envelope.json`
+4. `sf-quality-db/docs/handoffs/Role Security/RBAC-Package-2026-02-23/`
+5. `sf-quality-api/.planning/REQUIREMENTS.md`
+6. `sf-quality-api/.planning/contracts/README.md`
+7. `sf-quality-api/.planning/phases/07-workflow-action-items/07-CONTEXT.md`
+8. `sf-quality-app/.planning/REQUIREMENTS.md`
+9. `sf-quality-app/.planning/contracts/README.md`
+10. `sf-quality-app/.planning/phases/07-workflow-action-approvals/07-CONTEXT.md`
 
 ---
 
 ## Paste-Ready New Chat Prompt
 
 ```text
-Finalize RBAC Phase 26 after Slice 08 completion; do not repeat full-repo discovery.
+Start post-Phase-26 execution from the finalized closeout state; do not repeat full-repo discovery.
 
 Load this handoff first:
 - C:/Dev/sf-quality/.worktrees/workspace-remediation-2026-02-22/docs/plans/2026-02-23-rbac-phase26-execution-handoff.md
 
 Commit anchors already pushed:
-- sf-quality: 08fd024
+- sf-quality: 3d87931
 - sf-quality-db: 41daace
 - sf-quality-api: 6397e1d
 - sf-quality-app: 8c79435
@@ -80,25 +92,9 @@ Execution constraints:
 3. Preserve producer-first contract-chain gating (DB -> API -> App).
 4. Preserve explicit-grant runtime model and deny-by-default behavior.
 
-Execution scope for Phase 26 closeout:
-A) Review + drift audit
-- Re-run targeted planning/contract consistency checks for DB->API->App chain.
-- Identify and document any stale references (versions, capability IDs, or contract notes).
-
-B) Decision
-- If no material findings: mark Phase 26 complete.
-- If findings exist: define a minimal, concrete Slice 09 with explicit scope and producer-first ordering.
-
-C) Documentation
-- Update handoff to a final Phase 26 closeout state (or Slice 09 kickoff state).
-- Include next execution target beyond Phase 26.
-
-D) Verification
-- `dotnet test` (API)
-- `pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly`
-- Report pass/fail by repo and any drift findings.
-
-E) Review + Handoff
-- Provide formal review findings by severity.
-- Provide next-slice follow-up prompt.
+Execution scope (post-Phase-26):
+A) Kick off DB Phase 27 planning/execution (`Approval Lifecycle and Timeout Processing`).
+B) Preserve ABAC defer decision and explicit-grant runtime model.
+C) Keep producer-first gates active (DB -> API -> App).
+D) Run verification gates before any completion claim.
 ```
