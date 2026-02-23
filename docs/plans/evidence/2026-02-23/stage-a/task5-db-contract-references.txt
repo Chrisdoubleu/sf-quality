@@ -1,0 +1,4 @@
+DB contract reference checks PASSED.
+  Manifest version: 1.0.0
+  Procedures in manifest: 80
+  Views in manifest: 36

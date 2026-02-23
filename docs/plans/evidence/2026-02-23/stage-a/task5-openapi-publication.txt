@@ -1,0 +1,3 @@
+OpenAPI publication checks PASSED.
+  OpenAPI version: 0.3.0
+  Paths in artifact: 26
