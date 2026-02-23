@@ -1,0 +1,11 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  SfQualityApi -> C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-api\src\SfQualityApi\bin\Debug\net9.0\SfQualityApi.dll
+  SfQualityApi.Tests -> C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-api\tests\SfQualityApi.Tests\bin\Debug\net9.0\SfQualityApi.Tests.dll
+Test run for C:\Dev\sf-quality\.worktrees\workspace-remediation-2026-02-22\sf-quality-api\tests\SfQualityApi.Tests\bin\Debug\net9.0\SfQualityApi.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 10 ms - SfQualityApi.Tests.dll (net9.0)
