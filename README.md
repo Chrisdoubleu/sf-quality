@@ -53,6 +53,37 @@ To validate cross-repo consistency from any repo:
 pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly
 ```
 
+## Automated Slice Finalize
+
+Use the workspace helper to enforce the full "verify -> stage -> commit -> push -> PR" flow with repo auto-detection:
+
+```powershell
+pwsh C:/Dev/sf-quality/scripts/Finalize-Slice.ps1 `
+  -Phase 34 `
+  -Slice 03 `
+  -CommitTitle "feat(phase34): slice 03 migration 147 app bundle seeding + role-bundle wiring" `
+  -CommitBody "Seeds app bundles and role wiring from the canonical Allow matrix with integrity guards." `
+  -CreatePr
+```
+
+What it does:
+1. Detects the active repo via `git rev-parse --show-toplevel`.
+2. Loads repo-specific checks from `scripts/slice-finalize.config.json`.
+3. Fails fast if checks fail or if you're on a protected branch (`main`/`master` by default).
+4. Stages files (`git add -A` by default), commits, pushes, and opens a PR only after checks pass.
+
+Validation-only mode:
+
+```powershell
+pwsh C:/Dev/sf-quality/scripts/Finalize-Slice.ps1 -ValidateOnly
+```
+
+Repo safety gate:
+
+```powershell
+pwsh C:/Dev/sf-quality/scripts/Finalize-Slice.ps1 -ExpectedRepo sf-quality-db -ValidateOnly
+```
+
 ## Environment Setup
 
 Four Azure SQL environments are configured in `sf-quality-db/database/deploy/deploy-config.json`:
