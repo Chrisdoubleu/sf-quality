@@ -1,0 +1,18 @@
+{
+  "package": "Plant2_AI_Audit_Package_B",
+  "plant": "Plant 2",
+  "scope": "Customer Inspection & Shipping: 8.2.2.3 (Production Forms by Customer), 8.2.2.4 (Shipping Forms)",
+  "form_count": 31,
+  "file_types": {
+    ".xlsx": 27,
+    ".xls": 4
+  },
+  "excluded": [
+    "Obsolete/ subfolders",
+    "Review and Update/ subfolders",
+    "~$* temp files",
+    "Thumbs.db"
+  ],
+  "generated": "2026-02-24",
+  "companion_package": "Plant2_AI_Audit_Package_A"
+}

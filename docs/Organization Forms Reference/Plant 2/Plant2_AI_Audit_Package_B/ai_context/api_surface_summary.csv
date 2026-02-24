@@ -1,0 +1,31 @@
+path,method,operation_id,summary,status
+/v1/audit,GET,GetAuditQueue,Audit queue surface (thin gateway placeholder),published-thin-placeholder
+/v1/diagnostics/claims,GET,ClaimsDiagnostic,List authenticated user claims (development only),published
+/v1/diagnostics/health,GET,HealthCheck,Service health check,published
+/v1/eightd,GET,GetEightDQueue,8D queue surface (thin gateway placeholder),published-thin-placeholder
+/v1/ncr,POST,CreateNcrQuick,Create NCR with minimum required fields,published
+/v1/ncr/customer-approval-aging,GET,GetNcrCustomerApprovalAging,NCR customer approval aging,published
+/v1/ncr/full,POST,CreateNcr,Create NCR with all fields,published
+/v1/ncr/gate-audit,GET,GetNcrGateAudit,NCR gate transition audit trail,published
+/v1/ncr/hold-aging,GET,GetNcrHoldAging,NCR hold location aging,published
+/v1/ncr/pareto,GET,GetNcrPareto,NCR defect type Pareto analysis,published
+/v1/ncr/queue,GET,GetNcrOperationalQueue,NCR operational queue with SLA status,published
+/v1/ncr/summary,GET,GetOpenNcrSummary,Open NCR summary dashboard view,published
+/v1/ncr/{id},PUT,UpdateNcr,Update NCR fields,published
+/v1/ncr/{id},DELETE,DeleteNcr,Delete NCR,published
+/v1/ncr/{id}/close,POST,CloseNcr,Close NCR (normal or fast-close),published
+/v1/ncr/{id}/containment,POST,UpsertNcrContainmentAction,Create or update containment action,published
+/v1/ncr/{id}/containment/complete,POST,CompleteNcrContainment,Complete containment (OPEN->CONTAINED),published
+/v1/ncr/{id}/disposition,POST,RecordNcrDisposition,Record disposition lines (JSON),published
+/v1/ncr/{id}/disposition-balance,GET,GetNcrDispositionBalance,NCR disposition vs affected quantity balance,published
+/v1/ncr/{id}/documents,POST,CreateDocumentAndLinkNcr,Create and link document to NCR,published
+/v1/ncr/{id}/investigation/start,POST,StartNcrInvestigation,Start investigation (CONTAINED->INVEST),published
+/v1/ncr/{id}/linked-entities,GET,GetNcrLinkedEntities,"NCR linked entities (CAPAs, SCARs, complaints)",published
+/v1/ncr/{id}/notes,POST,AddNcrNote,Add typed operational note,published
+/v1/ncr/{id}/reinvestigate,POST,ReinvestigateNcr,Reinvestigate NCR (DISPOSED->INVEST),published
+/v1/ncr/{id}/reopen,POST,ReopenNcr,Reopen closed NCR (CLOSED->OPEN),published
+/v1/ncr/{id}/submit,POST,SubmitNcr,Submit NCR (DRAFT->OPEN),published
+/v1/ncr/{id}/verification/reject,POST,RejectNcrVerification,Reject verification (PENDVERIF->INVEST),published
+/v1/ncr/{id}/verification/submit,POST,SubmitNcrVerification,Submit for verification (DISPOSED->PENDVERIF),published
+/v1/ncr/{id}/void,POST,VoidNcr,Void NCR with reason,published
+/v1/scar,GET,GetScarQueue,SCAR queue surface (thin gateway placeholder),published-thin-placeholder

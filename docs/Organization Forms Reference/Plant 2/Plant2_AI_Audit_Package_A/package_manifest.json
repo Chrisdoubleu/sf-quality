@@ -1,0 +1,19 @@
+{
+  "package": "Plant2_AI_Audit_Package_A",
+  "plant": "Plant 2",
+  "scope": "Line Operations & Process Control: 8.2.2.1 (Lines 101-103), 8.2.2.2 (Line 102), root-level forms (8.2.2.5-8.2.2.34)",
+  "form_count": 53,
+  "file_types": {
+    ".xlsx": 49,
+    ".xls": 3,
+    ".xlsm": 1
+  },
+  "excluded": [
+    "Obsolete/ subfolders",
+    "Review and Update/ subfolders",
+    "~$* temp files",
+    "Thumbs.db"
+  ],
+  "generated": "2026-02-24",
+  "companion_package": "Plant2_AI_Audit_Package_B"
+}

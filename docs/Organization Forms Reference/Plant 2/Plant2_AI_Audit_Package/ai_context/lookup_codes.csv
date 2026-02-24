@@ -1,0 +1,19 @@
+domain,code,name,notes
+LineType,ECOAT,E-Coat,Electrodeposition
+LineType,POWDER,Powder Coat,Electrostatic powder
+LineType,LIQUID,Liquid Paint,Conventional liquid spray
+LineType,ANODIZE,Anodizing,Aluminum anodic oxidation
+LineType,EPOLISH,Electropolish,Electrochemical polish
+LineType,CFLASH,Chrome Flash,Thin chromium electroplating
+LineType,MECHFIN,Mechanical Finish,Grinding/polishing/deburring
+DispositionCode,USE-AS-IS,Use As Is,Final disposition (requires customer approval)
+DispositionCode,DEVIATE,Deviate,Final disposition (requires customer approval)
+DispositionCode,REWORK,Rework,Final disposition
+DispositionCode,RECOAT,Recoat,Final disposition
+DispositionCode,STRIP-RECOAT,Strip and Recoat,Final disposition
+DispositionCode,REPROCESS,Reprocess,Final disposition
+DispositionCode,SCRAP,Scrap,Final disposition
+DispositionCode,RETURN-CUST,Return to Customer,Final disposition
+DispositionCode,RETURN-SUPP,Return to Supplier,Final disposition
+DispositionCode,SORT,Sort,Intermediate disposition
+DispositionCode,HOLD,Hold,Intermediate disposition

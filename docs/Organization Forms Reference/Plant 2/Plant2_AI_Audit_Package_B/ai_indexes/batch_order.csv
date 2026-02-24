@@ -1,0 +1,32 @@
+batch_order,filename,category,size_kb
+1,8.2.2.3.2.1 Rollstamp BMW G07 Inspection.xlsx,inspection,15.2
+2,8.2.2.3.3.2 Mytox Inspection.xls,inspection,31.0
+3,8.2.2.3.4.1 Laval Tool Inspection.xlsx,inspection,16.0
+4,8.2.2.3.4.2 Laval Tool Buff Inspection.xlsx,inspection,22.1
+5,8.2.2.3.5.1 Metelix Inspection.xlsx,inspection,25.4
+6,8.2.2.3.5.2 Metelix Buff Inspection.xlsx,inspection,25.1
+7,8.2.2.3.5.3 Metelix Moulding-Sanding Inspection.xlsx,inspection,24.6
+8,8.2.2.3.5.4 Metelix Hummer Painted Inspection.xlsx,inspection,25.5
+9,8.2.2.3.5.6 Metelix Y2XX Highwing Painted Inspection.xlsx,inspection,25.9
+10,8.2.2.3.6.1 KB Components Inspection Sheet.xlsx,inspection,15.6
+11,8.2.2.3.6.2 KB Components Buffing Inspection Sheet.xlsx,inspection,15.6
+12,8.2.2.3.7.1 Tesla Buff Inspection.xlsx,inspection,16.6
+13,8.2.2.3.7.2 Tesla Inspection.xlsx,inspection,15.6
+14,8.2.2.3.7.3 Tesla GP12 Inspection.xlsx,inspection,15.2
+15,8.2.2.4.1 P2 Receiving Log Blank Template.xlsx,packaging_shipping,306.6
+16,8.2.2.4.11 Mytox Packslip Template.xlsx,packaging_shipping,37.4
+17,8.2.2.4.12 Rollstamp BMW Packslip Template.xlsx,packaging_shipping,33.5
+18,8.2.2.4.14 Laval Tool Packslip Template.xlsx,packaging_shipping,30.2
+19,8.2.2.4.17 KB Components Packslip Template.xls,packaging_shipping,139.0
+20,8.2.2.4.18 Polycon Packslip Template.xlsx,packaging_shipping,35.0
+21,8.2.2.4.19 Plant 2 Polycon Tracker Template.xlsx,packaging_shipping,151.3
+22,8.2.2.4.2 P2 General Pack Slip Template.xls,packaging_shipping,141.0
+23,8.2.2.4.20 Metelix Demand and Production Tracker Template.xlsx,packaging_shipping,599.2
+24,8.2.2.4.21 Laval Tracker template.xlsx,packaging_shipping,179.1
+25,8.2.2.4.3 P2 Daily Shipping Report Template.xlsx,packaging_shipping,117.6
+26,8.2.2.4.4 P2 Monthly Totals Template.xlsx,packaging_shipping,30.4
+27,8.2.2.4.5 P2 Monthly Delivery Performance Template .xlsx,packaging_shipping,182.5
+28,8.2.2.4.9 Metelix Packslip Template.xlsx,packaging_shipping,35.3
+29,8.2.2.4.22 KB Components Tracker - Template.xlsx,document_control,74.2
+30,8.2.2.2.16 Misc Customers.xls,other,38.0
+31,8.2.2.3.5.5 Metelix Hummer Spoiler Application Tracker.xlsx,other,27.1

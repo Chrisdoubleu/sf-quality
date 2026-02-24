@@ -1,0 +1,197 @@
+Source,FormDefectName,AuditProposedParentCode,AuditProposedLeafCode,AuditProposedLeafName,LiveDBParentCode,LiveDBLeafCode,LiveDBLeafName,LineTypeCode,ReconciliationStatus,ReconciliationNote
+Plant1-Claude,Light Coverage,COVERAGE,COVERAGE-LIGHT,Light Coverage,COV,COV-THN,Low Film Build / Light Coverage,POWDER,MAPPED,Audit "Light Coverage" maps to live DB "COV-THN"
+Plant1-Claude,Light Coverage,COVERAGE,COVERAGE-LIGHT,Light Coverage,COV,COV-THN,Low Film Build / Light Coverage,ECOAT,MAPPED,Same mapping for e-coat
+Plant1-ChatGPT,Light Coverage,COVERAGE,LIGHT-COVERAGE,Light Coverage / Thin Film,COV,COV-THN,Low Film Build / Light Coverage,BOTH,MAPPED,ChatGPT used BOTH; same DB target
+Plant1-ChatGPT,Lt. cov/ Dry spray,COVERAGE,LIGHT-COVERAGE,Light Coverage / Thin Film,COV,COV-THN,Low Film Build / Light Coverage,UNKNOWN,MAPPED,AGS/Accurate variant normalizes to COV-THN
+Plant1-Claude,Heavy Coverage / Build-Up,COVERAGE,COVERAGE-HEAVY,Heavy Coverage/Build-Up,COV,COV-THK,Excessive Film Build / Heavy Coat,POWDER,MAPPED,Audit "Heavy" maps to live DB "COV-THK"
+Plant1-Claude,Heavy Coverage / Build-Up,COVERAGE,COVERAGE-HEAVY,Heavy Coverage/Build-Up,COV,COV-THK,Excessive Film Build / Heavy Coat,ECOAT,MAPPED,Same
+Plant1-ChatGPT,Heavy powder,COVERAGE,HEAVY-COAT,Excessive Film Build,COV,COV-THK,Excessive Film Build / Heavy Coat,UNKNOWN,MAPPED,ChatGPT variant same target
+Plant1-ChatGPT,Heavy,COVERAGE,HEAVY-COAT,Excessive Film Build,COV,COV-THK,Excessive Film Build / Heavy Coat,UNKNOWN,MAPPED,Warren variant same target
+Plant1-ChatGPT,Build Up,APPLICATION,BUILD-UP,Build Up,COV,COV-THK,Excessive Film Build / Heavy Coat,BOTH,MAPPED,ChatGPT put under APPLICATION; DB correctly classifies as COV
+Plant1-Claude,Bare Metal / No Coat,COVERAGE,COVERAGE-BARE,Bare Metal/No Coat,COV,COV-BAR,Bare Spot / Holiday / Skip Area,ECOAT,MAPPED,Direct match
+Plant1-ChatGPT,Bare Metal,COVERAGE,BARE-METAL,Bare Metal / Missing Coat,COV,COV-BAR,Bare Spot / Holiday / Skip Area,ECOAT,MAPPED,Same target
+Plant1-Claude,Dry Spray,COVERAGE,COVERAGE-DRY,Dry Spray,TEX,TEX-DRY,Rough / Dry Spray / Powdery Texture,POWDER,MAPPED,Audit placed in COVERAGE; DB places in TEX (Surface Texture) — DB categorization is more precise
+Plant1-Claude,Orange Peel,SURFACE,SURFACE-ORANGEPEEL,Orange Peel,TEX,TEX-ORP,Orange Peel / Poor Flow Texture,POWDER,EXACT,Direct match
+Plant1-Claude,Orange Peel,SURFACE,SURFACE-ORANGEPEEL,Orange Peel,TEX,TEX-ORP,Orange Peel / Poor Flow Texture,ECOAT,EXACT,Direct match
+Plant1-ChatGPT,Orange Peel,TEXTURE,ORANGE-PEEL,Orange Peel,TEX,TEX-ORP,Orange Peel / Poor Flow Texture,POWDER,EXACT,ChatGPT correctly placed in TEXTURE
+Plant1-ChatGPT,Rough Spots,TEXTURE,ROUGHNESS,Rough Spots,TEX,TEX-ORP,Orange Peel / Poor Flow Texture,ECOAT,MAPPED,Rough spots normalize to orange peel in DB
+Plant1-Claude,Runs/Sags,SURFACE,SURFACE-RUNS,Runs/Sags,TEX,TEX-SAG,Runs / Sags / Curtains,ECOAT,MAPPED,Audit "SURFACE" vs DB "TEX" category; leaf matches
+Plant1-ChatGPT,Paint Runs,SURFACE,PAINT-RUNS,Runs / Sags,TEX,TEX-SAG,Runs / Sags / Curtains,ECOAT,MAPPED,Same target
+Plant1-Claude,Fisheyes,SURFACE,SURFACE-FISHEYE,Fisheyes,CON,CON-FIS,Fisheye / Cratering (Surface Tension),POWDER,MAPPED,Audit placed in SURFACE; DB places in CON — DB is correct (contamination-driven)
+Plant1-ChatGPT,Fish Eyes,SURFACE,FISH-EYE,Fish Eyes,CON,CON-FIS,Fisheye / Cratering (Surface Tension),UNKNOWN,MAPPED,Same target; ChatGPT also placed in SURFACE
+Plant1-ChatGPT,Fisheyes,SURFACE,FISH-EYE,Fish Eyes,CON,CON-FIS,Fisheye / Cratering (Surface Tension),UNKNOWN,MAPPED,ABM variant same target
+Plant1-Claude,Pinholes,SURFACE,SURFACE-PINHOLE,Pinholes,BLS,BLS-PIN,Pinholes / Porosity,POWDER,MAPPED,Audit placed in SURFACE; DB places in BLS (Blistering & Porosity) — DB is correct
+Plant1-ChatGPT,Pinholes,SURFACE,PINHOLES,Pinholes,BLS,BLS-PIN,Pinholes / Porosity,UNKNOWN,MAPPED,Same target
+Plant1-Claude,Bubbles,SURFACE,SURFACE-BUBBLE,Bubbles,BLS,BLS-SOL,Solvent Pop / Microblistering,ECOAT,MAPPED,Audit placed in SURFACE; DB places in BLS
+Plant1-ChatGPT,Bubbles,SURFACE,BUBBLES,Bubbles / Air Pockets,BLS,BLS-SOL,Solvent Pop / Microblistering,ECOAT,MAPPED,Same target
+Plant1-Claude,Back Ionization,PROCESS,PROCESS-BACKION,Back Ionization,SPC,SPC-BRN,Electrochemical Burn / Over-Etch,POWDER,MAPPED,Audit "PROCESS" vs DB "SPC" (Specialty Finishing)
+Plant1-ChatGPT,Back Ionization,APPLICATION,BACK-IONIZATION,Back Ionization,SPC,SPC-BRN,Electrochemical Burn / Over-Etch,POWDER,MAPPED,ChatGPT placed in APPLICATION; DB SPC is correct
+Plant1-Claude,Missing Texture,PROCESS,PROCESS-TEXTURE,Missing Texture,TEX,TEX-DRY,Rough / Dry Spray / Powdery Texture,POWDER,MAPPED,Missing texture is a variant of texture defect; maps to TEX-DRY
+Plant1-Claude,Paint in Threads,PROCESS,PROCESS-THREADS,Paint in Threads,MAS,MAS-OVR,Overspray / Blowby,POWDER,MAPPED,Audit "PROCESS" vs DB "MAS" (Masking) — paint in threads is masking/overspray
+Plant1-ChatGPT,Paint in Threads,APPLICATION,PAINT-IN-THREADS,Paint in Threads,MAS,MAS-OVR,Overspray / Blowby,POWDER,MAPPED,ChatGPT placed in APPLICATION; DB MAS is correct
+Plant1-Claude,Adhesion Failure,PROCESS,PROCESS-ADHESION,Adhesion Failure,ADH,ADH-SUB,Substrate Adhesion Failure (Peel to Base),ECOAT,MAPPED,Direct functional match
+Plant1-ChatGPT,Adhesion Fail,PROCESS,PROCESS-ADHESION,Adhesion Failure,ADH,ADH-SUB,Substrate Adhesion Failure (Peel to Base),ECOAT,MAPPED,GLDC form variant
+Plant1-Claude,Rust/Corrosion,PRETREAT,PRETREAT-RUST,Rust/Corrosion,COR,COR-RUS,Red Rust / Rust Through,ECOAT,MAPPED,Audit "PRETREAT" vs DB "COR"
+Plant1-ChatGPT,Rust,CORROSION,RUST,Rust,COR,COR-RUS,Red Rust / Rust Through,BOTH,MAPPED,ChatGPT correctly placed in CORROSION
+Plant1-Claude,Water Marks/Spots,PRETREAT,PRETREAT-WATER,Water Marks/Spots,CON,CON-DST,Dirt / Dust / Particulate Contamination,ECOAT,REVIEW,Water spots from rinse residue — not corrosion; maps to contamination or needs new leaf
+Plant1-ChatGPT,Water Spots,CONTAMINATION,WATER-SPOTS,Water Spots / Water Marks,CON,CON-DST,Dirt / Dust / Particulate Contamination,ECOAT,REVIEW,Water marks may need dedicated leaf under CON or TEX
+Plant1-ChatGPT,Water,CONTAMINATION,WATER-SPOTS,Water Spots / Water Marks,CON,CON-DST,Dirt / Dust / Particulate Contamination,POWDER,REVIEW,Same review needed
+Plant1-ChatGPT,Water Marks,CONTAMINATION,WATER-SPOTS,Water Spots / Water Marks,CON,CON-DST,Dirt / Dust / Particulate Contamination,ECOAT,REVIEW,Polycon variant — same review
+Plant1-Claude,Dirt/Debris,CONTAMINATION,CONTAM-DIRT,Dirt/Debris,CON,CON-DST,Dirt / Dust / Particulate Contamination,POWDER,EXACT,Direct match
+Plant1-Claude,Dirt/Debris,CONTAMINATION,CONTAM-DIRT,Dirt/Debris,CON,CON-DST,Dirt / Dust / Particulate Contamination,ECOAT,EXACT,Direct match
+Plant1-ChatGPT,Debris,CONTAMINATION,DEBRIS,Debris,CON,CON-DST,Dirt / Dust / Particulate Contamination,POWDER,EXACT,Same target
+Plant1-ChatGPT,DIRT,CONTAMINATION,DIRT,Dirt / Particles,CON,CON-DST,Dirt / Dust / Particulate Contamination,ECOAT,EXACT,Same target
+Plant1-ChatGPT,Dirt on Track,CONTAMINATION,DIRT,Dirt / Particles,CON,CON-DST,Dirt / Dust / Particulate Contamination,UNKNOWN,EXACT,Location-specific variant; normalize to CON-DST + location metadata
+Plant1-ChatGPT,Dirt on Pulley,CONTAMINATION,DIRT,Dirt / Particles,CON,CON-DST,Dirt / Dust / Particulate Contamination,UNKNOWN,EXACT,Location-specific variant
+Plant1-ChatGPT,Dirt on Pully,CONTAMINATION,DIRT,Dirt / Particles,CON,CON-DST,Dirt / Dust / Particulate Contamination,UNKNOWN,EXACT,Typo variant of Dirt on Pulley
+Plant1-ChatGPT,Cluster of Dirt,CONTAMINATION,DIRT,Dirt / Particles,CON,CON-DST,Dirt / Dust / Particulate Contamination,UNKNOWN,EXACT,AGS variant
+Plant1-ChatGPT,Discoloured dirt / spec,APPEARANCE,OFF-COLOR,Off Color / Discoloration,APP,APP-COL,Color Mismatch / Wrong Shade,UNKNOWN,MAPPED,Discoloration maps to APP-COL
+Plant1-Claude,General Contamination,CONTAMINATION,CONTAM-GENERAL,General Contamination,CON,CON-FOI,Foreign Object Inclusion (Embedded),POWDER,MAPPED,Catch-all maps to FOI
+Plant1-ChatGPT,Contamination,CONTAMINATION,CONTAMINATION,Contamination (General),CON,CON-FOI,Foreign Object Inclusion (Embedded),POWDER,MAPPED,Same target
+Plant1-Claude,Oil Contamination,CONTAMINATION,CONTAM-OIL,Oil Contamination,CON,CON-FIS,Fisheye / Cratering (Surface Tension),POWDER,REVIEW,Oil causes fisheyes; could map to CON-FIS or need new CON-OIL leaf
+Plant1-ChatGPT,Oil,CONTAMINATION,OIL,Oil Contamination,CON,CON-FIS,Fisheye / Cratering (Surface Tension),UNKNOWN,REVIEW,Same review — oil contamination may need dedicated leaf
+Plant1-ChatGPT,OIL,CONTAMINATION,OIL,Oil Contamination,CON,CON-FIS,Fisheye / Cratering (Surface Tension),UNKNOWN,REVIEW,ABM variant same review
+Plant1-Claude,Fiber/Foreign Material,CONTAMINATION,CONTAM-FIBER,Fiber/Foreign Material,CON,CON-FOI,Foreign Object Inclusion (Embedded),POWDER,EXACT,Fiber is a type of foreign inclusion
+Plant1-ChatGPT,Fiber,CONTAMINATION,FIBER,Fiber / Lint,CON,CON-FOI,Foreign Object Inclusion (Embedded),UNKNOWN,EXACT,Same target
+Plant1-Claude,Discoloration/Off Color,CONTAMINATION,CONTAM-DISCOLOR,Discoloration/Off Color,APP,APP-COL,Color Mismatch / Wrong Shade,POWDER,MAPPED,Audit "CONTAMINATION" vs DB "APP" (Appearance) — DB correct
+Plant1-ChatGPT,Off colour (Discoloured),APPEARANCE,OFF-COLOR,Off Color / Discoloration,APP,APP-COL,Color Mismatch / Wrong Shade,UNKNOWN,MAPPED,ChatGPT correctly placed in APPEARANCE
+Plant1-ChatGPT,Off color,APPEARANCE,OFF-COLOR,Off Color / Discoloration,APP,APP-COL,Color Mismatch / Wrong Shade,UNKNOWN,MAPPED,AGS GP12 variant
+Plant1-Claude,Hook Mark,HANDLING,HANDLING-HOOK,Hook Mark,DAM,DAM-RCK,Rack / Hanger / Contact Marks,POWDER,EXACT,Direct match
+Plant1-ChatGPT,Hook Mark,DAMAGE,HOOK-MARK,Hook Mark / Hanger Mark,DAM,DAM-RCK,Rack / Hanger / Contact Marks,POWDER,EXACT,ChatGPT correctly placed in DAMAGE
+Plant1-ChatGPT,Large Hook marks,DAMAGE,HOOK-MARK,Hook Mark / Hanger Mark,DAM,DAM-RCK,Rack / Hanger / Contact Marks,UNKNOWN,EXACT,ABM variant same target
+Plant1-Claude,Hit Mark/Impact,HANDLING,HANDLING-HIT,Hit Mark/Impact,DAM,DAM-SCR,Scratch / Abrasion Damage,POWDER,MAPPED,Hit mark consolidated into scratch/scuff category in DB
+Plant1-ChatGPT,Hit Mark,DAMAGE,HIT-MARK,Hit/Impact Mark,DAM,DAM-SCR,Scratch / Abrasion Damage,UNKNOWN,MAPPED,Same target
+Plant1-ChatGPT,Hit mark,DAMAGE,HIT-MARK,Hit/Impact Mark,DAM,DAM-SCR,Scratch / Abrasion Damage,UNKNOWN,MAPPED,JAC/AGS variant
+Plant1-ChatGPT,Hit part,DAMAGE,HIT-MARK,Hit/Impact Mark,DAM,DAM-SCR,Scratch / Abrasion Damage,UNKNOWN,MAPPED,AGS 3pc variant
+Plant1-Claude,Touch Mark,HANDLING,HANDLING-TOUCH,Touch Mark,DAM,DAM-SCR,Scratch / Abrasion Damage,POWDER,MAPPED,Touch mark consolidated into scratch/scuff in DB
+Plant1-ChatGPT,Touch Mark,DAMAGE,TOUCH-MARK,Touch Mark,DAM,DAM-SCR,Scratch / Abrasion Damage,UNKNOWN,MAPPED,Same target
+Plant1-Claude,Scratch/Damage,HANDLING,HANDLING-SCRATCH,Scratch/Damage,DAM,DAM-SCR,Scratch / Abrasion Damage,POWDER,EXACT,Direct match
+Plant1-Claude,Scratch/Damage,HANDLING,HANDLING-SCRATCH,Scratch/Damage,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,EXACT,Direct match
+Plant1-ChatGPT,Damaged (Scratched),DAMAGE,SCRATCH,Scratch / Surface Damage,DAM,DAM-SCR,Scratch / Abrasion Damage,BOTH,EXACT,Same target
+Plant1-ChatGPT,Suface Scratches,DAMAGE,SCRATCH,Scratch / Surface Damage,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,EXACT,Typo variant same target
+Plant1-ChatGPT,Scratches,DAMAGE,SCRATCH,Scratch / Surface Damage,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,EXACT,Polycon variant
+Plant1-ChatGPT,Sanding marks,SUBSTRATE,SANDING-MARKS,Sanding Marks,DAM,DAM-SCR,Scratch / Abrasion Damage,UNKNOWN,MAPPED,Sanding marks are mechanical damage
+Plant1-Claude,Dropped/Dent,HANDLING,HANDLING-DROP,Dropped/Dent,DAM,DAM-CRK,Substrate Crack / Fracture (Material),ECOAT,MAPPED,Dent/drop maps to crack/chip category
+Plant1-ChatGPT,Dent,DAMAGE,DENT,Dent,DAM,DAM-CRK,Substrate Crack / Fracture (Material),ECOAT,MAPPED,Same target
+Plant1-ChatGPT,Bent,DAMAGE,BENT,Bent,DAM,DAM-CRK,Substrate Crack / Fracture (Material),ECOAT,MAPPED,Deformation maps to crack/chip
+Plant1-ChatGPT,Part dropped,DAMAGE,DROP,Dropped,DAM,DAM-CRK,Substrate Crack / Fracture (Material),UNKNOWN,MAPPED,Same target
+Plant1-Claude,Stuck Parts,HANDLING,HANDLING-STUCK,Stuck Parts,DAM,DAM-RCK,Rack / Hanger / Contact Marks,POWDER,MAPPED,Parts stuck on rack — rack/contact mark category
+Plant1-Claude,Tight Clip/Fitment,HANDLING,HANDLING-CLIP,Tight Clip/Fitment,MAS,MAS-PLG,Plugged Hole / Thread / Feature Blockage,POWDER,MAPPED,Warren-specific; clip interference is masking/dimensional issue
+Plant1-ChatGPT,Tight Clip Top,DAMAGE,CLIP-MARK,Clip Mark,MAS,MAS-PLG,Plugged Hole / Thread / Feature Blockage,UNKNOWN,MAPPED,Same target
+Plant1-ChatGPT,Tight Clip Bottom,DAMAGE,CLIP-MARK,Clip Mark,MAS,MAS-PLG,Plugged Hole / Thread / Feature Blockage,UNKNOWN,MAPPED,Same target
+Plant1-Claude,Belt Mark,SUBSTRATE,SUBSTRATE-BELTMARK,Belt Mark,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,MAPPED,Substrate mark mapped to damage category
+Plant1-Claude,Misfill/Short Shot,SUBSTRATE,SUBSTRATE-MISFILL,Misfill/Short Shot,,,NOT IN DB,,NEW-SUBSTRATE,Die-cast substrate defect — not a coating defect. GLDC-specific. Recommend: incoming material taxonomy extension
+Plant1-Claude,Pin Push,SUBSTRATE,SUBSTRATE-PINPUSH,Pin Push,,,NOT IN DB,,NEW-SUBSTRATE,Die-cast substrate defect. GLDC-specific
+Plant1-Claude,Sink Mark,SUBSTRATE,SUBSTRATE-SINK,Sink Mark,,,NOT IN DB,,NEW-SUBSTRATE,Die-cast substrate defect. GLDC-specific
+Plant1-Claude,Flash,SUBSTRATE,SUBSTRATE-FLASH,Flash,,,NOT IN DB,,NEW-SUBSTRATE,Die-cast substrate defect. GLDC-specific
+Plant1-ChatGPT,Sharp Edge,SUBSTRATE,SUBSTRATE-SHARPEDGE,Sharp Edge,,,NOT IN DB,,NEW-SUBSTRATE,Die-cast deburring failure. GLDC-specific
+Plant1-Claude,Tool Marks,SUBSTRATE,SUBSTRATE-TOOL,Tool Marks,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,MAPPED,Tool mark is mechanical damage — maps to DAM-SCR
+Plant1-ChatGPT,Tool Marks,SUBSTRATE,TOOL-MARKS,Tool Marks,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,MAPPED,Same
+Plant1-Claude,General Material Defect,SUBSTRATE,SUBSTRATE-GENERAL,General Material Defect,,,NOT IN DB,,NEW-SUBSTRATE,Catch-all for incoming material issues — needs incoming-material extension
+Plant1-ChatGPT,Material Defect,SUBSTRATE,MATERIAL-DEFECT,Material Defect,,,NOT IN DB,,NEW-SUBSTRATE,ABM/JAC variant same gap
+Plant1-ChatGPT,Material defects,SUBSTRATE,MATERIAL-DEFECT,Material Defect,,,NOT IN DB,,NEW-SUBSTRATE,JAC variant
+Plant1-ChatGPT,Raw Defects,SUBSTRATE,RAW-DEFECT,Raw Defects,,,NOT IN DB,,NEW-SUBSTRATE,Polycon incoming variant
+Plant1-ChatGPT,Over Sand,SUBSTRATE,OVER-SAND,Over Sand,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,MAPPED,Excessive sanding is mechanical damage
+Plant1-Claude,General Paint Defect,PROCESS,PROCESS-GENERAL,General Paint Defect,,,NOT IN DB,,NEW-PROCESS,GLDC catch-all — should map to specific leaf on investigation. Avoid in digital taxonomy
+Plant1-ChatGPT,STUCK,UNKNOWN,UNKNOWN,STUCK,DAM,DAM-RCK,Rack / Hanger / Contact Marks,UNKNOWN,MAPPED,Parts stuck on rack — same as Claude's mapping
+Plant1-ChatGPT,Over Sand,UNKNOWN,UNKNOWN,Over Sand,DAM,DAM-SCR,Scratch / Abrasion Damage,ECOAT,MAPPED,Duplicate — already mapped above
+Plant1-ChatGPT,Light Track @ Top,DAMAGE,TRACK-MARK,Track Mark,COV,COV-THN,Low Film Build / Light Coverage,UNKNOWN,MAPPED,Warren location-specific — "Light Track" is light coverage at track location. Map to COV-THN + location metadata
+Plant1-ChatGPT,Light Track a@ bottom,DAMAGE,TRACK-MARK,Track Mark,COV,COV-THN,Low Film Build / Light Coverage,UNKNOWN,MAPPED,Same — normalize to COV-THN + location
+Plant1-ChatGPT,Light Pulley @ top,DAMAGE,PULLEY-MARK,Pulley Mark,COV,COV-THN,Low Film Build / Light Coverage,UNKNOWN,MAPPED,Same — light coverage at pulley location
+Plant1-ChatGPT,Light Pulley @ Bottom,DAMAGE,PULLEY-MARK,Pulley Mark,COV,COV-THN,Low Film Build / Light Coverage,UNKNOWN,MAPPED,Same
+Plant1-ChatGPT,Heavy,COVERAGE,HEAVY-COAT,Excessive Film Build,COV,COV-THK,Excessive Film Build / Heavy Coat,UNKNOWN,MAPPED,Warren variant
+Plant1-ChatGPT,Handling damage,DAMAGE,HANDLING-GENERAL,General Handling Damage,DAM,DAM-SCR,Scratch / Abrasion Damage,UNKNOWN,MAPPED,AGS GP12 catch-all maps to DAM-SCR
+Plant1-ChatGPT,Dirt (Blk),CONTAMINATION,DIRT,Dirt / Particles,CON,CON-DST,Dirt / Dust / Particulate Contamination,UNKNOWN,EXACT,AGS GP12 variant — black dirt
+Plant1-ChatGPT,Lt. cov,COVERAGE,LIGHT-COVERAGE,Light Coverage / Thin Film,COV,COV-THN,Low Film Build / Light Coverage,UNKNOWN,MAPPED,AGS GP12 abbreviated variant
+Plant1-ChatGPT,Off color,APPEARANCE,OFF-COLOR,Off Color / Discoloration,APP,APP-COL,Color Mismatch / Wrong Shade,UNKNOWN,MAPPED,AGS GP12 variant
+Plant1-ChatGPT,Paint Defect,PROCESS,PAINT-DEFECT,General Paint Defect,,,NOT IN DB,,NEW-PROCESS,GLDC catch-all — same as Claude mapping. Avoid in digital taxonomy
+Plant1-ChatGPT,FE,SURFACE,FISH-EYE,Fish Eyes,CON,CON-FIS,Fisheye / Cratering (Surface Tension),UNKNOWN,MAPPED,Abbreviated — same target
+Plant2-Claude,Dirt,APP,APP-DIRT,Dirt/Contamination,CON,CON-DST,Dirt / Dust / Particulate Contamination,LIQUID,EXACT,Universal — appears on all 11 customer form families
+Plant2-ChatGPT,DIRT,CON,CON-DIRT,Dirt / Dust,CON,CON-DST,Dirt / Dust / Particulate Contamination,LIQUID,EXACT,Same target — ChatGPT correctly placed in CON
+Plant2-Claude,Sag/Run,APP,APP-SAG,Sag/Run,TEX,TEX-SAG,Runs / Sags / Curtains,LIQUID,MAPPED,Universal — appears on all 11 customer form families. Audit APP vs DB TEX
+Plant2-ChatGPT,SAG/RUN,TEX,TEX-SAG,Sag / Run,TEX,TEX-SAG,Runs / Sags / Curtains,LIQUID,EXACT,ChatGPT correctly placed in TEX
+Plant2-Claude,Orange Peel,APP,APP-OP,Orange Peel,TEX,TEX-ORP,Orange Peel / Poor Flow Texture,LIQUID,EXACT,Appears on 7/11 customer form families
+Plant2-ChatGPT,ORANGE PEEL,TEX,TEX-ORP,Orange Peel,TEX,TEX-ORP,Orange Peel / Poor Flow Texture,LIQUID,EXACT,Same target
+Plant2-Claude,Orange Peel - End Cap,APP,APP-OP,Orange Peel (Location Variant),TEX,TEX-ORP,Orange Peel / Poor Flow Texture,LIQUID,EXACT,Rollstamp/BMW location-specific — normalize to TEX-ORP + location metadata
+Plant2-Claude,Orange Peel - Face,APP,APP-OP,Orange Peel (Location Variant),TEX,TEX-ORP,Orange Peel / Poor Flow Texture,LIQUID,EXACT,Rollstamp/BMW location-specific — normalize to TEX-ORP + location metadata
+Plant2-Claude,Thin Paint,APP,APP-THIN,Thin Paint / Insufficient Coverage,COV,COV-THN,Low Film Build / Light Coverage,LIQUID,MAPPED,Appears on 9/11 customer form families. Audit APP vs DB COV
+Plant2-ChatGPT,THIN PAINT,COV,COV-THN,Thin Paint,COV,COV-THN,Low Film Build / Light Coverage,LIQUID,EXACT,ChatGPT correctly placed in COV
+Plant2-Claude,Thin Clear,APP,APP-THINCLEAR,Thin Clear Coat,COV,COV-THN,Low Film Build / Light Coverage,LIQUID,MAPPED,Appears on 8/11 customer form families. Same target as Thin Paint
+Plant2-ChatGPT,THIN CLEAR,COV,COV-THN,Thin Clear Coat,COV,COV-THN,Low Film Build / Light Coverage,LIQUID,EXACT,Same target — clear coat variant of COV-THN
+Plant2-Claude,Fiber,CON,CON-FIBER,Fiber/Foreign Material in Film,CON,CON-FOI,Foreign Object Inclusion (Embedded),LIQUID,MAPPED,Appears on 6/11 customer form families
+Plant2-ChatGPT,FIBER,CON,CON-FOI,Fiber / Foreign Object,CON,CON-FOI,Foreign Object Inclusion (Embedded),LIQUID,EXACT,ChatGPT correctly placed
+Plant2-Claude,Fish Eye,CON,CON-FISHEYE,Fish Eye / Cratering,CON,CON-FIS,Fisheye / Cratering (Surface Tension),LIQUID,EXACT,Metelix Hummer + Y2XX forms. Cross-plant match with Plant 1
+Plant2-ChatGPT,FISH EYE,CON,CON-FIS,Fisheye / Cratering,CON,CON-FIS,Fisheye / Cratering (Surface Tension),LIQUID,EXACT,Same target
+Plant2-Claude,Scratches,DAM,DAM-SCRATCH,Scratch / Abrasion,DAM,DAM-SCR,Scratch / Abrasion Damage,LIQUID,EXACT,Tesla buff and Metelix buff forms
+Plant2-ChatGPT,SCRATCHES,DAM,DAM-SCR,Scratch,DAM,DAM-SCR,Scratch / Abrasion Damage,LIQUID,EXACT,Same target
+Plant2-Claude,Hit,DAM,DAM-HIT,Hit / Impact,DAM,DAM-RCK,Rack / Hanger / Contact Marks,LIQUID,MAPPED,RW HIT on Metelix forms — hit during racking/handling
+Plant2-ChatGPT,RW HIT,DAM,DAM-RCK,Rework Hit,DAM,DAM-RCK,Rack / Hanger / Contact Marks,LIQUID,MAPPED,Same target — Metelix prefix convention
+Plant2-Claude,Blisters,BLS,BLS-OSM,Blisters / Osmotic Blistering,BLS,BLS-OSM,Osmotic Blistering,LIQUID,EXACT,Rollstamp/BMW and Tesla forms
+Plant2-ChatGPT,BLISTERS,BLS,BLS-OSM,Blisters,BLS,BLS-OSM,Osmotic Blistering,LIQUID,EXACT,Same target
+Plant2-Claude,Blisters/Pitmark,BLS,BLS-PIN,Blisters / Pinholes / Porosity,BLS,BLS-PIN,Pinholes / Porosity,LIQUID,MAPPED,Tesla form — combined blisters + pinholes. Map to BLS-PIN for porosity emphasis
+Plant2-Claude,Popping,BLS,BLS-SOL,Popping / Outgassing,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,MAPPED,Rollstamp/BMW form
+Plant2-ChatGPT,POPPING,BLS,BLS-SOL,Popping,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,MAPPED,Same target
+Plant2-Claude,Outgassing,BLS,BLS-SOL,Outgassing,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,MAPPED,Tesla form — outgassing is solvent-pop mechanism
+Plant2-ChatGPT,OUTGASSING,BLS,BLS-SOL,Outgassing,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,MAPPED,Same target
+Plant2-Claude,Outgassing Popping,BLS,BLS-SOL,Outgassing Popping,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,MAPPED,KB Components form — same mechanism as outgassing
+Plant2-ChatGPT,OUTGASSING POPPING,BLS,BLS-SOL,Outgassing Popping,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,MAPPED,Same target
+Plant2-Claude,Solvent Pop,BLS,BLS-SOL,Solvent Pop,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,EXACT,Tesla GP12 form — direct match
+Plant2-ChatGPT,SOLVENT POP,BLS,BLS-SOL,Solvent Pop,BLS,BLS-SOL,Solvent Pop / Microblistering,LIQUID,EXACT,Same target
+Plant2-Claude,Delamination,ADH,ADH-INT,Intercoat Delamination,ADH,ADH-INT,Intercoat Delamination,LIQUID,EXACT,Rollstamp/BMW form — "DELAM." abbreviation
+Plant2-ChatGPT,DELAM.,ADH,ADH-INT,Delamination,ADH,ADH-INT,Intercoat Delamination,LIQUID,EXACT,Same target
+Plant2-Claude,Bad Masking,MAS,MAS-MSK,Masking Failure,MAS,MAS-MSK,Masking Failure / Tape Pull,LIQUID,EXACT,Rollstamp/BMW form
+Plant2-ChatGPT,BAD MASKING,MAS,MAS-MSK,Bad Masking,MAS,MAS-MSK,Masking Failure / Tape Pull,LIQUID,EXACT,Same target
+Plant2-Claude,Overspray,MAS,MAS-OVR,Overspray,MAS,MAS-OVR,Overspray / Blowby,LIQUID,EXACT,Metelix Hummer + Y2XX forms
+Plant2-ChatGPT,OVERSPRAY,MAS,MAS-OVR,Overspray,MAS,MAS-OVR,Overspray / Blowby,LIQUID,EXACT,Same target
+Plant2-Claude,Missing Paint,COV,COV-MISS,Missing Paint / Uncovered Area,COV,COV-BAR,Bare Spot / Holiday / Skip Area,LIQUID,MAPPED,Metelix Hummer + Y2XX — "missing paint" = bare spot
+Plant2-ChatGPT,MISSING PAINT,COV,COV-BAR,Missing Paint,COV,COV-BAR,Bare Spot / Holiday / Skip Area,LIQUID,MAPPED,ChatGPT correctly mapped to COV-BAR
+Plant2-Claude,Burn Through,COV,COV-BURN,Burn Through,COV,COV-BAR,Bare Spot / Holiday / Skip Area,LIQUID,MAPPED,Metelix buff form — buff-through-to-substrate = bare spot
+Plant2-ChatGPT,BURN THROUGH,COV,COV-BAR,Burn Through,COV,COV-BAR,Bare Spot / Holiday / Skip Area,LIQUID,MAPPED,Same target
+Plant2-Claude,E-Coat Showing,COV,COV-ECOAT,E-Coat Substrate Visible,COV,COV-BAR,Bare Spot / Holiday / Skip Area,LIQUID,MAPPED,Mytox form — anomalous substrate defect from supplier e-coat visible through liquid paint
+Plant2-ChatGPT,E-COAT,COV,COV-BAR,E-Coat Showing,COV,COV-BAR,Bare Spot / Holiday / Skip Area,LIQUID,MAPPED,Same target — incoming substrate defect
+Plant2-Claude,Strings,CON,CON-STRING,Strings / Cobwebbing,CON,CON-FOI,Foreign Object Inclusion (Embedded),LIQUID,MAPPED,Rollstamp/BMW form — strings are foreign inclusions
+Plant2-ChatGPT,STRINGS,CON,CON-FOI,Strings,CON,CON-FOI,Foreign Object Inclusion (Embedded),LIQUID,MAPPED,Same target
+Plant2-Claude,Snowballs,CON,CON-SNOW,Snowballs / Compound Residue,CON,CON-FOI,Foreign Object Inclusion (Embedded),LIQUID,MAPPED,Metelix + Tesla buff forms — buffing compound residue = foreign inclusion
+Plant2-ChatGPT,SNOW BALL,CON,CON-FOI,Snowballs,CON,CON-FOI,Foreign Object Inclusion (Embedded),LIQUID,MAPPED,Same target
+Plant2-Claude,Foam Marks,DAM,DAM-FOAM,Foam Marks / Pad Marks,DAM,DAM-RCK,Rack / Hanger / Contact Marks,LIQUID,MAPPED,Tesla buff form — foam pad contact marks. Map to DAM-RCK (contact marks)
+Plant2-ChatGPT,FOAM MARKS,DAM,DAM-RCK,Foam Marks,DAM,DAM-RCK,Rack / Hanger / Contact Marks,LIQUID,MAPPED,Same target
+Plant2-Claude,Gouges,DAM,DAM-GOUGE,Gouges,DAM,DAM-SCR,Scratch / Abrasion Damage,LIQUID,MAPPED,Metelix + Hummer forms — deep scratch variant
+Plant2-ChatGPT,GOUGES,DAM,DAM-SCR,Gouges,DAM,DAM-SCR,Scratch / Abrasion Damage,LIQUID,MAPPED,Same target
+Plant2-Claude,Dents,DAM,DAM-DENT,Dents / Impact Damage,DAM,DAM-DEF,Substrate Deformation,LIQUID,NEW-SUBSTRATE,Plant 2-specific NEW leaf. Distinct from Plant 1 DAM-CRK (which is crack/fracture). Liquid paint substrate dents need dedicated deformation leaf
+Plant2-ChatGPT,DENTS,DAM,DAM-DEF,Dents,DAM,DAM-DEF,Substrate Deformation,LIQUID,NEW-SUBSTRATE,Same new leaf — DAM-DEF proposed for substrate deformation
+Plant2-Claude,Sink Marks,DAM,DAM-SINK,Sink Marks,DAM,DAM-DEF,Substrate Deformation,LIQUID,NEW-SUBSTRATE,Metelix moulding-sanding form — molding defect. Map to new DAM-DEF leaf
+Plant2-ChatGPT,SINK MARKS,DAM,DAM-DEF,Sink Marks,DAM,DAM-DEF,Substrate Deformation,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Thin Substrate,DAM,DAM-THINSUB,Thin Substrate / Wall Thickness,DAM,DAM-DEF,Substrate Deformation,LIQUID,NEW-SUBSTRATE,Metelix moulding-sanding form — thin wall = deformation category
+Plant2-ChatGPT,THIN SUBSTRATE,DAM,DAM-DEF,Thin Substrate,DAM,DAM-DEF,Substrate Deformation,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Cracks,DAM,DAM-CRACK,Cracks / Fractures,DAM,DAM-CRK,Substrate Crack / Fracture (Material),LIQUID,EXACT,Metelix moulding-sanding form — direct match to existing DB leaf
+Plant2-ChatGPT,CRACKS,DAM,DAM-CRK,Cracks,DAM,DAM-CRK,Substrate Crack / Fracture (Material),LIQUID,EXACT,Same target
+Plant2-Claude,Flash,DAM,DAM-FLASH,Flash / Parting Line Flash,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Laval/KB/Misc/Tesla forms — molding defect. NEW leaf DAM-MLD proposed for molding/extrusion marks
+Plant2-ChatGPT,FLASH,DAM,DAM-MLD,Flash / Molding Defect,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Parting Line,DAM,DAM-PARTLINE,Parting Line,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Metelix inspection + moulding-sanding — map to new DAM-MLD leaf
+Plant2-ChatGPT,PARTING LINE,DAM,DAM-MLD,Parting Line,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Splay,DAM,DAM-SPLAY,Splay / Silver Streaks,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Tesla form — injection molding defect. Map to new DAM-MLD
+Plant2-ChatGPT,SPLAY,DAM,DAM-MLD,Splay,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Gas Mark,DAM,DAM-GAS,Gas Mark,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Tesla form — gas trap molding defect. Map to new DAM-MLD
+Plant2-ChatGPT,GAS MARK,DAM,DAM-MLD,Gas Mark,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Chatter Mark,DAM,DAM-CHATTER,Chatter Mark,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Tesla form — machining/molding defect. Map to new DAM-MLD
+Plant2-ChatGPT,CHATTER MARK,DAM,DAM-MLD,Chatter Mark,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Extrusion Line,DAM,DAM-EXTLINE,Extrusion Line,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Rollstamp/BMW + Tesla — extrusion substrate mark. Map to new DAM-MLD
+Plant2-ChatGPT,EXT. LINE,DAM,DAM-MLD,Extrusion Line,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Zipper Line,DAM,DAM-ZIPPER,Zipper Line,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Rollstamp/BMW form — extrusion weld line. Map to new DAM-MLD
+Plant2-ChatGPT,ZIPPER LINE,DAM,DAM-MLD,Zipper Line,DAM,DAM-MLD,Molding / Extrusion Surface Marks,LIQUID,NEW-SUBSTRATE,Same new leaf
+Plant2-Claude,Paint Spits,TEX,TEX-SPIT,Paint Spits / Spatter,TEX,TEX-SPT,Spatter / Paint Spits,LIQUID,NEW-PROCESS,Mytox form — liquid-specific NEW leaf. Gun spit / spatter pattern
+Plant2-ChatGPT,PAINT SPITS,TEX,TEX-SPT,Paint Spits / Spatter,TEX,TEX-SPT,Spatter / Paint Spits,LIQUID,NEW-PROCESS,Same new leaf — TEX-SPT proposed
+Plant2-Claude,Mottling,APP,APP-MOT,Mottling / Uneven Metallic Appearance,APP,APP-MOT,Mottling / Metallic Orientation,LIQUID,NEW-PROCESS,Mytox + Misc + hidden BRP Spyder forms — liquid-specific NEW leaf for metallic orientation defect
+Plant2-ChatGPT,MOTTLING,APP,APP-MOT,Mottling,APP,APP-MOT,Mottling / Metallic Orientation,LIQUID,NEW-PROCESS,Same new leaf — APP-MOT proposed
+Plant2-Claude,Haze,SPC,SPC-HAZE,Haze / Swirl Marks,SPC,SPC-SWL,Swirl Marks / Buff Lines,LIQUID,NEW-PROCESS,Metelix buff form — buffing-induced haze. NEW leaf SPC-SWL proposed
+Plant2-ChatGPT,HAZE,SPC,SPC-SWL,Haze / Swirl,SPC,SPC-SWL,Swirl Marks / Buff Lines,LIQUID,NEW-PROCESS,Same new leaf
+Plant2-Claude,Sanding Marks,SPC,SPC-SAND,Sanding Marks / Scratch Pattern,SPC,SPC-SWL,Swirl Marks / Buff Lines,LIQUID,NEW-PROCESS,Metelix moulding-sanding form — mechanical finishing marks. Map to new SPC-SWL
+Plant2-ChatGPT,SANDING MARKS,SPC,SPC-SWL,Sanding Marks,SPC,SPC-SWL,Swirl Marks / Buff Lines,LIQUID,NEW-PROCESS,Same new leaf
+Plant2-Claude,Scrap,DISP,DISP-SCRAP,Scrap (Disposition not Defect),,,N/A — DISPOSITION,,MAPPED,Appears on Rollstamp + Mytox forms. This is a disposition decision not a defect type. Map to DispositionCode=SCRAP
+Plant2-Claude,Fan Pattern Break,APP,APP-FAN,Fan Pattern Break,,,NOT IN DB,,NEW-PROCESS,Line 102 Operating Form SWI — spray application defect. Liquid-specific. Consider adding under APP
+Plant2-Claude,Colour Out of Tolerance,APP,APP-COLOUR,Colour Out of Tolerance (delta-Ecmc > 2),APP,APP-COL,Color Mismatch / Wrong Shade,LIQUID,MAPPED,New Paint Batch Verification form — delta-Ecmc > 2 or delta-L/a/b > 1.15 for metallics. Map to existing APP-COL
+Plant2-Claude,Viscosity Out of Tolerance,MIX,MIX-VISC,Viscosity Out of Tolerance,,,NOT IN DB,,NEW-PROCESS,Paint Tally Sheet — inferred defect. Consider adding under new MIX category or map to process parameter OOS
+Plant2-Claude,Catalyst Check Failure,MIX,MIX-CAT,Catalyst Check Failure,,,NOT IN DB,,NEW-PROCESS,Line 102 Production Tracking — catalyst check column. Critical process failure
+Plant2-Claude,Rack Visual Check Failure,HAND,HAND-RACK,Rack Condition Failure,DAM,DAM-RCK,Rack / Hanger / Contact Marks,LIQUID,MAPPED,Line 102 Production Tracking + Operating Form — rack visual = potential contact damage
+Plant2-Claude,Booth Environmental Feedback,ENV,ENV-BOOTH,Booth Environmental Feedback,,,NOT IN DB,,NEW-PROCESS,Downtime Tracking Template — environmental condition causing line stop. May not be a defect type but a downtime reason
+Plant2-Claude,Part Damage at Blow-Off,HAND,HAND-BLOWOFF,Part Damage at Blow-Off,DAM,DAM-SCR,Scratch / Abrasion Damage,LIQUID,MAPPED,Downtime Tracking Template — damage during blow-off stage. Map to DAM-SCR
