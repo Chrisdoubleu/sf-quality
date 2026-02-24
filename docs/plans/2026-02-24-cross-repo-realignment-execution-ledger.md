@@ -58,7 +58,7 @@ Summary:
 
 ## Risks/Flags
 
-1. `human_needed` confirmed for admin allow-path runtime probe in API runtime sanity closeout (dev DB has no active user-role assignments).
+1. Admin allow-path blocker was resolved by DB migration `151_phase34_policy_lookup_table_exclusion.sql` (RLS no longer targets auth lookup tables required for session bootstrap).
 2. Root workspace has pre-existing untracked docs under `docs/Organization Forms Reference/` and must remain untouched by this wave.
 
 ## Wave Execution Record (Merged)
@@ -90,26 +90,26 @@ Summary:
    - `pwsh scripts/Test-ApiContractReferences.ps1 -RepoRoot (Get-Location)` -> `PASSED`
    - `pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly` -> `All cycle checks passed.`
 
-## Runtime Sanity Closeout Attempt (2026-02-24)
+## Runtime Sanity Closeout Resolution (2026-02-24)
 
 1. Runtime command evidence recorded at:
    - `docs/plans/evidence/2026-02-24-runtime-sanity-closeout.md`
-2. Runtime probe results:
+2. Root cause discovered:
+   - `security.PlantIsolationPolicy` included predicates on `dbo/audit UserPlantAccess/UserRole`, preventing reliable admin bootstrap in `dbo.usp_SetSessionContext`.
+3. Fix applied:
+   - deployed DB migration `151_phase34_policy_lookup_table_exclusion.sql` to dev.
+   - preflight guard added (`P07`) to enforce that those lookup tables are excluded from policy predicates.
+4. Post-fix runtime probe results:
    - non-admin deny probe (`2FA67B5A-5880-4D2A-BFAD-6F5D29EBF101`) -> `403` (`PASS`)
-   - admin allow probe candidate (`7CB31D63-9EA5-43EB-BCC3-BE10CA6F6C03`) -> `403` (`FAIL`; expected non-`403`)
-3. Correlation IDs captured:
-   - health: `2af594ff-d076-4f87-a4d3-032ee84c0e76`
-   - non-admin deny: `41f59491-19e7-49de-8297-72e6f8969b75`
-   - admin candidate: `5df45e3f-5358-4d77-8b9f-9d3719157998`
-4. DB identity/authorization evidence:
-   - `dbo.UserRole WHERE IsActive=1` -> `0` rows
-   - `dbo.UserPlantAccess` -> `0` rows
-   - `WF.NCR.Submit` grants exist at role level, but all matching rows had `UserId = NULL`
-5. Outcome:
-   - deny-path proof complete
-   - allow-path proof blocked pending manual provisioning of an active user-role mapping that grants `WF.NCR.Submit` (`human_needed`)
+   - admin allow probe (`7CB31D63-9EA5-43EB-BCC3-BE10CA6F6C03`) -> `404` (`PASS`; expected non-`403`)
+5. Correlation IDs captured:
+   - health: `ff4b5b6a-1661-41b4-9034-1036265ca809`
+   - non-admin deny: `3b648026-4427-4a89-9781-71e2e2a3767e`
+   - admin allow: `d7892164-22f6-48a1-bec2-53b7870ca2b6`
+6. Outcome:
+   - runtime sanity closeout fully completed (deny + allow paths both verified)
+   - `human_needed` cleared for this closeout scope
 
 ## Open Items
 
-1. Runtime sanity closeout deny-path is verified; admin allow-path remains blocked until a permissioned admin identity is provisioned in dev DB.
-2. DB Phase 35 remains blocked except for formally documented API/App blocker exceptions.
+1. DB Phase 35 remains blocked except for formally documented API/App blocker exceptions.
