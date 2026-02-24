@@ -1,0 +1,20 @@
+{
+  "generated_utc": "2026-02-24T15:27:19Z",
+  "source_forms_path": "c:\\Dev\\sf-quality\\docs\\Organization Forms Reference\\Plant 1 Production Forms",
+  "package_root": "c:\\Dev\\sf-quality\\docs\\Organization Forms Reference\\Plant1_AI_Audit_Package",
+  "prompt_included": false,
+  "excluded_artifacts": [
+    "Thumbs.db",
+    "~$*"
+  ],
+  "counts": {
+    "copied_files": 133,
+    "forms_manifest_rows": 133,
+    "sheet_index_rows": 1710,
+    "duplicate_revision_rows": 5,
+    "batch_rows": 133,
+    "api_surface_rows": 30,
+    "extracted_text_files": 17
+  },
+  "pdf_parser_available": false
+}

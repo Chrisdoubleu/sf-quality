@@ -1,0 +1,56 @@
+{
+  "generated_utc": "2026-02-24T16:45:58Z",
+  "source_forms_path": "c:\\Dev\\sf-quality\\docs\\Organization Forms Reference\\Plant 2\\Plant 2 Production Forms",
+  "package_root": "c:\\Dev\\sf-quality\\docs\\Organization Forms Reference\\Plant 2\\Plant2_AI_Audit_Package",
+  "prompt_included": false,
+  "excluded_artifacts": [
+    "Thumbs.db",
+    "~$*"
+  ],
+  "counts": {
+    "total_files": 289,
+    "current_files": 84,
+    "obsolete_files": 205,
+    "forms_manifest_rows": 289,
+    "sheet_index_rows": 758,
+    "duplicate_clusters": 58,
+    "duplicate_revision_rows": 150,
+    "batch_rows": 289,
+    "stale_files": 198,
+    "current_files_in_zip": 81,
+    "current_files_excluded_from_zip": 3,
+    "obsolete_files_in_zip": 0
+  },
+  "file_type_distribution": {
+    "xlsx": 208,
+    "xls": 77,
+    "pdf": 2,
+    "xlsm": 1,
+    "doc": 1
+  },
+  "category_distribution_current": {
+    "POST-PAINT OPERATIONS": 4,
+    "PRODUCTION TRACKING": 18,
+    "NCR / DISPOSITION": 3,
+    "WASTE MANAGEMENT": 5,
+    "LAB / CHEMISTRY": 5,
+    "PROCESS CONTROL": 5,
+    "None/Reference": 1,
+    "MAINTENANCE / PM": 9,
+    "DOCUMENT CONTROL": 1,
+    "SCHEDULING / LABOR": 2,
+    "PACKAGING / SHIPPING": 16,
+    "QUALITY INSPECTION": 14,
+    "GP-12 / CONTAINMENT": 1
+  },
+  "customer_distribution_current": {
+    "Rollstamp": 2,
+    "Mytox": 2,
+    "Laval Tool": 3,
+    "Metelix": 8,
+    "KB Components": 4,
+    "Polycon": 5,
+    "Misc": 1
+  },
+  "pdf_parser_available": false
+}

@@ -1,0 +1,4 @@
+Comparison Dimension,Plant 1 Baseline,Evidence to Collect in Plant N,Match Status,Normalization Action,Impact
+Defect taxonomy structure,L1/L2 + line-type scoped,Count unique defect labels + map collisions,,,
+GP-12 workflow,Customer-specific forms present,Entry/exit criteria and approval signatures,,,
+Traceability chain,Load->Process->Inspect->Ship,Can complaint trace to load/rack/operator?,,,

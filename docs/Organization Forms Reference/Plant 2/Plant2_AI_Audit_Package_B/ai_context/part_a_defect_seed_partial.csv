@@ -1,0 +1,11 @@
+FormDefectName,ProposedParentCode_L1,ProposedParentName_L1,ProposedDefectCode_L2,ProposedDefectName_L2,LineTypeCode,DefaultSeverityId,SortOrderHint,Notes,EvidencePath,Confidence
+Fan pattern break,APP,Application Defects,FAN_BREAK,Fan Pattern Break,LIQUID,5,10,Checklist item 14: observe fan breaks,8.2.2.2.7/Option 2,Medium
+Part damage at blow-off,HAND,Handling Defects,PART_DMG_BLOWOFF,Part Damage at Blow-Off,LIQUID,4,20,Downtime category: PARTS HIT IN BLOW OFF,8.2.2.28/Feb,Medium
+Booth environmental feedback,ENV,Environmental Defects,BOOTH_FEEDBACK,Booth Environmental Feedback,LIQUID,6,30,Downtime category: BOOTH FEEDBACK,8.2.2.28/Feb,Medium
+Colour out of tolerance,COLOUR,Colour Defects,COLOUR_OOT,Colour Out of Tolerance,LIQUID,7,40,DEcmc > 2 or DL/Da/Db > 1.15 metallics,8.2.2.26/Sheet1,High
+Viscosity out of tolerance,MIX,Paint Mix Defects,VISC_OOT,Viscosity Out of Tolerance,LIQUID,5,50,Inferred from viscosity capture fields,8.2.2.1.18/Paint Tally,Low
+Catalyst issue,MIX,Paint Mix Defects,CATALYST_ISSUE,Catalyst Check Failure,LIQUID,7,60,Catalyst Check column on production tracking,8.2.2.2.1/Line Paint Production Tracking,Medium
+Rack visual check failure,HAND,Handling Defects,RACK_VISUAL_FAIL,Rack Condition Failure,LIQUID,3,70,Rack Visual Check column,8.2.2.2.1/Line Paint Production Tracking,Medium
+Equipment issue - primer,EQUIP,Equipment Defects,EQUIP_PRIME,Equipment Issue - Primer Stage,LIQUID,6,80,Downtime category: EQUIPMENT ISSUES PRIME,8.2.2.28/Feb,Medium
+Equipment issue - base,EQUIP,Equipment Defects,EQUIP_BASE,Equipment Issue - Base Stage,LIQUID,6,90,Downtime category: EQUIPMENT ISSUES BASE,8.2.2.28/Feb,Medium
+Equipment issue - clear,EQUIP,Equipment Defects,EQUIP_CLEAR,Equipment Issue - Clear Stage,LIQUID,6,100,Downtime category: EQUIPMENT ISSUES CLEAR,8.2.2.28/Feb,Medium
