@@ -109,6 +109,14 @@ Summary:
 6. Outcome:
    - runtime sanity closeout fully completed (deny + allow paths both verified)
    - `human_needed` cleared for this closeout scope
+7. Runtime principal remediation:
+   - Restored missing app runtime roles in dev: `dbrole_ncr_ops_exec`, `dbrole_ncr_ops_read`.
+   - Assigned SQL contained principal `sfq-runtime-dev` to both ops roles.
+   - Confirmed rerun probe correlations after remediation:
+     - health: `a7bedcce-eb36-4565-a98f-4c86203826b7`
+     - non-admin deny: `05c79ffc-afed-4265-9645-428d6dca467c` (`403`)
+     - admin allow: `c10a6dc6-61d2-4dad-b7b5-af4bef6deb30` (`404`, non-`403`)
+   - Noted dev schema drift: `integration.usp_AcknowledgeNcrOutboxEvent` and `integration.usp_GetPendingNotifications` absent, so guarded grant replay was used for role wiring compatibility.
 
 ## Open Items
 

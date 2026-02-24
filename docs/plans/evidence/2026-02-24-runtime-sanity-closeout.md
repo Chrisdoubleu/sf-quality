@@ -111,3 +111,73 @@ Overall runtime sanity closeout: `PASS`
 
 - `human_needed = false`
 - Admin allow-path evidence is now present and verified end-to-end.
+
+## Rerun: Role Remediation + Probe Recheck (2026-02-24)
+
+### Additional Commands Run
+
+```powershell
+# Restore/verify runtime SQL principal role wiring in dev
+# (idempotent role creation + object-guarded grants + membership assignment)
+```
+
+```powershell
+# Runtime probe execution with local API background job
+dotnet run --project C:/Dev/sf-quality/sf-quality-api/src/SfQualityApi/SfQualityApi.csproj --urls http://localhost:5269
+Invoke-WebRequest -Uri "http://localhost:5269/v1/diagnostics/health" -SkipHttpErrorCheck
+Invoke-WebRequest -Uri "http://localhost:5269/v1/ncr/999999/submit?isValidateOnly=true" -Method Post -Headers @{ "X-MS-CLIENT-PRINCIPAL" = $principal } -Body "{}" -ContentType "application/json" -SkipHttpErrorCheck
+```
+
+### Runtime Principal Role State (Dev DB)
+
+- Roles present:
+  - `dbrole_ncr_admin`
+  - `dbrole_ncr_audit_read`
+  - `dbrole_ncr_integration`
+  - `dbrole_ncr_ops_exec`
+  - `dbrole_ncr_ops_read`
+- Principal `sfq-runtime-dev` membership:
+  - `dbrole_ncr_ops_exec`
+  - `dbrole_ncr_ops_read`
+- Effective permission counts after guarded grant replay:
+  - `dbrole_ncr_ops_exec`: `18`
+  - `dbrole_ncr_ops_read`: `10`
+- Missing objects observed in current dev schema (explains partial Phase 16 replay failure):
+  - `integration.usp_AcknowledgeNcrOutboxEvent`
+  - `integration.usp_GetPendingNotifications`
+
+### Rerun Probe Results
+
+#### Health check
+
+- Status: `200`
+- Correlation ID: `a7bedcce-eb36-4565-a98f-4c86203826b7`
+
+#### Probe 1: non-admin-deny
+
+- OID: `2FA67B5A-5880-4D2A-BFAD-6F5D29EBF101`
+- Status: `403`
+- Body:
+
+```json
+{"error":"No role grants permission: WF.NCR.Submit","correlationId":"05c79ffc-afed-4265-9645-428d6dca467c"}
+```
+
+- Correlation ID: `05c79ffc-afed-4265-9645-428d6dca467c`
+
+#### Probe 2: admin-allow
+
+- OID: `7CB31D63-9EA5-43EB-BCC3-BE10CA6F6C03`
+- Status: `404` (non-`403` allow-path proof)
+- Body:
+
+```json
+{"error":"NCR not found.","correlationId":"c10a6dc6-61d2-4dad-b7b5-af4bef6deb30"}
+```
+
+- Correlation ID: `c10a6dc6-61d2-4dad-b7b5-af4bef6deb30`
+
+### Rerun PASS/FAIL
+
+1. Non-admin deny expected `403`: `PASS`
+2. Admin allow expected non-`403`: `PASS` (`404` observed)
