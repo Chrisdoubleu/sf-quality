@@ -60,3 +60,37 @@ Summary:
 
 1. `human_needed` remains possible for admin allow-path runtime probe in API runtime sanity closeout.
 2. Root workspace has pre-existing untracked docs under `docs/Organization Forms Reference/` and must remain untouched by this wave.
+
+## Wave Execution Record (Merged)
+
+| Wave | Repo | PR | Merge Commit |
+|------|------|----|--------------|
+| 1A | `sf-quality` | https://github.com/Chrisdoubleu/sf-quality/pull/11 | `111656a4ed00f46d2c1b9a13919fa9c35ea9f6d4` |
+| 1B | `sf-quality-db` | https://github.com/Chrisdoubleu/sf-quality-db/pull/25 | `2a9720b3fec5bf408cebbfa2755cac7d6bdd6125` |
+| 1C | `sf-quality-api` | https://github.com/Chrisdoubleu/sf-quality-api/pull/9 | `035bbf7abd803a822e2e00bbcbc2662e709853a9` |
+| 1D | `sf-quality-app` | https://github.com/Chrisdoubleu/sf-quality-app/pull/4 | `ed281afd05328cee0f84435b54a25f0d0bbbe8f8` |
+| 2 | `sf-quality-api` (Phase 4 slice) | https://github.com/Chrisdoubleu/sf-quality-api/pull/10 | `e82d12ba7dd7a663d6a92499adba9dda58f31fd8` |
+| 3 | `sf-quality-api` (Phase 6 slice) | https://github.com/Chrisdoubleu/sf-quality-api/pull/11 | `4c219411aa5306826faf39dbc14f193d1d17b4d1` |
+| 4 | `sf-quality-api` (Phase 8/9 slice) | https://github.com/Chrisdoubleu/sf-quality-api/pull/12 | `e620ddc99005ead6cd581d43814e433709613992` |
+| 5 | `sf-quality-app` (Phase 1 slice) | https://github.com/Chrisdoubleu/sf-quality-app/pull/5 | `76bb49fbf3005db6b6c73e1e43e375193bca8591` |
+| 6 | `sf-quality-app` (Phase 2/3 slice) | https://github.com/Chrisdoubleu/sf-quality-app/pull/6 | `2f706f32c95e13107f83c21b27cbbecfb27f0d1a` |
+
+## Post-Wave Verification Snapshot
+
+1. API verification after Phase 8/9 slice:
+   - `dotnet build SfQualityApi.sln -v minimal` -> `Build succeeded. 0 Warning(s), 0 Error(s).`
+   - `dotnet test tests/SfQualityApi.Tests/SfQualityApi.Tests.csproj -v minimal` -> `Passed: 37, Failed: 0`
+   - `pwsh scripts/Test-DbContractReferences.ps1 -RepoRoot (Get-Location)` -> `PASSED`
+   - `pwsh scripts/Test-OpenApiPublication.ps1 -RepoRoot (Get-Location)` -> `PASSED`
+   - `pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly` -> `All cycle checks passed.`
+2. App verification after Phase 2/3 slice:
+   - `pwsh scripts/Test-AuthSessionPropagation.ps1 -RepoRoot (Get-Location)` -> `PASSED`
+   - `pwsh scripts/Test-ServerApiBoundary.ps1 -RepoRoot (Get-Location)` -> `PASSED`
+   - `pwsh scripts/Test-PlanningConsistency.ps1 -RepoRoot (Get-Location)` -> `PASSED`
+   - `pwsh scripts/Test-ApiContractReferences.ps1 -RepoRoot (Get-Location)` -> `PASSED`
+   - `pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly` -> `All cycle checks passed.`
+
+## Open Items
+
+1. Runtime sanity closeout still needs one verified non-admin deny probe and one verified admin allow probe against current API `main`.
+2. DB Phase 35 remains blocked except for formally documented API/App blocker exceptions.
