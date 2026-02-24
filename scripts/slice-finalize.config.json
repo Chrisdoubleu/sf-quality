@@ -1,0 +1,38 @@
+{
+  "defaults": {
+    "baseBranch": "main",
+    "protectedBranches": [
+      "main",
+      "master"
+    ]
+  },
+  "repos": {
+    "sf-quality-db": {
+      "baseBranch": "main",
+      "checks": [
+        "pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly",
+        "pwsh database/deploy/Test-PlanningConsistency.ps1 -RepoRoot {repoRoot}"
+      ],
+      "requiredPathPatterns": [],
+      "requiredPathPatternMode": "all"
+    },
+    "sf-quality-api": {
+      "baseBranch": "main",
+      "checks": [
+        "pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly",
+        "pwsh scripts/Test-PlanningConsistency.ps1 -RepoRoot {repoRoot}"
+      ],
+      "requiredPathPatterns": [],
+      "requiredPathPatternMode": "all"
+    },
+    "sf-quality-app": {
+      "baseBranch": "main",
+      "checks": [
+        "pwsh scripts/Invoke-CycleChecks.ps1 -ChangedOnly",
+        "pwsh scripts/Test-PlanningConsistency.ps1 -RepoRoot {repoRoot}"
+      ],
+      "requiredPathPatterns": [],
+      "requiredPathPatternMode": "all"
+    }
+  }
+}
