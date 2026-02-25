@@ -55,8 +55,8 @@ The single source of truth for bundle composition is:
 
 | RoleId | Role Name | Allow Count |
 |---|---|---|
-| 1 | Quality Authority - Enterprise | 51 (47 + 4 timeout) |
-| 2 | Enterprise Reopen/Cancel | 10 |
+| 1 | Quality Authority - Enterprise (Full) | 51 (47 + 4 timeout) |
+| 2 | Workflow Reopen/Cancel - Enterprise | 10 |
 | 3 | Engineering Contributor - Enterprise | 27 |
 | 4 | Maintenance Contributor - Enterprise | 16 |
 | 5 | Operations Lead - Multi-Plant | 40 |
@@ -67,8 +67,8 @@ The single source of truth for bundle composition is:
 | 10 | Quality Workflow Coordinator | 19 |
 | 11 | Quality Data Steward | 5 |
 | 12 | Maintenance Workflow Lead | 13 |
-| 13 | Floor Supervisor | 5 |
-| 14 | Floor Reporter | 1 |
+| 13 | Floor Supervisor - Initiate & Manage | 5 |
+| 14 | Floor Reporter - Initiate Only | 1 |
 | 15 | Process Engineering Contributor | 11 |
 | **Total** | | **328 Allow / 709 total rows** |
 

@@ -1,0 +1,12 @@
+WorkflowTransitionId,WorkflowProcessId,FromStateId,ToStateId,TransitionName,RequiredRoleId,RequiredRole_Ref,SlaHours,SlaBaselineType,GuardType,GuardExpression,IsAutoFire,SortOrder,IsActive,FromState_Ref,ToState_Ref,FloorScenario,TeamNotes
+86,7,48,49,Begin Review,,,,,,,0,1,1,QA-OPEN,QA-REVIEW,Supervisor picks up the alert. No role gate — anyone with dashboard access can start review.,
+87,7,49,51,Close — Not a Defect,9,Quality Workflow Approver - Plant,,,,,0,2,1,QA-REVIEW,QA-CLOSED,"False signal, boundary sample OK. Record kept for trending.",
+88,7,49,50,Confirm Defect,9,Quality Workflow Approver - Plant,,,,,0,3,1,QA-REVIEW,QA-CONFIRMED,"Reviewer populates DefectTypeId, SeverityRatingId, FamiliarityCode. This is the decision gate.",
+89,7,50,52,Resolve in Place,9,Quality Workflow Approver - Plant,,,FamiliarityGuard,"Severity IN (Minor, Observation) AND Familiarity = 'Known'",0,4,1,QA-CONFIRMED,QA-RESOLVED,Known + Minor: scrap/rework/adjust and move on. ResolutionActionCode + notes recorded. No NCR needed.,
+90,7,50,53,Escalate to NCR,9,Quality Workflow Approver - Plant,,,,,0,5,1,QA-CONFIRMED,QA-ESCALATED,"Known+Major or Unknown. Creates linked NCR in Draft. NCR inherits DefectTypeId, SeverityRatingId.",
+91,7,50,53,Escalate to Process Deviation,9,Quality Workflow Approver - Plant,,,,,0,6,1,QA-CONFIRMED,QA-ESCALATED,Root cause is process not product. Creates linked ProcDev in Open.,
+92,7,48,54,Void Alert (from Open),9,Quality Workflow Approver - Plant,,,,,0,7,1,QA-OPEN,QA-VOIDED,Duplicate/error,
+93,7,49,54,Void Alert (from Review),1,Quality Authority - Enterprise (Full),,,,,0,8,1,QA-REVIEW,QA-VOIDED,Late-discovered duplicate. Higher role required.,
+94,7,50,54,Void Alert (from Confirmed),1,Quality Authority - Enterprise (Full),,,,,0,9,1,QA-CONFIRMED,QA-VOIDED,Confirmed in error. Higher role required.,
+95,7,48,50,Direct Confirm,1,Quality Authority - Enterprise (Full),,,,,0,10,1,QA-OPEN,QA-CONFIRMED,Skip review for obvious defects (manager authority only).,
+96,7,50,49,Reclassify,10,Quality Workflow Coordinator,,,,,0,11,1,QA-CONFIRMED,QA-REVIEW,Confirmation was wrong — need to reassess. Backward transition.,

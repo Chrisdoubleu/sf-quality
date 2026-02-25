@@ -1,0 +1,9 @@
+WorkflowTransitionId,WorkflowProcessId,FromStateId,ToStateId,TransitionName,RequiredRoleId,RequiredRole_Ref,SlaHours,SlaBaselineType,GuardType,GuardExpression,IsAutoFire,SortOrder,IsActive,FromState_Ref,ToState_Ref,FloorScenario,TeamNotes
+97,8,55,56,Begin Assessment,,,4,StateEntry,,,0,1,1,PD-OPEN,PD-ASSESS,CQI-12 expects prompt reaction. 4hr SLA is the audit trail that currently doesn't exist.,
+98,8,56,57,Quarantine Product,,,,,,,0,2,1,PD-ASSESS,PD-CONTAINED,Product held pending verification.,
+99,8,56,58,Close — No Product Impact,10,Quality Workflow Coordinator,,,,,0,3,1,PD-ASSESS,PD-CLOSED,"Parameter corrected, product verified OK.",
+100,8,57,58,Release Product,1,Quality Authority - Enterprise (Full),,,,,0,4,1,PD-CONTAINED,PD-CLOSED,Testing confirms product is conforming. Higher role for release.,
+101,8,57,59,Escalate to NCR,10,Quality Workflow Coordinator,,,,,0,5,1,PD-CONTAINED,PD-ESCALATED,Testing confirms nonconformance — NCR created.,
+102,8,55,60,Void Deviation (from Open),9,Quality Workflow Approver - Plant,,,,,0,6,1,PD-OPEN,PD-VOIDED,False alarm.,
+103,8,56,60,Void Deviation (from Assessing),1,Quality Authority - Enterprise (Full),,,,,0,7,1,PD-ASSESS,PD-VOIDED,Late-discovered false alarm. Higher role.,
+104,8,57,56,Reassess Scope,10,Quality Workflow Coordinator,,,,,0,8,1,PD-CONTAINED,PD-ASSESS,New information changes scope. Backward transition.,

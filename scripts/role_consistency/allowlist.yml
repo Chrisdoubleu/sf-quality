@@ -1,0 +1,51 @@
+{
+  "historical_globs": [
+    "sf-quality-db/docs/handoffs/**",
+    "sf-quality-db/.planning/**",
+    "docs/Organization Forms Reference/**",
+    "Reference_Architecture/Phase23_Discussion_Package/**",
+    "docs/Quality-Event Classification/Parallel Forms - Quality-Event Classification Deep Research.json",
+    "docs/plans/2026-02-25-cross-repo-role-terminology-remediation.md",
+    "docs/standards/role-terminology-policy.md",
+    "docs/plans/evidence/2026-02-25-role-terminology-report.json",
+    "sf-quality-db/docs/Milestone v1.1/**",
+    "sf-quality-db/database/deploy/Inspect-NcrOperationalParity.sql",
+    "sf-quality-db/database/migrations/010_seed_roles.sql",
+    "sf-quality-db/database/migrations/047_seed_workflow_processes.sql",
+    "sf-quality-db/database/migrations/052_seed_escalation_approval.sql"
+  ],
+  "reasons": {
+    "sf-quality-db/docs/handoffs/**": "Historical handoff snapshots",
+    "sf-quality-db/.planning/**": "Historical planning artifacts",
+    "docs/Organization Forms Reference/**": "External/source package content",
+    "Reference_Architecture/Phase23_Discussion_Package/**": "Archived discussion package",
+    "docs/Quality-Event Classification/Parallel Forms - Quality-Event Classification Deep Research.json": "Imported research evidence",
+    "docs/plans/2026-02-25-cross-repo-role-terminology-remediation.md": "Remediation implementation plan includes legacy-term examples for validation logic",
+    "docs/standards/role-terminology-policy.md": "Policy document intentionally enumerates prohibited legacy terms",
+    "docs/plans/evidence/2026-02-25-role-terminology-report.json": "Generated validator output can contain legacy-term findings by design",
+    "sf-quality-db/docs/Milestone v1.1/**": "Frozen historical milestone artifacts",
+    "sf-quality-db/database/deploy/Inspect-NcrOperationalParity.sql": "Historical parity script references pre-rename baseline labels",
+    "sf-quality-db/database/migrations/010_seed_roles.sql": "Immutable migration seeds pre-rename role labels by design",
+    "sf-quality-db/database/migrations/047_seed_workflow_processes.sql": "Immutable migration comments reference pre-rename labels",
+    "sf-quality-db/database/migrations/052_seed_escalation_approval.sql": "Immutable migration step labels predate canonical rename"
+  },
+  "scan_roots": [
+    "Reference_Architecture",
+    "docs",
+    "sf-quality-db",
+    "sf-quality-api",
+    "sf-quality-app"
+  ],
+  "extensions": [
+    ".md",
+    ".csv",
+    ".sql",
+    ".json",
+    ".txt",
+    ".ps1",
+    ".py",
+    ".ts",
+    ".tsx",
+    ".cs"
+  ]
+}

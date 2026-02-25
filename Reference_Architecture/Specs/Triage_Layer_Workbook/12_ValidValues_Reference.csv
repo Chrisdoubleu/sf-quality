@@ -1,0 +1,28 @@
+FieldName,Entity,Code,DisplayName,Description,TeamNotes
+AlertSourceCode,QualityAlert,Visual,Visual Inspection,Defect spotted by eye at unload or in-process,Most common source at both plants
+AlertSourceCode,QualityAlert,Instrument,Instrument Reading,"Gauge, meter, or measurement tool reading",DFT gauge failure etc.
+AlertSourceCode,QualityAlert,SPCSignal,SPC Signal,"Statistical process control chart out-of-control signal",Cpk alert from monitoring system
+AlertSourceCode,QualityAlert,ProcessAlarm,Process Alarm,"Equipment alarm, interlock, or parameter alarm",E-coat crash / oven alarm
+AlertSourceCode,QualityAlert,CustomerFeedback,Customer Feedback,"Customer complaint, return, or notification",May also create CustomerComplaint entity
+AlertSourceCode,QualityAlert,Other,Other,Source not covered above,Free text Description should explain
+FamiliarityCode,QualityAlert,Known,Known Defect,We have seen this defect type before and understand it,Enables Resolve in Place path
+FamiliarityCode,QualityAlert,Unknown,Unknown Defect,We have NOT seen this before or don't understand the cause,Forces NCR with full investigation
+ResolutionActionCode,QualityAlert,Scrap,Scrap,Parts scrapped,
+ResolutionActionCode,QualityAlert,Rework,Rework,Parts reworked (sand/buff/recoat),
+ResolutionActionCode,QualityAlert,UseAsIs,Use As-Is,Parts accepted as-is within tolerance,May need customer approval
+ResolutionActionCode,QualityAlert,Adjusted,Adjusted,Process parameter adjusted to correct,Common for minor process drift
+ResolutionActionCode,QualityAlert,Contained,Contained,Product isolated pending further review,Edge case — may reconsider escalation
+EscalationReason,QualityAlert,KnownMajor,Known + Major,Known defect but severity too high for in-place resolution,
+EscalationReason,QualityAlert,Unknown,Unknown Defect,Unfamiliar defect — requires investigation,
+EscalationReason,QualityAlert,AccumulationRule,Accumulation Rule,Auto-escalated by accumulation engine,
+DeviationTypeCode,ProcessDeviation,ChemistryExcursion,Chemistry Excursion,"Bath pH, conductivity, solids, PB ratio, paint viscosity out of spec",Plant 1: e-coat bath. Plant 2: paint mix.
+DeviationTypeCode,ProcessDeviation,TemperatureExcursion,Temperature Excursion,"Oven, tank, or environmental temperature out of spec",Both plants — cure oven primary.
+DeviationTypeCode,ProcessDeviation,EquipmentParameter,Equipment Parameter,"Non-temperature equipment parameter (pressure, flow, voltage, amps)",
+DeviationTypeCode,ProcessDeviation,SPCOutOfControl,SPC Out-of-Control,Statistical process control chart signals out-of-control condition,
+DeviationTypeCode,ProcessDeviation,MonitoringReversion,Monitoring Reversion,"CQI-12: monitoring frequency reverted from reduced back to standard",Auditors specifically look for this.
+DeviationTypeCode,ProcessDeviation,CalibrationPyrometry,Calibration / Pyrometry,"SAT failure, TUS failure, gauge calibration failure",CQI-12 requires tracking these.
+DeviationTypeCode,ProcessDeviation,Other,Other,Deviation type not covered above,
+ProductRiskAssessment,ProcessDeviation,ConfirmedOK,Confirmed OK,Testing confirms product is conforming,Leads to PD-CLOSED
+ProductRiskAssessment,ProcessDeviation,Suspect,Suspect (Hold),Product held — testing not yet complete,Leads to PD-CONTAINED
+ProductRiskAssessment,ProcessDeviation,ConfirmedNC,Confirmed Nonconforming,Testing confirms nonconformance,Leads to PD-ESCALATED → NCR
+ProductRiskAssessment,ProcessDeviation,NotAssessed,Not Yet Assessed,Product impact not yet evaluated,Initial state during PD-ASSESS

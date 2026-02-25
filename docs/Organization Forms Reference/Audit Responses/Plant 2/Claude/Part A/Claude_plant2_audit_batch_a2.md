@@ -91,7 +91,7 @@ Based on the forms analyzed, a `ProductionRun` / `LoadRecord` entity needs to ca
 
 1. **Sheet1 (SWI):** 11-step standardized work instruction for robot spray operators. Steps include: verify pot room supplies, confirm viscosity via cookbook, verify gun assembly, program parameters and conduct cup test with supervisor sign-off, verify rack condition, observe fan pattern. This is a real SWI that references actual quality checkpoints.
 
-2. **Option 1:** Production Supervisor Shift Report. Captures 6 colour/program slots with Value, Operator Initials, Supervisor Initials per task (solvent fill, base fill, clear fill). This is a basic check-off.
+2. **Option 1:** Floor Supervisor - Initiate & Manage Shift Report. Captures 6 colour/program slots with Value, Operator Initials, Supervisor Initials per task (solvent fill, base fill, clear fill). This is a basic check-off.
 
 3. **Option 2 (best form in both plant audits):** "Line 102 Application Tracker." Captures:
    - **Header:** Name, Date, Program, Colour, Temp/Humidity at start and end, Booth Temp at start and end

@@ -1,0 +1,61 @@
+WorkflowStateId,WorkflowProcessId,ProcessCode,EntityType,StatusCodeId,StatusCode,StatusName,StateType,StatusCategory,IsFinal,ColorHex,SortOrder,Description,Source
+1,1,NCR,NCR,1,NCR-DRAFT,Draft,Start,New,0,#6B7280,1,NCR created but not yet submitted,migration-018+047
+2,1,NCR,NCR,2,NCR-OPEN,Open,Normal,Active,0,#3B82F6,2,NCR submitted and awaiting containment,migration-018+047
+3,1,NCR,NCR,3,NCR-CONTAINED,Contained,Normal,Active,0,#F59E0B,3,Immediate containment actions completed,migration-018+047
+4,1,NCR,NCR,4,NCR-INVEST,Under Investigation,Normal,Active,0,#8B5CF6,4,Root cause analysis in progress,migration-018+047
+5,1,NCR,NCR,5,NCR-DISPOSED,Dispositioned,Normal,Active,0,#EC4899,5,Disposition decision made for nonconforming material,migration-018+047
+6,1,NCR,NCR,6,NCR-PENDVERIF,Pending Verification,Normal,PendingReview,0,#F97316,6,Awaiting verification that corrective actions are effective,migration-018+047
+7,1,NCR,NCR,7,NCR-CLOSED,Closed,Terminal,Closed,1,#10B981,7,NCR fully resolved and verified,migration-018+047
+8,1,NCR,NCR,8,NCR-VOIDED,Voided,Cancelled,Cancelled,1,#EF4444,8,NCR cancelled or created in error,migration-018+047
+9,2,CAPA,CAPA,9,CAPA-DRAFT,Draft,Start,New,0,#6B7280,1,CAPA initiated but not yet assigned,migration-018+047
+10,2,CAPA,CAPA,10,CAPA-ASSIGNED,Assigned,Normal,Active,0,#3B82F6,2,CAPA assigned to investigation team,migration-018+047
+11,2,CAPA,CAPA,11,CAPA-CONTAIN,Containment Active,Normal,Active,0,#F59E0B,3,D3 containment actions being implemented,migration-018+047
+12,2,CAPA,CAPA,12,CAPA-INVEST,Under Investigation,Normal,Active,0,#8B5CF6,4,D4-D5 root cause analysis and corrective action planning,migration-018+047
+13,2,CAPA,CAPA,13,CAPA-PENDREV,Pending Review,Normal,PendingReview,0,#F97316,5,Corrective action plan submitted for management review,migration-018+047
+14,2,CAPA,CAPA,14,CAPA-IMPLEMENT,Implementing,Normal,Active,0,#06B6D4,6,D6 corrective actions being implemented,migration-018+047
+15,2,CAPA,CAPA,15,CAPA-PENDEFF,Pending Effectiveness,Normal,PendingReview,0,#F97316,7,D7 awaiting effectiveness verification,migration-018+047
+16,2,CAPA,CAPA,16,CAPA-CLOSED,Closed,Terminal,Closed,1,#10B981,8,D8 CAPA fully resolved and verified,migration-018+047
+17,2,CAPA,CAPA,17,CAPA-VOIDED,Voided,Cancelled,Cancelled,1,#EF4444,9,CAPA cancelled or created in error,migration-018+047
+18,3,COMPLAINT,CustomerComplaint,18,CC-RECEIVED,Received,Start,New,0,#6B7280,1,Complaint received and logged,migration-018+047
+19,3,COMPLAINT,CustomerComplaint,19,CC-ACKNOWLEDGED,Acknowledged,Normal,Active,0,#3B82F6,2,Complaint acknowledged to customer,migration-018+047
+20,3,COMPLAINT,CustomerComplaint,20,CC-INVEST,Under Investigation,Normal,Active,0,#8B5CF6,3,Investigation in progress,migration-018+047
+21,3,COMPLAINT,CustomerComplaint,21,CC-RESPONDED,Response Submitted,Normal,Active,0,#06B6D4,4,Formal response sent to customer,migration-018+047
+22,3,COMPLAINT,CustomerComplaint,22,CC-PENDACCEPT,Pending Customer Acceptance,Normal,PendingReview,0,#F97316,5,Awaiting customer acceptance of response,migration-018+047
+23,3,COMPLAINT,CustomerComplaint,23,CC-CLOSED,Closed,Terminal,Closed,1,#10B981,6,Complaint fully resolved and accepted by customer,migration-018+047
+24,3,COMPLAINT,CustomerComplaint,24,CC-VOIDED,Voided,Cancelled,Cancelled,1,#EF4444,7,Complaint cancelled or entered in error,migration-018+047
+25,4,SCAR,SupplierCAR,25,SCAR-DRAFT,Draft,Start,New,0,#6B7280,1,SCAR created but not yet issued to supplier,migration-018+047
+26,4,SCAR,SupplierCAR,26,SCAR-ISSUED,Issued to Supplier,Normal,Active,0,#3B82F6,2,SCAR formally issued to supplier for response,migration-018+047
+27,4,SCAR,SupplierCAR,27,SCAR-RESPONSE,Response Received,Normal,PendingReview,0,#F97316,3,Supplier response received — pending internal review,migration-018+047
+28,4,SCAR,SupplierCAR,28,SCAR-REVIEW,Under Review,Normal,PendingReview,0,#8B5CF6,4,Internal review of supplier response,migration-018+047
+29,4,SCAR,SupplierCAR,29,SCAR-ACCEPTED,Accepted,Normal,Active,0,#10B981,5,Supplier corrective action plan accepted,migration-018+047
+30,4,SCAR,SupplierCAR,30,SCAR-REJECTED,Rejected,Normal,Active,0,#EF4444,6,Supplier response rejected — awaiting revised response,migration-018+047
+31,4,SCAR,SupplierCAR,31,SCAR-VERIFIED,Verified,Terminal,Closed,1,#10B981,7,Supplier corrective actions verified effective,migration-018+047
+32,4,SCAR,SupplierCAR,32,SCAR-CLOSED,Closed,Terminal,Closed,1,#059669,8,SCAR fully resolved and closed,migration-018+047
+33,5,AUDITFINDING,AuditFinding,33,AF-OPEN,Open,Start,New,0,#6B7280,1,Audit finding logged and awaiting assignment,migration-018+047
+34,5,AUDITFINDING,AuditFinding,34,AF-ASSIGNED,Assigned,Normal,Active,0,#3B82F6,2,Finding assigned to responsible party,migration-018+047
+35,5,AUDITFINDING,AuditFinding,35,AF-INVEST,Under Investigation,Normal,Active,0,#8B5CF6,3,Root cause analysis in progress,migration-018+047
+36,5,AUDITFINDING,AuditFinding,36,AF-CALINKED,Corrective Action Linked,Normal,Active,0,#06B6D4,4,Linked to CAPA for corrective action tracking,migration-018+047
+37,5,AUDITFINDING,AuditFinding,37,AF-PENDVERIF,Pending Verification,Normal,PendingReview,0,#F97316,5,Awaiting verification of corrective action effectiveness,migration-018+047
+38,5,AUDITFINDING,AuditFinding,38,AF-VERIFIED,Verified,Normal,Closed,1,#10B981,6,Corrective action verified effective,migration-018+047
+39,5,AUDITFINDING,AuditFinding,39,AF-CLOSED,Closed,Terminal,Closed,1,#059669,7,Audit finding fully resolved,migration-018+047
+40,6,EIGHTD,EightD,40,EIGHTD-DRAFT,Draft,Start,New,0,#6B7280,1,8D report created but not yet started,migration-043+047
+41,6,EIGHTD,EightD,41,EIGHTD-INPROG,In Progress,Normal,Active,0,#3B82F6,2,8D disciplines actively being completed,migration-043+047
+42,6,EIGHTD,EightD,42,EIGHTD-REVIEW,Under Review,Normal,PendingReview,0,#8B5CF6,3,8D completed internally — pending quality review,migration-043+047
+43,6,EIGHTD,EightD,43,EIGHTD-SUBMITTED,Submitted to Customer,Normal,Active,0,#06B6D4,4,8D report formally submitted to customer,migration-043+047
+44,6,EIGHTD,EightD,44,EIGHTD-PENDACCEPT,Pending Customer Acceptance,Normal,Active,0,#F97316,5,Awaiting customer acceptance of 8D report,migration-043+047
+45,6,EIGHTD,EightD,45,EIGHTD-ACCEPTED,Accepted,Normal,Active,0,#10B981,6,Customer accepted the 8D report,migration-043+047
+46,6,EIGHTD,EightD,46,EIGHTD-CLOSED,Closed,Terminal,Closed,1,#059669,7,8D fully resolved and closed (D8 complete),migration-043+047
+47,6,EIGHTD,EightD,47,EIGHTD-REVISION,Revision Requested,Normal,Active,0,#F59E0B,8,Customer requested revisions to the 8D report,migration-043+047
+48,7,QA,QualityAlert,48,QA-OPEN,Open,Start,New,0,#3B82F6,1,Alert logged — awaiting review,triage-layer-spec
+49,7,QA,QualityAlert,49,QA-REVIEW,Under Review,Normal,Active,0,#F59E0B,2,Supervisor/QE evaluating: is this actually a problem?,triage-layer-spec
+50,7,QA,QualityAlert,50,QA-CONFIRMED,Confirmed,Normal,Active,0,#8B5CF6,3,Problem confirmed — assessing familiarity and severity,triage-layer-spec
+51,7,QA,QualityAlert,51,QA-CLOSED,Closed,Terminal,Closed,1,#10B981,4,Reviewed and determined not to be a defect,triage-layer-spec
+52,7,QA,QualityAlert,52,QA-RESOLVED,Resolved,Terminal,Closed,1,#06B6D4,5,Confirmed defect handled in place (Known + Minor),triage-layer-spec
+53,7,QA,QualityAlert,53,QA-ESCALATED,Escalated,Terminal,Closed,1,#EC4899,6,Promoted to NCR or ProcessDeviation,triage-layer-spec
+54,7,QA,QualityAlert,54,QA-VOIDED,Voided,Cancelled,Cancelled,1,#EF4444,7,Duplicate or error,triage-layer-spec
+55,8,PD,ProcessDeviation,55,PD-OPEN,Open,Start,New,0,#3B82F6,1,Deviation detected — not yet assessed,triage-layer-spec
+56,8,PD,ProcessDeviation,56,PD-ASSESS,Assessing,Normal,Active,0,#F59E0B,2,Evaluating product impact and scope,triage-layer-spec
+57,8,PD,ProcessDeviation,57,PD-CONTAINED,Contained,Normal,Active,0,#8B5CF6,3,Suspect product quarantined — reaction plan active,triage-layer-spec
+58,8,PD,ProcessDeviation,58,PD-CLOSED,Closed,Terminal,Closed,1,#10B981,4,Deviation resolved — product released or no impact,triage-layer-spec
+59,8,PD,ProcessDeviation,59,PD-ESCALATED,Escalated,Terminal,Closed,1,#EC4899,5,Confirmed NC product found — NCR created,triage-layer-spec
+60,8,PD,ProcessDeviation,60,PD-VOIDED,Voided,Cancelled,Cancelled,1,#EF4444,6,False alarm or duplicate,triage-layer-spec

@@ -1,0 +1,20 @@
+{
+  "source": "sf-quality-db/database/migrations/092_seed_workflow_permissions_features.sql#SectionF",
+  "roles": [
+    { "roleId": 1, "roleName": "Quality Authority - Enterprise (Full)" },
+    { "roleId": 2, "roleName": "Workflow Reopen/Cancel - Enterprise" },
+    { "roleId": 3, "roleName": "Engineering Contributor - Enterprise" },
+    { "roleId": 4, "roleName": "Maintenance Contributor - Enterprise" },
+    { "roleId": 5, "roleName": "Operations Lead - Multi-Plant" },
+    { "roleId": 6, "roleName": "Process Engineering Lead - Multi-Plant" },
+    { "roleId": 7, "roleName": "Plant Workflow Manager" },
+    { "roleId": 8, "roleName": "Production Workflow Lead" },
+    { "roleId": 9, "roleName": "Quality Workflow Approver - Plant" },
+    { "roleId": 10, "roleName": "Quality Workflow Coordinator" },
+    { "roleId": 11, "roleName": "Quality Data Steward" },
+    { "roleId": 12, "roleName": "Maintenance Workflow Lead" },
+    { "roleId": 13, "roleName": "Floor Supervisor - Initiate & Manage" },
+    { "roleId": 14, "roleName": "Floor Reporter - Initiate Only" },
+    { "roleId": 15, "roleName": "Process Engineering Contributor" }
+  ]
+}

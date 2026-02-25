@@ -1,0 +1,14 @@
+StatusCodeId,StatusCode,StatusName,Description,EntityType,StatusCategory,IsFinal,IsActive,ColorHex,SortOrder,Notes
+48,QA-OPEN,Open,Alert logged — awaiting review,QualityAlert,New,0,1,#3B82F6,1,Start state. Anyone can create.
+49,QA-REVIEW,Under Review,"Supervisor/QE evaluating: is this actually a problem?",QualityAlert,Active,0,1,#F59E0B,2,
+50,QA-CONFIRMED,Confirmed,"Problem confirmed. DefectType, Severity, Familiarity assessed.",QualityAlert,Active,0,1,#8B5CF6,3,Decision gate — determines resolution path
+51,QA-CLOSED,Closed,Reviewed and determined not to be a defect (record preserved for trending),QualityAlert,Closed,1,0,#10B981,4,Terminal. Counts as false signal for metrics.
+52,QA-RESOLVED,Resolved,"Confirmed defect handled in place — known issue, minor severity, quick disposition recorded",QualityAlert,Closed,1,0,#06B6D4,5,Terminal. Counts as confirmed defect. Feeds accumulation.
+53,QA-ESCALATED,Escalated,Promoted to NCR or Process Deviation for formal resolution,QualityAlert,Closed,1,0,#EC4899,6,Terminal. Spawned entity takes over.
+54,QA-VOIDED,Voided,Duplicate or error,QualityAlert,Cancelled,1,0,#EF4444,7,
+55,PD-OPEN,Open,"Deviation detected, not yet assessed",ProcessDeviation,New,0,1,#3B82F6,1,Start state.
+56,PD-ASSESS,Assessing,Evaluating product impact and scope,ProcessDeviation,Active,0,1,#F59E0B,2,4hr SLA from Open.
+57,PD-CONTAINED,Contained,"Suspect product quarantined, reaction plan active",ProcessDeviation,Active,0,1,#8B5CF6,3,
+58,PD-CLOSED,Closed,Deviation resolved — product released or no product impact,ProcessDeviation,Closed,1,0,#10B981,4,Terminal.
+59,PD-ESCALATED,Escalated,Confirmed nonconforming product found — NCR created,ProcessDeviation,Closed,1,0,#EC4899,5,Terminal.
+60,PD-VOIDED,Voided,False alarm or duplicate,ProcessDeviation,Cancelled,1,0,#EF4444,6,

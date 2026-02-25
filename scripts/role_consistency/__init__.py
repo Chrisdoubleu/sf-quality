@@ -1,0 +1,1 @@
+"""Role consistency utilities."""

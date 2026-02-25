@@ -1,0 +1,3 @@
+WorkflowProcessId,ProcessCode,ProcessName,EntityType,Description,IsActive,Notes
+7,QA,Quality Alert Lifecycle,QualityAlert,Triage intake — observation to confirmed defect or false signal,1,5 states + void. 11 transitions.
+8,PD,Process Deviation Lifecycle,ProcessDeviation,CQI-12 reaction plan — parameter excursion to product disposition,1,5 states + void. 8 transitions.

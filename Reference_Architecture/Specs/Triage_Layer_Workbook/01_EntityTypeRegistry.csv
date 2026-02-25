@@ -1,0 +1,3 @@
+EntityTypeCode,EntityTypeName,TableSchema,TableName,PrimaryKeyColumn,Notes
+QualityAlert,Quality Alert,quality,QualityAlert,QualityAlertId,New — upstream intake for floor observations
+ProcessDeviation,Process Deviation,quality,ProcessDeviation,ProcessDeviationId,New — CQI-12 process parameter excursion tracking

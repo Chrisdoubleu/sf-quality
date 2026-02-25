@@ -1,0 +1,6 @@
+RoleId,RoleCode,RoleName,CanCreate_QA,CanCreate_PD,CanTransition_QA,CanTransition_PD,Notes
+14,OPERATOR,Floor Reporter - Initiate Only,YES,YES,NO (view only after creation),NO (view only after creation),Creates alerts and deviations. Cannot review/confirm/resolve.
+13,PRODSUP,Floor Supervisor - Initiate & Manage,YES,YES,YES (transitions 1-7-10),YES (transitions 1-6),Can review and escalate. Cannot void from Review/Confirmed.
+9,QASUP,Quality Workflow Approver - Plant,YES,YES,YES (all except reclassify),YES (all except reassess),Primary reviewer. Can void from Open.
+10,QACOORD,Quality Workflow Coordinator,YES,YES,YES (includes reclassify #11),YES (includes reassess #8),Can reclassify/reassess (backward transitions).
+1,CORPMGR,Quality Authority - Enterprise (Full),YES,YES,YES (all — includes Direct Confirm #10),YES (all — includes void from Assessing),Full authority. Can direct-confirm and void from any non-terminal state.

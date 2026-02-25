@@ -1,0 +1,103 @@
+WorkflowTransitionId,WorkflowProcessId,ProcessCode,EntityType,FromStateId,ToStateId,FromStatusCode,ToStatusCode,TransitionName,TransitionType,RequiredRoleId,RequiredRole_Ref,SlaHours,SlaBaselineType,GuardType,GuardExpression,IsAutoFire,SortOrder,IsActive,Source
+1,1,NCR,NCR,1,2,NCR-DRAFT,NCR-OPEN,Submit NCR,Forward,,,,,,,,1,1,migration-047
+2,1,NCR,NCR,2,3,NCR-OPEN,NCR-CONTAINED,Record Containment,Forward,,,,,,,,2,1,migration-047
+3,1,NCR,NCR,3,4,NCR-CONTAINED,NCR-INVEST,Begin Investigation,Forward,,,48,StateEntry,,,0,3,1,migration-047
+4,1,NCR,NCR,4,5,NCR-INVEST,NCR-DISPOSED,Record Disposition,Forward,9,Quality Workflow Approver - Plant,,,,,,4,1,migration-047
+5,1,NCR,NCR,5,6,NCR-DISPOSED,NCR-PENDVERIF,Submit for Verification,Forward,,,,,,,,5,1,migration-047
+6,1,NCR,NCR,6,7,NCR-PENDVERIF,NCR-CLOSED,Verify and Close,Forward,9,Quality Workflow Approver - Plant,,,,,,6,1,migration-047
+7,1,NCR,NCR,3,5,NCR-CONTAINED,NCR-DISPOSED,Skip Investigation (Minor),Skip,9,Quality Workflow Approver - Plant,,,SeveritySkip,Severity IN (Minor) AND SkipJustification IS NOT NULL,0,7,1,migration-047
+8,1,NCR,NCR,6,4,NCR-PENDVERIF,NCR-INVEST,Reject Verification,Backward,9,Quality Workflow Approver - Plant,,,,,,8,1,migration-047
+9,1,NCR,NCR,7,2,NCR-CLOSED,NCR-OPEN,Re-open NCR,Reopen,1,Quality Authority - Enterprise (Full),,,,,,9,1,migration-047
+10,1,NCR,NCR,1,8,NCR-DRAFT,NCR-VOIDED,Void Draft,Void,9,Quality Workflow Approver - Plant,,,,,,10,1,migration-047
+11,1,NCR,NCR,2,8,NCR-OPEN,NCR-VOIDED,Void NCR,Void,9,Quality Workflow Approver - Plant,,,,,,11,1,migration-047
+69,1,NCR,NCR,2,4,NCR-OPEN,NCR-INVEST,Skip Containment (Investigation Only),Skip,,,48,StateEntry,,,0,12,1,migration-047
+70,1,NCR,NCR,5,4,NCR-DISPOSED,NCR-INVEST,Re-investigate (Disposition Rejected),Backward,9,Quality Workflow Approver - Plant,,,,,,13,1,migration-047
+79,1,NCR,NCR,3,8,NCR-CONTAINED,NCR-VOIDED,Void NCR (No Nonconformance Found),Void,9,Quality Workflow Approver - Plant,,,,,,14,1,migration-047
+12,2,CAPA,CAPA,9,10,CAPA-DRAFT,CAPA-ASSIGNED,Assign CAPA,Forward,,,,,,,,1,1,migration-047
+13,2,CAPA,CAPA,10,11,CAPA-ASSIGNED,CAPA-CONTAIN,Initiate Containment,Forward,,,,,,,,2,1,migration-047
+14,2,CAPA,CAPA,11,12,CAPA-CONTAIN,CAPA-INVEST,Begin Investigation,Forward,,,,,,,,3,1,migration-047
+15,2,CAPA,CAPA,12,13,CAPA-INVEST,CAPA-PENDREV,Submit for Review,Forward,,,,,,,,4,1,migration-047
+16,2,CAPA,CAPA,13,14,CAPA-PENDREV,CAPA-IMPLEMENT,Approve and Begin Implementation,Forward,9,Quality Workflow Approver - Plant,720,StateEntry,,,0,5,1,migration-047
+17,2,CAPA,CAPA,14,15,CAPA-IMPLEMENT,CAPA-PENDEFF,Submit for Effectiveness Review,Forward,,,,,,,,6,1,migration-047
+18,2,CAPA,CAPA,15,16,CAPA-PENDEFF,CAPA-CLOSED,Verify Effectiveness and Close,Forward,9,Quality Workflow Approver - Plant,,,,,,7,1,migration-047
+19,2,CAPA,CAPA,13,12,CAPA-PENDREV,CAPA-INVEST,Reject Review - Return to Investigation,Backward,9,Quality Workflow Approver - Plant,,,,,,8,1,migration-047
+20,2,CAPA,CAPA,15,12,CAPA-PENDEFF,CAPA-INVEST,Effectiveness Failed - Return to Investigation,Backward,9,Quality Workflow Approver - Plant,,,,,,9,1,migration-047
+21,2,CAPA,CAPA,16,10,CAPA-CLOSED,CAPA-ASSIGNED,Re-open CAPA,Reopen,1,Quality Authority - Enterprise (Full),,,,,,10,1,migration-047
+22,2,CAPA,CAPA,9,17,CAPA-DRAFT,CAPA-VOIDED,Void Draft,Void,9,Quality Workflow Approver - Plant,,,,,,11,1,migration-047
+23,2,CAPA,CAPA,10,17,CAPA-ASSIGNED,CAPA-VOIDED,Cancel CAPA,Void,1,Quality Authority - Enterprise (Full),,,,,,12,1,migration-047
+24,2,CAPA,CAPA,10,12,CAPA-ASSIGNED,CAPA-INVEST,Skip Containment,Skip,,,,,,,,13,1,migration-047
+71,2,CAPA,CAPA,14,12,CAPA-IMPLEMENT,CAPA-INVEST,Return to Investigation (Root Cause Revised),Backward,9,Quality Workflow Approver - Plant,,,,,,14,1,migration-047
+80,2,CAPA,CAPA,11,17,CAPA-CONTAIN,CAPA-VOIDED,Cancel CAPA (Not Needed),Void,1,Quality Authority - Enterprise (Full),,,,,,15,1,migration-047
+25,3,COMPLAINT,CustomerComplaint,18,19,CC-RECEIVED,CC-ACKNOWLEDGED,Acknowledge Complaint,Forward,,,24,Creation,,,0,1,1,migration-047
+26,3,COMPLAINT,CustomerComplaint,19,20,CC-ACKNOWLEDGED,CC-INVEST,Begin Investigation,Forward,,,,,,,,2,1,migration-047
+27,3,COMPLAINT,CustomerComplaint,20,21,CC-INVEST,CC-RESPONDED,Submit Response,Forward,,,,,,,,3,1,migration-047
+28,3,COMPLAINT,CustomerComplaint,21,22,CC-RESPONDED,CC-PENDACCEPT,Await Customer Acceptance,Forward,,,,,,,,4,1,migration-047
+29,3,COMPLAINT,CustomerComplaint,22,23,CC-PENDACCEPT,CC-CLOSED,Close Complaint,Forward,9,Quality Workflow Approver - Plant,,,ChildEntityState,"IF EXISTS(linked 8D) THEN 8D.StatusCode IN (Accepted,Closed) IF EXISTS(linked CAPA, no 8D) THEN CAPA.StatusCode IN (Implementing,Verification,Closed)",0,5,1,migration-047
+30,3,COMPLAINT,CustomerComplaint,22,20,CC-PENDACCEPT,CC-INVEST,Customer Rejected - Return to Investigation,Backward,,,,,,,,6,1,migration-047
+31,3,COMPLAINT,CustomerComplaint,21,23,CC-RESPONDED,CC-CLOSED,Close Complaint (Direct),Skip,9,Quality Workflow Approver - Plant,,,,,,7,1,migration-047
+32,3,COMPLAINT,CustomerComplaint,23,19,CC-CLOSED,CC-ACKNOWLEDGED,Re-open Complaint,Reopen,1,Quality Authority - Enterprise (Full),,,,,,8,1,migration-047
+33,3,COMPLAINT,CustomerComplaint,18,24,CC-RECEIVED,CC-VOIDED,Void Complaint,Void,9,Quality Workflow Approver - Plant,,,,,,9,1,migration-047
+34,3,COMPLAINT,CustomerComplaint,19,24,CC-ACKNOWLEDGED,CC-VOIDED,Withdraw Complaint,Void,9,Quality Workflow Approver - Plant,,,,,,10,1,migration-047
+72,3,COMPLAINT,CustomerComplaint,19,23,CC-ACKNOWLEDGED,CC-CLOSED,Close Complaint (Minor - No Investigation),Skip,9,Quality Workflow Approver - Plant,,,,,,11,1,migration-047
+73,3,COMPLAINT,CustomerComplaint,20,24,CC-INVEST,CC-VOIDED,Void Complaint (Invalid),Void,1,Quality Authority - Enterprise (Full),,,,,,12,1,migration-047
+35,4,SCAR,SupplierCAR,25,26,SCAR-DRAFT,SCAR-ISSUED,Issue SCAR to Supplier,Forward,,,,,,,,1,1,migration-047
+36,4,SCAR,SupplierCAR,26,27,SCAR-ISSUED,SCAR-RESPONSE,Record Supplier Response,Forward,,,720,StateEntry,,,0,2,1,migration-047
+37,4,SCAR,SupplierCAR,27,28,SCAR-RESPONSE,SCAR-REVIEW,Begin Internal Review,Forward,,,,,,,,3,1,migration-047
+38,4,SCAR,SupplierCAR,28,29,SCAR-REVIEW,SCAR-ACCEPTED,Accept Supplier Response,Forward,9,Quality Workflow Approver - Plant,,,,,,4,1,migration-047
+39,4,SCAR,SupplierCAR,29,31,SCAR-ACCEPTED,SCAR-VERIFIED,Verify Corrective Actions,Forward,9,Quality Workflow Approver - Plant,,,,,,5,1,migration-047
+40,4,SCAR,SupplierCAR,31,32,SCAR-VERIFIED,SCAR-CLOSED,Close SCAR,Forward,9,Quality Workflow Approver - Plant,,,,,,6,1,migration-047
+41,4,SCAR,SupplierCAR,28,30,SCAR-REVIEW,SCAR-REJECTED,Reject Supplier Response,Backward,9,Quality Workflow Approver - Plant,,,,,,7,1,migration-047
+42,4,SCAR,SupplierCAR,30,27,SCAR-REJECTED,SCAR-RESPONSE,Supplier Revised Response,Backward,,,720,StateEntry,,,0,8,1,migration-047
+43,4,SCAR,SupplierCAR,31,28,SCAR-VERIFIED,SCAR-REVIEW,Verification Failed - Return to Review,Backward,9,Quality Workflow Approver - Plant,,,,,,9,1,migration-047
+44,4,SCAR,SupplierCAR,32,26,SCAR-CLOSED,SCAR-ISSUED,Re-open SCAR,Reopen,1,Quality Authority - Enterprise (Full),,,,,,10,1,migration-047
+74,4,SCAR,SupplierCAR,26,32,SCAR-ISSUED,SCAR-CLOSED,Close SCAR (Supplier Non-Responsive),Skip,1,Quality Authority - Enterprise (Full),,,,,,11,1,migration-047
+75,4,SCAR,SupplierCAR,30,28,SCAR-REJECTED,SCAR-REVIEW,Escalate Rejected Response for Re-review,Backward,9,Quality Workflow Approver - Plant,,,,,,12,1,migration-047
+81,4,SCAR,SupplierCAR,25,32,SCAR-DRAFT,SCAR-CLOSED,Cancel Draft SCAR,Void,9,Quality Workflow Approver - Plant,,,,,,13,1,migration-047
+82,4,SCAR,SupplierCAR,29,32,SCAR-ACCEPTED,SCAR-CLOSED,Close SCAR (Skip Verification),Skip,1,Quality Authority - Enterprise (Full),,,,,,14,1,migration-047
+45,5,AUDITFINDING,AuditFinding,33,34,AF-OPEN,AF-ASSIGNED,Assign Finding,Forward,,,,,,,,1,1,migration-047
+46,5,AUDITFINDING,AuditFinding,34,35,AF-ASSIGNED,AF-INVEST,Begin Investigation,Forward,,,,,,,,2,1,migration-047
+47,5,AUDITFINDING,AuditFinding,35,36,AF-INVEST,AF-CALINKED,Link Corrective Action,Forward,,,,,,,,3,1,migration-047
+48,5,AUDITFINDING,AuditFinding,36,37,AF-CALINKED,AF-PENDVERIF,Submit for Verification,Forward,,,,,,,,4,1,migration-047
+49,5,AUDITFINDING,AuditFinding,37,38,AF-PENDVERIF,AF-VERIFIED,Verify Corrective Action,Forward,9,Quality Workflow Approver - Plant,,,,,,5,1,migration-047
+50,5,AUDITFINDING,AuditFinding,38,39,AF-VERIFIED,AF-CLOSED,Close Finding,Forward,9,Quality Workflow Approver - Plant,,,Classification,IF Classification=Major THEN LinkedCAPA.Status >= Implementing,0,6,1,migration-047
+51,5,AUDITFINDING,AuditFinding,37,35,AF-PENDVERIF,AF-INVEST,Reject Verification - Return to Investigation,Backward,9,Quality Workflow Approver - Plant,,,,,,7,1,migration-047
+52,5,AUDITFINDING,AuditFinding,39,34,AF-CLOSED,AF-ASSIGNED,Re-open Finding,Reopen,1,Quality Authority - Enterprise (Full),,,,,,8,1,migration-047
+53,5,AUDITFINDING,AuditFinding,34,36,AF-ASSIGNED,AF-CALINKED,Link Corrective Action (Skip Investigation),Skip,,,,,Classification,"Classification IN (Minor,Observation)",0,9,1,migration-047
+54,5,AUDITFINDING,AuditFinding,34,37,AF-ASSIGNED,AF-PENDVERIF,Fast-track to Verification (OFI),Skip,,,,,Classification,"Classification IN (OFI,Observation)",0,10,1,migration-047
+55,5,AUDITFINDING,AuditFinding,37,39,AF-PENDVERIF,AF-CLOSED,Close Finding (Minor/OFI),Skip,9,Quality Workflow Approver - Plant,,,Classification,"Classification IN (Minor,OFI,Observation)",0,11,1,migration-047
+56,5,AUDITFINDING,AuditFinding,36,35,AF-CALINKED,AF-INVEST,Reclassify - Return to Investigation,Backward,1,Quality Authority - Enterprise (Full),,,,,,12,1,migration-047
+76,5,AUDITFINDING,AuditFinding,35,37,AF-INVEST,AF-PENDVERIF,Skip CA Link (Minor Finding),Skip,,,,,Classification,Classification IN (Minor),0,13,1,migration-047
+77,5,AUDITFINDING,AuditFinding,38,37,AF-VERIFIED,AF-PENDVERIF,Re-verify Finding,Backward,9,Quality Workflow Approver - Plant,,,,,,14,1,migration-047
+57,6,EIGHTD,EightD,40,41,EIGHTD-DRAFT,EIGHTD-INPROG,Begin 8D Work,Forward,,,,,,,,1,1,migration-047
+58,6,EIGHTD,EightD,41,42,EIGHTD-INPROG,EIGHTD-REVIEW,Submit for Internal Review,Forward,,,,,,,,2,1,migration-047
+59,6,EIGHTD,EightD,42,43,EIGHTD-REVIEW,EIGHTD-SUBMITTED,Submit to Customer,Forward,9,Quality Workflow Approver - Plant,360,Creation,,,0,3,1,migration-047
+60,6,EIGHTD,EightD,43,44,EIGHTD-SUBMITTED,EIGHTD-PENDACCEPT,Await Customer Response,Forward,,,,,,,,4,1,migration-047
+61,6,EIGHTD,EightD,44,45,EIGHTD-PENDACCEPT,EIGHTD-ACCEPTED,Customer Accepted,Forward,,,,,,,,5,1,migration-047
+62,6,EIGHTD,EightD,45,46,EIGHTD-ACCEPTED,EIGHTD-CLOSED,Close 8D Report,Forward,9,Quality Workflow Approver - Plant,,,,,,6,1,migration-047
+63,6,EIGHTD,EightD,44,47,EIGHTD-PENDACCEPT,EIGHTD-REVISION,Customer Requested Revision,Backward,,,,,,,,7,1,migration-047
+64,6,EIGHTD,EightD,43,47,EIGHTD-SUBMITTED,EIGHTD-REVISION,Customer Requested Revision (from Submitted),Backward,,,,,,,,8,1,migration-047
+65,6,EIGHTD,EightD,47,41,EIGHTD-REVISION,EIGHTD-INPROG,Begin Revision,Backward,,,,,,,,9,1,migration-047
+66,6,EIGHTD,EightD,42,41,EIGHTD-REVIEW,EIGHTD-INPROG,Reject Internal Review,Backward,9,Quality Workflow Approver - Plant,,,,,,10,1,migration-047
+67,6,EIGHTD,EightD,46,41,EIGHTD-CLOSED,EIGHTD-INPROG,Re-open 8D Report,Reopen,1,Quality Authority - Enterprise (Full),,,,,,11,1,migration-047
+68,6,EIGHTD,EightD,40,46,EIGHTD-DRAFT,EIGHTD-CLOSED,Cancel Draft 8D,Void,9,Quality Workflow Approver - Plant,,,,,,12,1,migration-047
+78,6,EIGHTD,EightD,41,46,EIGHTD-INPROG,EIGHTD-CLOSED,Cancel 8D (No Longer Needed),Void,1,Quality Authority - Enterprise (Full),,,,,,13,1,migration-047
+83,6,EIGHTD,EightD,42,46,EIGHTD-REVIEW,EIGHTD-CLOSED,Cancel 8D from Review,Void,1,Quality Authority - Enterprise (Full),,,,,,14,1,migration-047
+84,7,QA,QualityAlert,48,49,QA-OPEN,QA-REVIEW,Begin Review,Forward,,,,,,,,1,1,triage-layer-spec
+85,7,QA,QualityAlert,49,51,QA-REVIEW,QA-CLOSED,Close — Not a Defect,Forward,9,Quality Workflow Approver - Plant,,,,,,2,1,triage-layer-spec
+86,7,QA,QualityAlert,49,50,QA-REVIEW,QA-CONFIRMED,Confirm Defect,Forward,9,Quality Workflow Approver - Plant,,,,,,3,1,triage-layer-spec
+87,7,QA,QualityAlert,50,52,QA-CONFIRMED,QA-RESOLVED,Resolve in Place,Forward,9,Quality Workflow Approver - Plant,,,FamiliarityGuard,"Severity IN (Minor, Observation) AND Familiarity = 'Known'",0,4,1,triage-layer-spec
+88,7,QA,QualityAlert,50,53,QA-CONFIRMED,QA-ESCALATED,Escalate to NCR,Forward,9,Quality Workflow Approver - Plant,,,,,,5,1,triage-layer-spec
+89,7,QA,QualityAlert,50,53,QA-CONFIRMED,QA-ESCALATED,Escalate to Process Deviation,Forward,9,Quality Workflow Approver - Plant,,,,,,6,1,triage-layer-spec
+90,7,QA,QualityAlert,48,54,QA-OPEN,QA-VOIDED,Void Alert (from Open),Void,9,Quality Workflow Approver - Plant,,,,,,7,1,triage-layer-spec
+91,7,QA,QualityAlert,49,54,QA-REVIEW,QA-VOIDED,Void Alert (from Review),Void,1,Quality Authority - Enterprise (Full),,,,,,8,1,triage-layer-spec
+92,7,QA,QualityAlert,50,54,QA-CONFIRMED,QA-VOIDED,Void Alert (from Confirmed),Void,1,Quality Authority - Enterprise (Full),,,,,,9,1,triage-layer-spec
+93,7,QA,QualityAlert,48,50,QA-OPEN,QA-CONFIRMED,Direct Confirm,Skip,1,Quality Authority - Enterprise (Full),,,,,,10,1,triage-layer-spec
+94,7,QA,QualityAlert,50,49,QA-CONFIRMED,QA-REVIEW,Reclassify,Backward,10,Quality Workflow Coordinator,,,,,,11,1,triage-layer-spec
+95,8,PD,ProcessDeviation,55,56,PD-OPEN,PD-ASSESS,Begin Assessment,Forward,,,4,StateEntry,,,0,1,1,triage-layer-spec
+96,8,PD,ProcessDeviation,56,57,PD-ASSESS,PD-CONTAINED,Quarantine Product,Forward,,,,,,,,2,1,triage-layer-spec
+97,8,PD,ProcessDeviation,56,58,PD-ASSESS,PD-CLOSED,Close — No Product Impact,Forward,10,Quality Workflow Coordinator,,,,,,3,1,triage-layer-spec
+98,8,PD,ProcessDeviation,57,58,PD-CONTAINED,PD-CLOSED,Release Product,Forward,1,Quality Authority - Enterprise (Full),,,,,,4,1,triage-layer-spec
+99,8,PD,ProcessDeviation,57,59,PD-CONTAINED,PD-ESCALATED,Escalate to NCR,Forward,10,Quality Workflow Coordinator,,,,,,5,1,triage-layer-spec
+100,8,PD,ProcessDeviation,55,60,PD-OPEN,PD-VOIDED,Void Deviation (from Open),Void,9,Quality Workflow Approver - Plant,,,,,,6,1,triage-layer-spec
+101,8,PD,ProcessDeviation,56,60,PD-ASSESS,PD-VOIDED,Void Deviation (from Assessing),Void,1,Quality Authority - Enterprise (Full),,,,,,7,1,triage-layer-spec
+102,8,PD,ProcessDeviation,57,56,PD-CONTAINED,PD-ASSESS,Reassess Scope,Backward,10,Quality Workflow Coordinator,,,,,,8,1,triage-layer-spec
