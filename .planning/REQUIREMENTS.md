@@ -125,21 +125,60 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Repo | Status |
 |---|---|---|---|
-| ADJ-01 through ADJ-05 | Phase 1 | sf-quality | Pending |
-| SPRING-01 through SPRING-15 | Phase 2 | sf-quality-api | Pending |
-| SPRING-16 through SPRING-17 | Phase 3 | sf-quality-api | Pending |
-| SPRING-18 through SPRING-23 | Phases 4-7 | sf-quality-api | Pending |
-| APP-01 | Phase 8 | sf-quality-app | Pending |
-| APP-02 through APP-03 | Phase 9 | sf-quality-app | Pending |
-| DB-01 through DB-06 | Phase 10 | sf-quality-db | Pending |
-| QF-API-01 through QF-API-05 | Phase 11 | sf-quality-api | Pending |
-| QF-APP-01 through QF-APP-06 | Phases 12-13 | sf-quality-app | Pending |
+| ADJ-01 | Phase 1 | sf-quality | Pending |
+| ADJ-02 | Phase 1 | sf-quality | Pending |
+| ADJ-03 | Phase 1 | sf-quality | Pending |
+| ADJ-04 | Phase 1 | sf-quality | Pending |
+| ADJ-05 | Phase 1 | sf-quality | Pending |
+| SPRING-01 | Phase 2 | sf-quality-api | Pending |
+| SPRING-02 | Phase 2 | sf-quality-api | Pending |
+| SPRING-03 | Phase 2 | sf-quality-api | Pending |
+| SPRING-04 | Phase 2 | sf-quality-api | Pending |
+| SPRING-05 | Phase 2 | sf-quality-api | Pending |
+| SPRING-06 | Phase 2 | sf-quality-api | Pending |
+| SPRING-07 | Phase 2 | sf-quality-api | Pending |
+| SPRING-08 | Phase 2 | sf-quality-api | Pending |
+| SPRING-09 | Phase 2 | sf-quality-api | Pending |
+| SPRING-10 | Phase 2 | sf-quality-api | Pending |
+| SPRING-11 | Phase 2 | sf-quality-api | Pending |
+| SPRING-12 | Phase 2 | sf-quality-api | Pending |
+| SPRING-13 | Phase 2 | sf-quality-api | Pending |
+| SPRING-14 | Phase 2 | sf-quality-api | Pending |
+| SPRING-15 | Phase 2 | sf-quality-api | Pending |
+| SPRING-16 | Phase 3 | sf-quality-api | Pending |
+| SPRING-17 | Phase 3 | sf-quality-api | Pending |
+| SPRING-18 | Phase 4 | sf-quality-api | Pending |
+| SPRING-19 | Phase 4 | sf-quality-api | Pending |
+| SPRING-20 | Phase 4 | sf-quality-api | Pending |
+| SPRING-21 | Phase 4 | sf-quality-api | Pending |
+| SPRING-22 | Phase 4 | sf-quality-api | Pending |
+| SPRING-23 | Phase 4 | sf-quality-api | Pending |
+| APP-01 | Phase 5 | sf-quality-app | Pending |
+| APP-02 | Phase 5 | sf-quality-app | Pending |
+| APP-03 | Phase 5 | sf-quality-app | Pending |
+| DB-01 | Phase 6 | sf-quality-db | Pending |
+| DB-02 | Phase 6 | sf-quality-db | Pending |
+| DB-03 | Phase 6 | sf-quality-db | Pending |
+| DB-04 | Phase 6 | sf-quality-db | Pending |
+| DB-05 | Phase 6 | sf-quality-db | Pending |
+| DB-06 | Phase 6 | sf-quality-db | Pending |
+| QF-API-01 | Phase 7 | sf-quality-api | Pending |
+| QF-API-02 | Phase 7 | sf-quality-api | Pending |
+| QF-API-03 | Phase 7 | sf-quality-api | Pending |
+| QF-API-04 | Phase 7 | sf-quality-api | Pending |
+| QF-API-05 | Phase 7 | sf-quality-api | Pending |
+| QF-APP-01 | Phase 8 | sf-quality-app | Pending |
+| QF-APP-02 | Phase 8 | sf-quality-app | Pending |
+| QF-APP-03 | Phase 8 | sf-quality-app | Pending |
+| QF-APP-04 | Phase 8 | sf-quality-app | Pending |
+| QF-APP-05 | Phase 8 | sf-quality-app | Pending |
+| QF-APP-06 | Phase 8 | sf-quality-app | Pending |
 
 **Coverage:**
-- v1.0 requirements: 56 total
-- Mapped to phases: 56
-- Unmapped: 0 ✓
+- v1.0 requirements: 48 total (5 ADJ + 23 SPRING + 3 APP + 6 DB + 5 QF-API + 6 QF-APP)
+- Mapped to phases: 48
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after milestone v1.0 initialization*
+*Last updated: 2026-02-26 after roadmap creation*

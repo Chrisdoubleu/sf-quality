@@ -1,0 +1,263 @@
+{
+  "input": "Research the current best practices, leading frameworks, and architectural patterns for designing forms, data input systems, and data collection interfaces within custom-coded business applications.\nContext: Mid-size manufacturing company (~200 employees). Current technology stack: Next.js 15 (App Router), React 19, TypeScript (strict), shadcn/ui + Radix primitives, React Hook Form + Zod validation, TanStack Query + TanStack Table, Tailwind CSS 4, hosted on Azure App Service with Azure SQL backend and Entra ID authentication via Easy Auth. Must support audit trails, revision control, and conditional business logic. Solutions must be code-first — no low-code/no-code platforms.\nResearch the following:\n\nFrontend form frameworks & libraries — Compare the top 5 production-ready code-first options for complex, enterprise-grade business forms. Include React-based, Vue-based, Angular-based, and .NET/Blazor options. Evaluate specifically against React Hook Form + Zod as the baseline.\nForm architecture patterns — Schema-driven/dynamic forms, metadata-driven generation, multi-step wizards, and conditional logic engines. Which patterns are dominant in enterprise software and why?\nBackend & data layer — API patterns (REST vs. GraphQL) and database design approaches (relational, JSONB, EAV, document store) for storing data from forms whose structure evolves over time. Evaluate specifically against Azure SQL as the persistence layer.\nValidation architecture — How to implement layered validation (client-side, server-side, business rules engine) including cross-field, async, and conditional validation. Evaluate patterns that share Zod schemas between frontend courtesy validation and server-side authoritative validation.\nAI-assisted data input — Current production-ready capabilities for auto-fill, OCR/document extraction, smart defaults, and LLM-assisted form generation or data quality checks.\nAzure platform integration — Specific recommendations for organizations running Next.js on Azure App Service with Azure SQL and Entra ID authentication. How to leverage Azure services (Cognitive Services, Document Intelligence, Azure Functions) to extend custom form applications.\n\nRequired Output Format:\nSection A — Technology Comparison Matrix\nSection B — Recommended Architecture\nSection C — Pattern Deep Dives\nSection D — Build Approach Decision Matrix\nSection E — Key Sources",
+  "output": {
+    "technology_comparison_matrix": [
+      {
+        "name_and_version": "React Hook Form 7.71.2",
+        "category": "Frontend form library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Low",
+        "best_suited_for": "All business forms in the existing stack; baseline for shadcn/ui integration. shadcn/ui's <Form>, <FormField>, and <FormItem> components are built directly on RHF's Controller. The @hookform/resolvers/zod bridge connects Zod schemas with zero glue code. With 25 million weekly npm downloads, RHF has the largest community and deepest ecosystem of any React form library.",
+        "key_limitation": "Controller wrapper needed for rich editors and custom components; verbose for deeply nested forms with dynamic arrays. useActionState integration with Server Actions requires careful wiring.",
+        "source_url": "https://react-hook-form.com"
+      },
+      {
+        "name_and_version": "TanStack Form 1.28.3",
+        "category": "Frontend form library (headless, framework-agnostic)",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Complex nested/dynamic forms with strict TypeScript requirements. Superior type-safe field paths and granular reactivity — particularly valuable for deeply nested manufacturing data (bills of materials, multi-level quality inspections). Signal-based architecture avoids full form re-renders.",
+        "key_limitation": "Smaller ecosystem (~15x fewer weekly downloads than RHF); requires custom shadcn/ui wrappers since no native integration exists. Fewer community resources and tutorials available.",
+        "source_url": "https://tanstack.com/form"
+      },
+      {
+        "name_and_version": "react-jsonschema-form (RJSF) 6.3.1",
+        "category": "Frontend form library (schema-driven)",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Generating forms dynamically from JSON Schema definitions. Useful when form structures are stored as JSON Schema in a database and rendered at runtime without code changes.",
+        "key_limitation": "No native Zod support (uses AJV for validation); no shadcn/ui theme available — requires building custom theme/widget wrappers. Two separate validation systems to maintain.",
+        "source_url": "https://rjsf-team.github.io/react-jsonschema-form"
+      },
+      {
+        "name_and_version": "JSON Forms 3.7.0",
+        "category": "Frontend form library (schema-driven, enterprise)",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "High",
+        "best_suited_for": "Schema-driven admin/configuration UIs with enterprise support. Backed by the Eclipse Foundation. Separates form definition into three schemas (data, UI, rule) for maximum flexibility in enterprise environments.",
+        "key_limitation": "Default MUI renderers incompatible with shadcn/ui; building custom renderers is verbose and time-consuming. Steep learning curve for the three-schema model.",
+        "source_url": "https://jsonforms.io"
+      },
+      {
+        "name_and_version": "Formik 2.4.9",
+        "category": "Frontend form library (legacy)",
+        "maturity_level": "Maintenance mode",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Low",
+        "best_suited_for": "Legacy codebases only. Not recommended for new projects.",
+        "key_limitation": "Near-dormant maintenance; 44KB bundle size; re-renders on every keystroke causing performance issues on large forms. No native Zod integration.",
+        "source_url": "https://formik.org"
+      },
+      {
+        "name_and_version": "Uniforms 4.0.0",
+        "category": "Frontend form library (auto-generating)",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Auto-generating forms from Zod schemas via the AutoForm pattern. Useful for rapid admin UI prototyping where pixel-perfect design is not required.",
+        "key_limitation": "Tiny community (~15K weekly downloads); slow release cadence. Limited customization compared to hand-built forms.",
+        "source_url": "https://uniforms.tools"
+      },
+      {
+        "name_and_version": "tRPC 11.10.0",
+        "category": "API / Validation layer",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "End-to-end type-safe API layer for Next.js + Zod. Zod .input() validation serves as the authoritative server-side gate. @tanstack/react-query integration provides automatic caching, deduplication, and optimistic updates. createCaller API enables server-side calls without HTTP round-trips in React Server Components.",
+        "key_limitation": "Not callable by external clients without adapter (TypeScript-only ecosystem). Adding REST consumers later requires a separate API layer.",
+        "source_url": "https://trpc.io"
+      },
+      {
+        "name_and_version": "Prisma 7.x",
+        "category": "Backend ORM",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Low",
+        "best_suited_for": "Azure SQL access with type-safe queries and migrations. Strong TypeScript integration generates types from schema. Handles connection pooling and migration management.",
+        "key_limitation": "Managed Identity support for Azure SQL still requires workaround configuration. Schema drift possible if JSON columns bypass Prisma's type system.",
+        "source_url": "https://www.prisma.io"
+      },
+      {
+        "name_and_version": "Azure SQL Temporal Tables",
+        "category": "Database approach",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Low",
+        "best_suited_for": "Automatic audit trails and revision history for form data. SYSTEM_VERSIONING = ON automatically captures every INSERT/UPDATE/DELETE into a history table with UTC timestamps — no triggers, no application code, no performance tuning required. Queryable via FOR SYSTEM_TIME AS OF for point-in-time recovery.",
+        "key_limitation": "No native 'who changed' tracking (only 'what changed' and 'when') — requires a ModifiedBy column populated by application code. History cleanup requires explicit retention policies. Storage grows with every update.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/azure-sql/temporal-tables"
+      },
+      {
+        "name_and_version": "Azure SQL Native JSON",
+        "category": "Database approach",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Low",
+        "best_suited_for": "Flexible form field storage alongside relational columns. GA in Azure SQL since May 2024. Stores pre-parsed JSON with ~18% storage savings over NVARCHAR(MAX). Supports JSON_VALUE, JSON_QUERY, and computed column indexing for hybrid relational/JSON patterns.",
+        "key_limitation": "JSON Index (CREATE JSON INDEX) not yet available in Azure SQL Database — only in SQL Server 2025 on-prem. Must use computed column + standard index workaround for query performance on JSON fields.",
+        "source_url": "https://learn.microsoft.com/en-us/sql/relational-databases/json/json-data-sql-server"
+      },
+      {
+        "name_and_version": "json-rules-engine 7.3.1",
+        "category": "Validation / Business rules engine",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Externalizing conditional business rules as database-stored JSON. Rules like 'if product category is Chemical AND quantity exceeds 500, require Safety Officer approval' can be edited by administrators without developer intervention or code deployments.",
+        "key_limitation": "Limited to boolean condition evaluation; no built-in form field awareness. Complex rule chains require careful design to remain debuggable.",
+        "source_url": "https://github.com/CacheControl/json-rules-engine"
+      },
+      {
+        "name_and_version": "Zod 3.x",
+        "category": "Validation tool",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Low",
+        "best_suited_for": "Shared client/server schema validation with TypeScript inference. A single schema file per form type is imported by both the client (via zodResolver) and the server (via tRPC .input()), eliminating validation drift entirely. z.infer<typeof schema> generates TypeScript types consumed by both environments.",
+        "key_limitation": "superRefine won't run until base validations pass; async refine can over-fire on rapid input changes. Bundle size grows with schema complexity.",
+        "source_url": "https://zod.dev"
+      },
+      {
+        "name_and_version": "Azure Document Intelligence 4.0",
+        "category": "AI-assisted input",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "OCR and structured data extraction from manufacturing documents (invoices, quality certificates, shipping manifests, COAs). Prebuilt models handle common document types; custom models can be trained for company-specific document layouts.",
+        "key_limitation": "Custom model training requires labeled sample documents. No real-time streaming — requires async architecture (Azure Functions + Queue) for production use. Accuracy depends on document quality.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence"
+      },
+      {
+        "name_and_version": "Azure OpenAI Service (GPT-4o)",
+        "category": "AI-assisted input",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Smart defaults, data quality checks, and natural language to structured data conversion. Can generate pre-populated form field suggestions from unstructured text, validate data consistency, and provide context-aware autocomplete.",
+        "key_limitation": "Hallucination risk for extraction tasks; no confidence scores on output. Higher per-transaction cost than OCR. Non-deterministic outputs require user confirmation for any high-impact actions.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/ai-services/openai"
+      }
+    ],
+    "recommended_architecture_diagram_description": {
+      "frontend_flow": "User interaction begins with forms built using shadcn/ui components (based on Radix primitives for accessibility). Client-side form state, validation, and submission are managed by React Hook Form 7.71.x. Zod schemas are integrated via @hookform/resolvers/zod to provide immediate client-side courtesy validation on blur and submit via .safeParse(). Form definitions for dynamic forms are fetched and cached via TanStack Query. Upon submission, data flows through tRPC mutations (primary path) or Next.js Server Actions (progressive enhancement path) to the server.",
+      "api_layer_flow": "The API layer runs on Next.js 15 App Router hosted on Azure App Service (Linux, output: 'standalone'). Two API patterns coexist: tRPC v11 handles all form CRUD and submission mutations with Zod .input() validation as the authoritative server-side security gate. Next.js Server Actions handle simple progressive-enhancement mutations (e.g., quick status updates). Route Handlers serve webhooks and any future external API consumers. Authentication is managed by Easy Auth, which runs as a platform-level module authenticating every request before it reaches Node.js. The application reads the x-ms-client-principal header to identify users and extract role claims — no MSAL SDK or auth middleware is needed in the Next.js application itself. App roles defined in the Entra ID app registration manifest enable role-based access control. A centralized Data Access Layer (DAL) uses React's cache API to memoize session verification.",
+      "data_persistence_flow": "Data is persisted in Azure SQL Database using a hybrid relational + JSON schema. Core queryable fields (submitter, status, form type, timestamps) live in typed relational columns with proper indexes and foreign keys. Variable form field data lives in a native JSON column (GA since May 2024). Azure SQL temporal tables (SYSTEM_VERSIONING = ON) automatically version every row change into history tables, providing a complete audit trail queryable via FOR SYSTEM_TIME AS OF. A ModifiedBy column (populated by application code from the Entra ID principal) supplements temporal tables with 'who changed it' tracking. Prisma v7 manages the ORM layer. Computed columns on hot JSON paths (e.g., JSON_VALUE(data, '$.status')) with standard indexes provide SQL-level query performance on dynamic data. Retention policies (HISTORY_RETENTION_PERIOD) manage history table growth.",
+      "background_processing_flow": "Document uploads flow to Azure Blob Storage (secured via SAS tokens or Managed Identity for server-side uploads). An upload event triggers an Azure Function (TypeScript/Node.js, Durable Functions for multi-step workflows) that calls Azure Document Intelligence v4.0 for OCR/extraction from manufacturing documents (invoices, quality certificates, shipping manifests). Extracted structured data returns to the form as pre-populated field suggestions via a tRPC subscription or polling endpoint. Azure OpenAI provides optional enrichment (smart defaults, data quality checks). Once processing completes, the function updates metadata and extracted data back into Azure SQL, linking to the original form submission. All services authenticate via Managed Identity, eliminating credential management.",
+      "observability_flow": "Comprehensive telemetry is achieved using Azure Application Insights integrated via Next.js 15's stable instrumentation.js API. Server-side and client-side SDKs capture custom events for form submissions, Server Actions, tRPC mutations, and user interactions. Traces are correlated across client events, server actions, and database queries for end-to-end performance monitoring. PII avoidance strategies (data masking, selective logging) ensure compliance with privacy requirements.",
+      "security_flow": "The security model centers on a 'secretless' architecture using System-Assigned Managed Identity for the Azure App Service. This provides the Next.js application with credential-free access to Azure SQL (via Authentication=Active Directory Managed Identity connection string), Azure Blob Storage, and Azure Queue Storage — completely eliminating stored connection strings or secrets. Entra ID Easy Auth handles user authentication at the platform level. Row-Level Security (RLS) in Azure SQL can enforce data isolation based on Entra ID roles. App roles defined in the Entra ID manifest govern form definition editing vs. form submission permissions."
+    },
+    "primary_stack_recommendation": {
+      "layer": "Full Stack (Frontend → API → Validation → Persistence → Azure Services)",
+      "technology": "React Hook Form 7.71.x + Zod 3.x + shadcn/ui (frontend forms) → tRPC v11 + Next.js Server Actions (API layer) → Shared Zod schemas + json-rules-engine (validation) → Prisma 7.x + Azure SQL with hybrid relational/JSON columns + temporal tables (persistence) → Entra ID Easy Auth (authentication) → Azure Document Intelligence v4.0 + Azure Functions + Azure Blob Storage (Azure services)",
+      "rationale": "This stack keeps the team in TypeScript end-to-end, avoids introducing new infrastructure, and provides the audit and revision control manufacturing operations demand. React Hook Form + Zod + shadcn/ui is the only combination where all three libraries are designed to work together natively — shadcn/ui's Form components are literally built on RHF's Controller. tRPC v11 provides type-safe queries and mutations with automatic caching via @tanstack/react-query integration. Shared Zod schemas (imported by both client and server) ensure zero validation drift, while json-rules-engine handles externalized business rules editable without code deployments. Azure SQL's hybrid relational + JSON approach stores stable metadata in typed columns with indexes while absorbing form evolution in JSON columns without schema migrations. Temporal tables automatically capture every change for audit trails without triggers or application code. Entra ID Easy Auth authenticates at the platform level, requiring zero auth middleware in the application. Azure Document Intelligence v4.0 handles OCR extraction for manufacturing document auto-fill, orchestrated by Azure Functions for async processing."
+    },
+    "alternative_stack_recommendation": {
+      "name": "TanStack Form + Drizzle ORM + GraphQL + Azure Cosmos DB",
+      "description": "Replace React Hook Form with TanStack Form 1.28.x for superior type-safe field paths and granular reactivity — particularly valuable for deeply nested manufacturing data (bills of materials, multi-level quality inspections). Replace Prisma with Drizzle ORM for a lighter, SQL-first approach (though Drizzle lacks native MSSQL support, requiring migration to Azure Cosmos DB as the primary store). Replace tRPC with GraphQL (via Pothos + Yoga Server) for a self-documenting API that external systems (ERP, MES) can query directly.",
+      "trade_offs": "Gains: Better TypeScript inference for complex nested forms; a self-documenting API consumable by external systems; schema-free document storage that handles form evolution without migrations; global distribution if needed later. Losses: The mature RHF + shadcn/ui integration (must build custom wrappers); SQL-level audit trails via temporal tables (must implement change tracking in application code); transactional integrity across related entities (Cosmos DB transactions limited to single partitions); predictable costs (Cosmos DB RU billing can spike unpredictably); team familiarity with SQL (most manufacturing teams know SQL, not NoSQL). The primary stack is strongly recommended given the existing Azure SQL investment and the team's SQL expertise."
+    },
+    "architectural_pattern_deep_dives": [
+      {
+        "pattern_name": "Hybrid Relational + JSON Persistence",
+        "description": "The hybrid pattern stores stable, frequently queried fields as typed relational columns alongside a native JSON column for variable form-specific data. In a manufacturing context, a form_submissions table has indexed columns for id, form_definition_id, submitted_by, submitted_at, status, and line_id (relational, with foreign keys and constraints), while the actual form field responses live in a data JSON column. Form definitions themselves follow the same pattern: relational columns for name, version, status, created_by, with the full field schema in a schema JSON column. This gives you SQL JOINs, referential integrity, and index performance for operational queries while absorbing form evolution without schema migrations.",
+        "when_to_use_vs_avoid": "Use when: Form systems where the structure evolves frequently (new fields added per product line, regulatory changes require new quality check fields) but core operational metadata is stable. When you need ACID transactions, SQL reporting, and foreign key relationships. When the team has SQL expertise. When Azure SQL is already the database platform. Avoid when: All fields are known and will never change (pure relational is simpler). When JSON documents exceed ~1MB regularly (full-document rewrites on updates become expensive). When every field inside the JSON needs individual SQL-level indexing (extract those fields into columns instead).",
+        "real_world_example": "Heap Analytics uses PostgreSQL JSONB alongside relational columns for arbitrary event properties. They documented a 30% disk savings by extracting 45 commonly-used fields from JSONB into dedicated columns, validating the hybrid approach of promoting hot paths to relational while keeping the long tail in JSON. Source: https://www.heap.io/blog/when-to-avoid-jsonb-in-a-postgresql-schema",
+        "implementation_complexity_estimate": "4.5-6 person-weeks for a 2-3 developer team. Breakdown: Database schema design and migration setup (1-2 weeks), Prisma model definitions and JSON column typing (1 week), computed columns and indexing strategy for Azure SQL (0.5-1 week), temporal table configuration and audit query layer (1 week), integration testing and performance validation (1 week)."
+      },
+      {
+        "pattern_name": "Schema-Driven Form Rendering with Dynamic Zod Generation",
+        "description": "A JSON form definition stored in the database describes every aspect of a form: fields, types, validation rules, conditional visibility logic, layout hints, and default values. At runtime, a generateZodSchema() function transforms this definition into a Zod object schema, which feeds into React Hook Form via zodResolver. A FieldRenderer component maps each field type to the corresponding shadcn/ui component. This decouples form structure from frontend code — new forms or field changes require only database updates, not code deployments. The pattern is especially powerful in manufacturing where quality inspection forms vary by product line and change with regulatory requirements.",
+        "when_to_use_vs_avoid": "Use when: Forms change frequently and changes must not require code deployments. When non-developers (quality managers, compliance officers) need to modify form structures. When supporting many form variants (different inspection checklists per product line). When frontend and backend validation must stay in sync automatically. Avoid when: Forms have highly bespoke, interactive UI that cannot be expressed declaratively (drag-and-drop interfaces, real-time 3D visualizations). When you have fewer than 10 stable form types that rarely change. When the overhead of a rendering engine and schema parser isn't justified.",
+        "real_world_example": "Adobe Experience Manager (AEM) Headless Adaptive Forms implements this pattern with a JSON form model, a Business Rule Processor (managing state, validation, conditional logic), and a React Binder (hooks connecting to UI). The architecture explicitly separates the form logic core from the rendering layer, enabling the same form definition to render across web, mobile, and conversational interfaces. Source: https://experienceleague.adobe.com/en/docs/experience-manager-headless-adaptive-forms/using/architecture",
+        "implementation_complexity_estimate": "10-15 person-weeks for a 2-3 developer team. Breakdown: JSON form definition schema design (1-2 weeks), dynamic Zod schema generator covering field types, validation rules, and conditionals (2-3 weeks), FieldRenderer component registry for 15-20 shadcn/ui field types (2-3 weeks), conditional logic engine with json-rules-engine integration (1-2 weeks), form definition admin UI with basic CRUD (2-3 weeks), testing edge cases in dynamic schema generation (2 weeks)."
+      },
+      {
+        "pattern_name": "Layered Validation with Shared Zod Schemas",
+        "description": "This pattern establishes three validation tiers sharing a common Zod schema as the source of truth. Tier 1 (client courtesy): React Hook Form runs zodResolver(schema) on blur and submit for instant user feedback — this is advisory only and never trusted. Tier 2 (server authoritative): tRPC procedures run schema.parse(input) as the security boundary — all data must pass this gate before touching the database. Tier 3 (business rules): json-rules-engine evaluates externalized rules that encode business logic too complex or too frequently changing for Zod schemas (approval routing, conditional requirements based on external data, cross-entity validation). The key insight is that Tiers 1 and 2 share literally the same .ts file — z.infer<typeof schema> generates TypeScript types consumed by both client components and server procedures, making it impossible for validation logic to drift.",
+        "when_to_use_vs_avoid": "Use when: Any enterprise application where validation correctness is critical (manufacturing quality data, compliance forms, financial data). When business rules change frequently and must be updatable without code deployments. When the same form data is submitted from multiple clients (web, mobile, API). Avoid when: All validation is simple field-level checks (email format, required fields) — Zod alone suffices without a rules engine. When the team lacks TypeScript expertise to maintain shared schemas. When forms are entirely server-rendered with no client-side interactivity.",
+        "real_world_example": "MakerKit.dev, a popular Next.js SaaS boilerplate used by thousands of developers, documents this exact pattern: shared Zod schemas between client and next-safe-action server actions, with the same schema powering React Hook Form's zodResolver and the server's action.input(). Their engineering blog reports that refactoring to this pattern cut mutation code nearly in half. Source: https://makerkit.dev/blog/tutorials/server-actions-vs-route-handlers",
+        "implementation_complexity_estimate": "5-8 person-weeks for a 2-3 developer team. Breakdown: Shared schema package setup via monorepo or shared directory (0.5 week), core Zod schemas for existing form types (1-2 weeks), tRPC router with Zod input validation (1-2 weeks), json-rules-engine integration and rule storage in Azure SQL (1-2 weeks), client-side zodResolver integration with RHF (0.5-1 week), testing to ensure client/server parity and edge cases (1 week)."
+      }
+    ],
+    "build_approach_decision_matrix": [
+      {
+        "complexity_tier": "Simple (single-step, flat data)",
+        "recommended_architecture_pattern": "Static React Hook Form + Zod + shadcn/ui + Next.js Server Actions. Server Actions handle form POST natively with built-in CSRF protection. Data fetching for initial form population occurs directly in Server Components. Minimal client-side JavaScript with progressive enhancement.",
+        "estimated_build_effort": "1-3 person-weeks. Assumes a team proficient in the existing Next.js + RHF + Zod stack.",
+        "key_technical_risks": "1) Over-engineering: temptation to build dynamic infrastructure for static forms wastes time. 2) Validation bypass: client-only validation without server-side Zod check creates a security gap — always run schema.safeParse() in the Server Action.",
+        "azure_integration_points": "Azure App Service: Deploy as output: 'standalone' on Linux App Service; Server Actions handle form POST natively with no additional infrastructure needed. Azure SQL: Simple Prisma model with typed columns; standard INSERT on submit. Entra ID: Easy Auth provides x-ms-client-principal header; extract user ID for created_by column."
+      },
+      {
+        "complexity_tier": "Moderate (multi-step with conditional logic and relational data)",
+        "recommended_architecture_pattern": "Multi-step wizard with shared Zod schemas + tRPC + conditional logic engine. tRPC route handler at /api/trpc/[trpc]/route.ts provides type-safe mutations per step. TanStack Query manages step data caching and optimistic updates. json-rules-engine evaluates conditional field visibility and step branching from rules stored in Azure SQL.",
+        "estimated_build_effort": "6-10 person-weeks. Accounts for designing multi-step flows, conditional business logic, relational data models, and draft persistence.",
+        "key_technical_risks": "1) Step state management: cross-step validation and draft persistence introduce subtle bugs with React Hook Form's uncontrolled model. 2) Conditional logic explosion: business rules grow combinatorially and become untestable without externalization via a rules engine. 3) Azure SQL connection pooling: multi-step forms with frequent draft saves can exhaust Prisma connection pools without proper singleton pattern.",
+        "azure_integration_points": "Azure App Service: Same deployment; add tRPC route handler; use TanStack Query for step data caching. Azure SQL: Prisma models with relations (form → steps → fields); draft submissions stored as rows with status = 'draft'; computed columns for frequently filtered JSON fields; temporal tables may be used for auditing critical data. Entra ID: App roles for step-level permissions (e.g., 'only QA Manager can approve Step 3'); role claims from Entra ID app registration manifest."
+      },
+      {
+        "complexity_tier": "Complex (dynamic schema, revision-controlled, audit-trailed)",
+        "recommended_architecture_pattern": "Schema-driven rendering + hybrid relational/JSON persistence + temporal tables + business rules engine. Form definitions stored as JSON in Azure SQL drive dynamic Zod schema generation and FieldRenderer component at runtime. Temporal tables on both form_definitions and form_submissions provide automatic audit trails. Azure Functions handle async form definition compilation, document extraction via Document Intelligence, and validation workflows.",
+        "estimated_build_effort": "16-26 person-weeks. Reflects the complexity of building a dynamic form engine including metadata schema design, dynamic form renderer, FieldRenderer component registry, conditional logic engine, form definition admin UI, versioning strategy, and comprehensive testing.",
+        "key_technical_risks": "1) Schema evolution: changing form definitions after data collection requires migration logic to handle submissions made against older schema versions. 2) Performance degradation: dynamic Zod schema generation on every render can be expensive for forms with 100+ fields — requires memoization and caching. 3) Audit trail storage growth: temporal tables capture every UPDATE as a new history row; high-frequency forms (quality checks every 15 minutes) can generate substantial history tables requiring retention policies (HISTORY_RETENTION_PERIOD = 7 YEARS).",
+        "azure_integration_points": "Azure App Service: Same deployment; add Azure Functions for async form definition compilation and validation; use deployment slots for zero-downtime schema updates. Azure SQL: Temporal tables on form_definitions and form_submissions; native JSON columns for flexible field data; computed columns + indexes on hot JSON paths; retention policy on history tables. Azure Functions + Blob Storage for Document Intelligence OCR extraction pipeline. Entra ID: Row-level security using Entra ID roles; ModifiedBy column populated from principal for audit 'who changed' tracking; app roles govern form definition editing vs. form submission."
+      }
+    ],
+    "key_sources": [
+      {
+        "title": "React Hook Form — shadcn/ui Documentation",
+        "url": "https://ui.shadcn.com/docs/forms/react-hook-form",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "Temporal Tables — Azure SQL | Microsoft Learn",
+        "url": "https://learn.microsoft.com/en-us/azure/azure-sql/temporal-tables",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "What Is Azure Document Intelligence (Foundry Tools)? | Microsoft Learn",
+        "url": "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "TanStack Form vs. React Hook Form — LogRocket Blog",
+        "url": "https://blog.logrocket.com/tanstack-form-vs-react-hook-form/",
+        "publication_date": "2025-06-09"
+      },
+      {
+        "title": "Comparison | TanStack Form Docs",
+        "url": "https://tanstack.com/form/latest/docs/comparison",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "JSON Data in SQL Server | Microsoft Learn",
+        "url": "https://learn.microsoft.com/en-us/sql/relational-databases/json/json-data-sql-server",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "Dynamic Forms Architecture and Design — Progress Corticon",
+        "url": "https://www.progress.com/blogs/dynamic-forms-architecture-design",
+        "publication_date": "2022-07-14"
+      },
+      {
+        "title": "tRPC v11 Documentation",
+        "url": "https://trpc.io/docs",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "Guides: Forms | Next.js",
+        "url": "https://nextjs.org/docs/app/guides/forms",
+        "publication_date": "Accessed February 2026"
+      },
+      {
+        "title": "When to Avoid JSONB in a PostgreSQL Schema — Heap Engineering",
+        "url": "https://www.heap.io/blog/when-to-avoid-jsonb-in-a-postgresql-schema",
+        "publication_date": "2024"
+      }
+    ]
+  }
+}

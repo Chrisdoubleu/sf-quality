@@ -3,6 +3,11 @@ sf-quality-db/
 sf-quality-api/
 sf-quality-app/
 
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
 # Local IDE/agent configuration
 .claude/
 

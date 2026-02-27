@@ -1,0 +1,745 @@
+{
+  "input": "Research the current best practices, leading frameworks, and architectural patterns for designing forms, data input systems, and data collection interfaces within custom-coded business applications.\nContext: Mid-size manufacturing company (~200 employees). Current technology stack: Next.js 15 (App Router), React 19, TypeScript (strict mode), shadcn/ui + Radix primitives, React Hook Form + Zod validation, TanStack Query + TanStack Table, Tailwind CSS 4, hosted on Azure App Service with Azure SQL backend and Entra ID authentication via Easy Auth. Must support audit trails, revision control, and conditional business logic. Solutions must be code-first — no low-code/no-code platforms.\nResearch the following:\n\n1. Frontend form frameworks & libraries — Compare the top 5 production-ready code-first options for complex, enterprise-grade business forms. Include React-based, Vue-based, Angular-based, and .NET/Blazor options. Evaluate specifically against React Hook Form + Zod as the baseline.\n2. Form architecture patterns — Schema-driven/dynamic forms, metadata-driven generation, multi-step wizards, and conditional logic engines. Which patterns are dominant in enterprise software and why?\n3. Backend & data layer — API patterns (REST vs. GraphQL) and database design approaches (relational, JSONB, EAV, document store) for storing data from forms whose structure evolves over time. Evaluate specifically against Azure SQL as the persistence layer.\n4. Validation architecture — How to implement layered validation (client-side, server-side, business rules engine) including cross-field, async, and conditional validation. Evaluate patterns that share Zod schemas between frontend courtesy validation and server-side authoritative validation.\n5. AI-assisted data input — Current production-ready capabilities for auto-fill, OCR/document extraction, smart defaults, and LLM-assisted form generation or data quality checks.\n6. Azure platform integration — Specific recommendations for organizations running Next.js on Azure App Service with Azure SQL and Entra ID authentication. How to leverage Azure services (Cognitive Services, Document Intelligence, Azure Functions) to extend custom form applications.\n\nRequired Output Format:\n\nSection A — Technology Comparison Matrix\nA table with these columns for each recommended technology/framework (minimum 10 entries covering all research areas):\n- Name & version\n- Category (frontend library / backend framework / database approach / validation tool / AI service)\n- Maturity level (Production-ready / Emerging / Experimental)\n- Azure stack compatibility (Native / Good / Limited)\n- Learning curve (Low / Medium / High)\n- Best suited for (specific use case)\n- Key limitation\n- Source URL\n\nSection B — Recommended Architecture\nA single recommended architecture stack for the described context, presented as:\n1. Diagram description — Describe the component layers and data flow (frontend → API → validation → persistence). Write this as a text description that could be used to create a technical diagram.\n2. Primary stack — List specific named technologies for each layer with 2-3 sentence rationale for each choice. Cover: frontend forms, validation, API layer, database/persistence, authentication integration, and Azure services.\n3. Alternative stack — Provide one complete alternative approach with explicit trade-offs noted (what you gain vs. what you lose compared to the primary stack).\n\nSection C — Pattern Deep Dives\nFor each of the top 3 most relevant architectural patterns identified:\n1. Pattern name and one-paragraph description (3-5 sentences)\n2. When to use vs. when to avoid — Specific criteria for each\n3. Real-world example — Named company or product using this pattern (with source)\n4. Implementation complexity estimate — Person-weeks for a small team (2-3 developers), broken down by major phases\n\nSection D — Build Approach Decision Matrix\nA table comparing 3 representative form complexity tiers:\n- Simple (single-step, flat data)\n- Moderate (multi-step, conditional logic, relational data)\n- Complex (dynamic schema, revision-controlled, audit-trailed)\n\nFor each: Recommended architecture pattern, estimated build effort (person-weeks), key technical risks (list 2-3), and integration points with Azure App Service / Azure SQL / Entra ID (specific services/features to leverage).\n\nSection E — Key Sources\nNumbered list of the 10 most authoritative sources consulted. For each source include: full title, URL, publication date (or 'Accessed [date]' if no publication date), and one sentence describing why this source is authoritative.",
+  "output": {
+    "technology_comparison_matrix": [
+      {
+        "name_and_version": "React Hook Form 7.71.2",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "High-performance business forms in React with large field counts, nested arrays, and complex validation UX.",
+        "key_limitation": "Not schema-first; dynamic schema-driven forms need additional architecture (field registry + renderer + metadata/rules model).",
+        "source_url": "https://www.npmjs.com/package/react-hook-form"
+      },
+      {
+        "name_and_version": "Zod 4.3.6",
+        "category": "validation tool",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Shared, type-inferred validation schemas (client courtesy + server authoritative), plus schema reuse for OpenAPI/JSON Schema generation.",
+        "key_limitation": "Zod is great for validation, but it isn't a full rules engine; complex policy logic still needs a rules layer.",
+        "source_url": "https://www.npmjs.com/package/zod"
+      },
+      {
+        "name_and_version": "@hookform/resolvers 5.2.2",
+        "category": "validation tool",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Low",
+        "best_suited_for": "Wiring Zod (and other validators) into React Hook Form cleanly, with consistent error mapping.",
+        "key_limitation": "Tight coupling at the resolver boundary means you must standardize error formats and coercion rules across client/server to avoid drift.",
+        "source_url": "https://www.npmjs.com/package/@hookform/resolvers"
+      },
+      {
+        "name_and_version": "JSON Forms 3.7.0",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "High",
+        "best_suited_for": "Large catalogs of forms that must be generated from JSON Schema + UI schema (dynamic forms, configurable layouts, rapid change) across React/Angular/Vue.",
+        "key_limitation": "Renderer customization cost is real; matching shadcn/ui look-and-feel typically requires building custom renderers and UI schema conventions.",
+        "source_url": "https://www.npmjs.com/package/@jsonforms/core"
+      },
+      {
+        "name_and_version": "Angular 21 Reactive Forms",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "High",
+        "best_suited_for": "Highly structured enterprise UIs where Angular is already standard; strong reactive patterns and form model control.",
+        "key_limitation": "Doesn't integrate with your React/Next.js stack without running a separate frontend codebase and UI system.",
+        "source_url": "https://angular.dev/guide/forms/reactive-forms"
+      },
+      {
+        "name_and_version": "@ngx-formly/core 7.1.0",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "JSON-powered dynamic forms in Angular (metadata-driven patterns similar to enterprise platforms).",
+        "key_limitation": "Angular-only; also introduces another form schema dialect you must govern to prevent untestable sprawl.",
+        "source_url": "https://github.com/ngx-formly/ngx-formly/releases"
+      },
+      {
+        "name_and_version": "Vue 3.5.28",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "High",
+        "best_suited_for": "Vue-based business apps (if your org has Vue talent) with modern component composition.",
+        "key_limitation": "Switching ecosystems is a full strategic decision (components, patterns, tooling, hiring), not just a library swap.",
+        "source_url": "https://vuejs.org/about/releases"
+      },
+      {
+        "name_and_version": "FormKit (@formkit/vue) 1.7.2",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Vue form building with a cohesive form framework (generation + validation + theming + structure).",
+        "key_limitation": "Vue-only; your existing React Hook Form + Zod investment doesn't transfer directly.",
+        "source_url": "https://npmjs.com/package/@formkit/vue"
+      },
+      {
+        "name_and_version": "ASP.NET Core Blazor (.NET 10) EditForm & validation",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "High",
+        "best_suited_for": ".NET-centric enterprises building internal line-of-business apps with C# end-to-end, including forms and validation patterns.",
+        "key_limitation": "Not aligned with your current Next.js + React stack; using it would materially increase platform surface area.",
+        "source_url": "https://learn.microsoft.com/en-us/aspnet/core/blazor/forms/validation?view=aspnetcore-10.0"
+      },
+      {
+        "name_and_version": "MudBlazor 9.0.0",
+        "category": "frontend library",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Blazor apps that need a mature component library (including inputs/forms) with consistent UX.",
+        "key_limitation": "Material-style UI defaults may not match your shadcn/Radix conventions; plus it's irrelevant unless you adopt Blazor.",
+        "source_url": "https://www.nuget.org/packages/MudBlazor"
+      },
+      {
+        "name_and_version": "NestJS 11.1.14",
+        "category": "backend framework",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Structured Node/TypeScript backend (controllers, DI, modules) when Next.js route handlers start getting too crowded.",
+        "key_limitation": "More framework weight than plain route handlers; you pay for architecture (worth it only if complexity justifies it).",
+        "source_url": "https://github.com/nestjs/nest/releases"
+      },
+      {
+        "name_and_version": "ts-rest 3.52.1",
+        "category": "backend framework",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "Medium",
+        "best_suited_for": "Contract-first REST APIs with shared types/validation across client and server (works well with Zod + OpenAPI generation).",
+        "key_limitation": "Contract discipline required; if teams bypass it, you end up with two API styles and type drift.",
+        "source_url": "https://www.npmjs.com/package/@ts-rest/core"
+      },
+      {
+        "name_and_version": "Apollo Server 5.4.0",
+        "category": "backend framework",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Good",
+        "learning_curve": "High",
+        "best_suited_for": "GraphQL for client-driven data fetching when UIs need flexible queries across many resources.",
+        "key_limitation": "GraphQL adds governance overhead (schema lifecycle, authorization per field, query cost controls) and can be overkill for CRUD-heavy internal apps.",
+        "source_url": "https://www.npmjs.com/package/@apollo/server"
+      },
+      {
+        "name_and_version": "Azure SQL Database system-versioned temporal tables",
+        "category": "database approach",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Auditability + revision history for business records (including form definitions and form submissions), with point-in-time queries.",
+        "key_limitation": "History growth is real; you must plan retention, indexing, and 'who changed what' reporting outside the raw history rows.",
+        "source_url": "https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporal-tables?view=sql-server-ver17"
+      },
+      {
+        "name_and_version": "Azure SQL JSON features (OPENJSON/ISJSON/etc.)",
+        "category": "database approach",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Hybrid relational + JSON storage for form submissions whose structure evolves (store canonical JSON; project key fields for reporting).",
+        "key_limitation": "JSON is flexible but not free: indexing strategy, validation constraints, and reporting pipelines must be designed deliberately.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/json-features?view=azuresql"
+      },
+      {
+        "name_and_version": "Auditing for Azure SQL Database",
+        "category": "database approach",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Compliance-grade database event auditing to Storage / Log Analytics / Event Hubs for investigation and anomaly review.",
+        "key_limitation": "It prioritizes DB availability and may not record all audited events under very high activity or network load — so it cannot be your only audit trail.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/auditing-overview?view=azuresql"
+      },
+      {
+        "name_and_version": "Azure AI Document Intelligence (v4.0)",
+        "category": "AI service",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "OCR + document understanding for upload-to-form workflows (invoices, packing slips, inspections, compliance documents) using REST/SDKs.",
+        "key_limitation": "Extraction confidence varies by document quality; you need a human-review loop for low-confidence fields and strong monitoring/feedback.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0"
+      },
+      {
+        "name_and_version": "Azure OpenAI structured outputs (JSON Schema)",
+        "category": "AI service",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "LLM-assisted 'map unstructured text to your form schema' with strict JSON Schema adherence (safer than free-form JSON).",
+        "key_limitation": "Still needs guardrails: schema adherence does not equal factual correctness; you must enforce server-side validation and apply human review for critical fields.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/structured-outputs?view=foundry-classic"
+      },
+      {
+        "name_and_version": "Azure Functions Runtime 4.x (Node.js 22 GA)",
+        "category": "backend framework",
+        "maturity_level": "Production-ready",
+        "azure_stack_compatibility": "Native",
+        "learning_curve": "Medium",
+        "best_suited_for": "Async workloads: OCR extraction jobs, AI enrichment, scheduled data quality checks, webhooks, background validation/reprocessing.",
+        "key_limitation": "Cold starts and dependency size can hurt; functions are best for event-driven processing, not your main transaction API.",
+        "source_url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-versions"
+      }
+    ],
+    "recommended_architecture_diagram_description": {
+      "frontend_flow": "A user opens a form page in the Next.js App Router UI (server-rendered shell + client form runtime). The client runtime fetches a Form Definition (schema + UI schema + policy rules + version) and optionally a Draft Submission. The user edits fields using a field registry (shadcn/ui-based inputs), with client-side courtesy validation via React Hook Form + Zod. On save/submit, the client calls a backend Form Submission API (BFF) over HTTPS, sending the form version and payload.",
+      "api_layer_flow": "The API performs authoritative validation (Zod + business policy evaluation) and writes with a transaction to Azure SQL: (a) the current submission row, (b) history via temporal tables, and (c) an append-only domain audit event. Authentication is handled by App Service built-in authentication (Easy Auth) against Entra ID; the API trusts only validated identity headers/tokens and enforces authorization (roles/groups) per form and per operation.",
+      "data_persistence_flow": "Azure SQL serves as the system of record using a hybrid relational + JSON storage model for evolving form payloads. The canonical submission payload is stored as JSON (for forward compatibility) and a small set of high-value fields are projected into relational columns (for reporting, joins, constraints, and indexing). Azure SQL JSON functions (ISJSON/OPENJSON/etc.) and constraints keep payloads well-formed, with indexes on projected fields or computed columns for actual query patterns.",
+      "background_processing_flow": "For AI-assisted entry, the user uploads a document (scan/photo/PDF). The API stores the file in Blob Storage and enqueues a message; an Azure Function consumes the queue and calls Document Intelligence to extract text/fields/tables and returns extraction results + confidence. Optionally, the Function calls Azure OpenAI structured outputs to map extracted text into your target JSON Schema, producing a suggested form payload that is stored as a draft suggestion and presented back to the user for review before submission.",
+      "observability_flow": "App telemetry (frontend/server/API/functions) goes to Application Insights with correlation IDs passed through requests. Azure SQL Auditing streams database-level events to Log Analytics/Event Hubs/Storage for compliance visibility.",
+      "security_flow": "Authentication is handled by App Service built-in authentication (Easy Auth) against Entra ID. The API trusts only validated identity headers/tokens and enforces authorization (roles/groups) per form and per operation. Use managed identity for downstream Azure resources wherever possible (SQL, Key Vault, Storage) to avoid password/secrets sprawl."
+    },
+    "primary_stack_recommendation": [
+      {
+        "layer": "Frontend Forms",
+        "technology": "Next.js 15 (App Router) + React 19 + TypeScript strict + React Hook Form 7.71.2 + shadcn/ui",
+        "rationale": "This is the right baseline because it is performant at scale and aligns with your existing component primitives, so you keep one UI system and one mental model. The key architectural add-on is a field registry + form runtime so you can handle complex and dynamic form definitions without devolving into one-off forms."
+      },
+      {
+        "layer": "Validation",
+        "technology": "Zod 4.3.6 as single schema source, shared between client and server",
+        "rationale": "Client validation exists for UX, but the server re-validates everything (including conditional rules and async checks) to remain authoritative. If you need validator portability later, Standard Schema is emerging as a cross-library interface, but you can adopt it incrementally without abandoning Zod."
+      },
+      {
+        "layer": "API Layer",
+        "technology": "Next.js Route Handlers (BFF style) + Azure Functions 4.x for async/long-running work",
+        "rationale": "This split is pragmatic: you keep your latency-sensitive writes close to the app, and push variable-duration tasks to event-driven compute. If/when your API grows beyond a clean BFF, migrate the API layer to NestJS 11.x (same language, clearer modularity) rather than adding a second backend ecosystem prematurely."
+      },
+      {
+        "layer": "Database / Persistence",
+        "technology": "Azure SQL with hybrid relational + JSON storage model",
+        "rationale": "Store the canonical submission payload as JSON (for forward compatibility) and project a small set of high-value fields into relational columns (for reporting, joins, constraints, and indexing). Use Azure SQL JSON functions (ISJSON/OPENJSON/etc.) and constraints to keep payloads well-formed, and add indexes on projected fields or computed columns for the queries you actually run."
+      },
+      {
+        "layer": "Authentication Integration",
+        "technology": "Entra ID via App Service built-in authentication (Easy Auth) + Managed Identity",
+        "rationale": "This is the cleanest fit for your App Service hosting because it centralizes sign-in and token handling at the platform edge, and your app focuses on authorization decisions (roles/groups, form-level permissions, record-level security). Use managed identity for downstream Azure resources wherever possible (SQL, Key Vault, Storage) to avoid password/secrets sprawl."
+      },
+      {
+        "layer": "Azure Services",
+        "technology": "Azure Document Intelligence + Azure OpenAI structured outputs + Azure Functions + Application Insights",
+        "rationale": "Document Intelligence handles extraction (OCR + tables + key-value pairs + custom models) and Azure OpenAI structured outputs handle schema-constrained mapping and data quality checks. In production, make the workflow confidence-aware: auto-fill high-confidence fields, flag low-confidence fields, and require user attestation for critical fields (e.g., safety incidents, QA holds)."
+      }
+    ],
+    "alternative_stack_recommendation": {
+      "name": "ASP.NET Core 10 minimal APIs backend with .NET validation ecosystem",
+      "description": "Keep the same Next.js frontend, but build the backend as ASP.NET Core 10 minimal APIs with either REST + OpenAPI (first-class tooling) or GraphQL (Hot Chocolate), using FluentValidation for business validation and a .NET-based rules engine where appropriate, still persisting to Azure SQL with temporal tables/auditing.",
+      "gains": "A very mature enterprise backend ecosystem (profiling, auth middleware patterns, long-lived governance norms) and strong developer tooling around OpenAPI and production diagnostics. You also gain access to .NET-native validation and rule frameworks that many enterprise teams already understand.",
+      "losses": "The simplicity of having one primary language/runtime across the stack. In a 200-person company, that matters: two backend stacks tends to create two standards, duplicated deployment skills, and slower iteration unless you already have deep .NET strength. You also add operational surface area without necessarily improving form UX, because your frontend still needs the same schema/policy/runtime architecture."
+    },
+    "architectural_pattern_deep_dives": [
+      {
+        "pattern_name": "Metadata-Driven Schema Forms (Schema + UI Schema + Versioning)",
+        "description": "This pattern treats each form as data: a versioned definition containing a schema (field types, requiredness, constraints), a UI schema (layout, grouping, stepper structure), and optional policies/rules. The runtime renders forms from those definitions rather than hardcoding each form in React components. In enterprise software, this is dominant when form catalogs grow large and the business demands frequent changes without rewriting UI code — because it turns 'build a new form' into 'publish a new versioned definition.'",
+        "when_to_use": "Use when you have (a) many forms, (b) frequent changes, (c) a need for version-aware history ('what did the user see when they submitted?'), and (d) governance requirements (approved field types, consistent labels, consistent validation semantics).",
+        "when_to_avoid": "Avoid when you have only a handful of forms that rarely change, or where UI interaction is highly bespoke (complex canvases, non-standard widgets) because the schema abstraction becomes friction and you'll end up escaping into custom code constantly.",
+        "real_world_example": "Salesforce explicitly describes metadata-driven design as a core architectural principle, where applications are collections of metadata that control behavior and user experience (source: architect.salesforce.com).",
+        "implementation_complexity_estimate": {
+          "total_person_weeks": "24-40",
+          "phases": [
+            {
+              "phase_name": "Form definition model + storage (versioning, publish workflow, migrations)",
+              "person_weeks": "6-10"
+            },
+            {
+              "phase_name": "Renderer runtime (field registry, layout engine, repeatable sections, accessibility)",
+              "person_weeks": "8-14"
+            },
+            {
+              "phase_name": "Policy/rule hooks (visibility/requiredness/state transitions; server parity)",
+              "person_weeks": "4-8"
+            },
+            {
+              "phase_name": "Admin tooling MVP (create/edit/publish definitions; diff/rollback)",
+              "person_weeks": "4-6"
+            },
+            {
+              "phase_name": "Hardening (tests, performance, telemetry, upgrade strategy)",
+              "person_weeks": "2-4"
+            }
+          ]
+        }
+      },
+      {
+        "pattern_name": "Policy-Driven Conditional Logic (Client Guidance + Server Authority)",
+        "description": "This pattern separates 'what should happen' (policies) from 'how the UI is built' (components). Policies can define when fields become required, visible, read-only, or auto-populated based on other values, and the same policy model is enforced server-side for correctness. In enterprise environments, this is dominant because conditional business logic changes constantly — and if it's embedded as scattered if statements across UI components, it becomes untestable and risky to change.",
+        "when_to_use": "Use when conditionality is pervasive (e.g., compliance workflows, safety forms, QA nonconformance, maintenance procedures) and when policy changes must be audited and versioned.",
+        "when_to_avoid": "Avoid if conditional logic is minimal, or if every rule is truly domain-code-level and must be expressed as deterministic code (in which case, keep rules in code but still centralize them).",
+        "real_world_example": "ServiceNow UI policies dynamically change form behavior (mandatory, read-only, hide/show) and are positioned as a performant way to implement form behavior rules (source: servicenow.com docs).",
+        "implementation_complexity_estimate": {
+          "total_person_weeks": "12-22",
+          "phases": [
+            {
+              "phase_name": "Policy model design (operators, precedence, execution order, safe expression language)",
+              "person_weeks": "3-5"
+            },
+            {
+              "phase_name": "Client runtime integration (reactive evaluation, dependency graph, UX messaging)",
+              "person_weeks": "4-7"
+            },
+            {
+              "phase_name": "Server enforcement (authoritative evaluation + error format + audit hooks)",
+              "person_weeks": "3-6"
+            },
+            {
+              "phase_name": "Policy authoring UI + testing harness (playground, fixtures, regression tests)",
+              "person_weeks": "2-4"
+            }
+          ]
+        }
+      },
+      {
+        "pattern_name": "Versioned Records with Built-In History (Temporal Tables + Application Audit Events)",
+        "description": "This pattern combines database-managed row history with app-managed audit narratives. Temporal tables provide automatic 'previous row versions' for point-in-time recovery and investigation, while the application emits append-only audit events that capture business meaning (who submitted, who approved, why it was rejected, which policy triggered). In regulated enterprises, this is dominant because it provides both forensic traceability (history rows) and operational traceability (business audit events).",
+        "when_to_use": "Use when audit and revision history are requirements (not nice-to-have), when form definitions evolve over time, and when you need to reproduce historical truth ('what was the record on Jan 3?').",
+        "when_to_avoid": "Avoid relying on temporal tables alone when you need workflow-level audit (approvals, attestations, reason codes), because temporal history doesn't capture 'why' — it captures 'what changed.'",
+        "real_world_example": "Microsoft documents system-versioned temporal tables as keeping a full history of data changes and enabling point-in-time analysis, and Azure SQL Auditing as emitting database event logs to Storage/Log Analytics/Event Hubs (source: learn.microsoft.com).",
+        "implementation_complexity_estimate": {
+          "total_person_weeks": "14-26",
+          "phases": [
+            {
+              "phase_name": "Schema & migration work (temporal tables, retention/indexing strategy, diffs)",
+              "person_weeks": "5-8"
+            },
+            {
+              "phase_name": "Audit event model (event types, correlation IDs, PII policy, storage)",
+              "person_weeks": "3-6"
+            },
+            {
+              "phase_name": "Authorization + identity attribution (who/what/when, Entra ID claims mapping)",
+              "person_weeks": "2-4"
+            },
+            {
+              "phase_name": "Reporting & investigation UX (timeline views, as-of views, export)",
+              "person_weeks": "3-6"
+            },
+            {
+              "phase_name": "Compliance hardening (log retention, monitoring, incident playbooks)",
+              "person_weeks": "1-2"
+            }
+          ]
+        }
+      }
+    ],
+    "build_approach_decision_matrix": [
+      {
+        "complexity_tier": "Simple (single-step, flat data)",
+        "recommended_architecture_pattern": "Component-first forms (RHF + Zod) with thin API and standard relational tables.",
+        "estimated_build_effort": "3-6 person-weeks",
+        "key_technical_risks": [
+          "Validation drift if server re-validation is skipped",
+          "Authorization gaps if API trusts client state",
+          "Weak audit narrative if you only log 'updated row'"
+        ],
+        "azure_integration_points": "App Service Easy Auth for sign-in and protected routes; Azure SQL basic tables + optional lightweight auditing; Application Insights for request tracing and exceptions."
+      },
+      {
+        "complexity_tier": "Moderate (multi-step, conditional logic, relational data)",
+        "recommended_architecture_pattern": "Policy-driven conditional logic + persisted drafts + hybrid relational/JSON payload model.",
+        "estimated_build_effort": "10-20 person-weeks",
+        "key_technical_risks": [
+          "Rule precedence bugs (conflicting conditions)",
+          "Draft/resume consistency (partial data, step gating)",
+          "Reporting pain if JSON payload isn't projected/indexed intentionally"
+        ],
+        "azure_integration_points": "Azure SQL JSON functions to validate and transform payloads (ISJSON/OPENJSON); temporal tables for submission history 'as-of' views; App Service Easy Auth with group/role-based authorization; Azure Functions (optional) for async validations/enrichment."
+      },
+      {
+        "complexity_tier": "Complex (dynamic schema, revision-controlled, audit-trailed)",
+        "recommended_architecture_pattern": "Metadata-driven schema forms (schema + UI schema + versioning) + temporal history + externalized auditing.",
+        "estimated_build_effort": "24-45 person-weeks",
+        "key_technical_risks": [
+          "Schema versioning mistakes (breaking old submissions, inability to reproduce historical UI)",
+          "Governance overhead (uncontrolled schema sprawl)",
+          "Audit gaps if you rely only on DB auditing under load"
+        ],
+        "azure_integration_points": "Temporal tables for full row history across form definitions and submissions; Azure SQL Auditing to Storage/Log Analytics/Event Hubs (supplementary evidence stream); Entra ID via Easy Auth for identity and protected access; Document Intelligence + Azure Functions for document-driven data entry pipelines; Azure OpenAI structured outputs for schema-constrained AI assistance."
+      }
+    ],
+    "key_sources": [
+      {
+        "title": "Authentication and Authorization — Azure App Service (Easy Auth)",
+        "url": "https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization",
+        "publication_date": "Nov 4, 2025",
+        "why_authoritative": "Official platform documentation describing App Service built-in authentication/authorization behavior and configuration expectations."
+      },
+      {
+        "title": "Temporal Tables — SQL Server (applies to Azure SQL Database)",
+        "url": "https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporal-tables?view=sql-server-ver17",
+        "publication_date": "Nov 18, 2025",
+        "why_authoritative": "Canonical documentation for system-versioned temporal tables, including how full history is captured and queried for point-in-time analysis."
+      },
+      {
+        "title": "Auditing for Azure SQL Database and Azure Synapse Analytics",
+        "url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/auditing-overview?view=azuresql",
+        "publication_date": "Jan 21, 2026",
+        "why_authoritative": "Official Azure SQL auditing guidance covering supported sinks (Storage/Log Analytics/Event Hubs) and operational caveats under load."
+      },
+      {
+        "title": "Work with JSON Data — Azure SQL Database & Azure SQL Managed Instance",
+        "url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/json-features?view=azuresql",
+        "publication_date": "Jul 24, 2025",
+        "why_authoritative": "Microsoft's official reference for JSON constraints/functions (ISJSON/OPENJSON/etc.) used to implement hybrid relational/JSON persistence in Azure SQL."
+      },
+      {
+        "title": "What is Azure Document Intelligence in Foundry Tools?",
+        "url": "https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/overview?view=doc-intel-4.0.0",
+        "publication_date": "Accessed Feb 26, 2026",
+        "why_authoritative": "Official service overview describing extraction capabilities (OCR, tables, key/value pairs) and custom model support for production document workflows."
+      },
+      {
+        "title": "How to use structured outputs with Azure OpenAI (JSON Schema)",
+        "url": "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/structured-outputs?view=foundry-classic",
+        "publication_date": "Accessed Feb 26, 2026",
+        "why_authoritative": "Official guidance explaining schema-constrained model outputs for reliable extraction and workflow automation using JSON Schema."
+      },
+      {
+        "title": "Best practices for RESTful web API design — Azure Architecture Center",
+        "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design",
+        "publication_date": "Accessed Feb 26, 2026",
+        "why_authoritative": "Microsoft's architecture guidance on REST principles (loose coupling, platform independence), which directly informs API design trade-offs in enterprise systems."
+      },
+      {
+        "title": "Support for GraphQL APIs — Azure API Management",
+        "url": "https://learn.microsoft.com/en-us/azure/api-management/graphql-apis-overview",
+        "publication_date": "Sep 30, 2025",
+        "why_authoritative": "Microsoft's practical explanation of GraphQL vs REST goals and how GraphQL is operationalized and governed in Azure API ecosystems."
+      },
+      {
+        "title": "The Salesforce Platform — metadata-driven design principle",
+        "url": "https://architect.salesforce.com/docs/architect/fundamentals/guide/platform-transformation",
+        "publication_date": "Accessed Feb 26, 2026",
+        "why_authoritative": "First-party architecture guidance from Salesforce explicitly describing metadata-driven design as a core principle — directly relevant to enterprise dynamic form architecture."
+      },
+      {
+        "title": "Using UI policies — dynamic form behavior rules (ServiceNow)",
+        "url": "https://www.servicenow.com/docs/r/platform-administration/t_CreateAUIPolicy.html",
+        "publication_date": "Updated July 31, 2025",
+        "why_authoritative": "First-party documentation from ServiceNow describing declarative policy-based control of form behavior, a common enterprise pattern for conditional logic."
+      }
+    ]
+  },
+  "outputBasis": [],
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "technology_comparison_matrix": {
+        "type": "array",
+        "minItems": 10,
+        "items": {
+          "type": "object",
+          "properties": {
+            "name_and_version": {
+              "type": "string",
+              "description": "The name and current version of the technology or framework."
+            },
+            "category": {
+              "type": "string",
+              "description": "The category of the technology.",
+              "enum": [
+                "frontend library",
+                "backend framework",
+                "database approach",
+                "validation tool",
+                "AI service",
+                "form architecture pattern"
+              ]
+            },
+            "maturity_level": {
+              "type": "string",
+              "enum": [
+                "Production-ready",
+                "Emerging",
+                "Experimental"
+              ]
+            },
+            "azure_stack_compatibility": {
+              "type": "string",
+              "enum": [
+                "Native",
+                "Good",
+                "Limited"
+              ]
+            },
+            "learning_curve": {
+              "type": "string",
+              "enum": [
+                "Low",
+                "Medium",
+                "High"
+              ]
+            },
+            "best_suited_for": {
+              "type": "string"
+            },
+            "key_limitation": {
+              "type": "string"
+            },
+            "source_url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name_and_version",
+            "category",
+            "maturity_level",
+            "azure_stack_compatibility",
+            "learning_curve",
+            "best_suited_for",
+            "key_limitation",
+            "source_url"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "recommended_architecture_diagram_description": {
+        "type": "object",
+        "properties": {
+          "frontend_flow": {
+            "type": "string"
+          },
+          "api_layer_flow": {
+            "type": "string"
+          },
+          "data_persistence_flow": {
+            "type": "string"
+          },
+          "background_processing_flow": {
+            "type": "string"
+          },
+          "observability_flow": {
+            "type": "string"
+          },
+          "security_flow": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "frontend_flow",
+          "api_layer_flow",
+          "data_persistence_flow",
+          "background_processing_flow",
+          "observability_flow",
+          "security_flow"
+        ],
+        "additionalProperties": false
+      },
+      "primary_stack_recommendation": {
+        "type": "array",
+        "minItems": 6,
+        "items": {
+          "type": "object",
+          "properties": {
+            "layer": {
+              "type": "string",
+              "enum": [
+                "Frontend Forms",
+                "Validation",
+                "API Layer",
+                "Database / Persistence",
+                "Authentication Integration",
+                "Azure Services"
+              ]
+            },
+            "technology": {
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "layer",
+            "technology",
+            "rationale"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "alternative_stack_recommendation": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "gains": {
+            "type": "string"
+          },
+          "losses": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "gains",
+          "losses"
+        ],
+        "additionalProperties": false
+      },
+      "architectural_pattern_deep_dives": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "properties": {
+            "pattern_name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "when_to_use": {
+              "type": "string"
+            },
+            "when_to_avoid": {
+              "type": "string"
+            },
+            "real_world_example": {
+              "type": "string"
+            },
+            "implementation_complexity_estimate": {
+              "type": "object",
+              "properties": {
+                "total_person_weeks": {
+                  "type": "string"
+                },
+                "phases": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "phase_name": {
+                        "type": "string"
+                      },
+                      "person_weeks": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "phase_name",
+                      "person_weeks"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "total_person_weeks",
+                "phases"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "pattern_name",
+            "description",
+            "when_to_use",
+            "when_to_avoid",
+            "real_world_example",
+            "implementation_complexity_estimate"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "build_approach_decision_matrix": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "properties": {
+            "complexity_tier": {
+              "type": "string",
+              "enum": [
+                "Simple (single-step, flat data)",
+                "Moderate (multi-step, conditional logic, relational data)",
+                "Complex (dynamic schema, revision-controlled, audit-trailed)"
+              ]
+            },
+            "recommended_architecture_pattern": {
+              "type": "string"
+            },
+            "estimated_build_effort": {
+              "type": "string"
+            },
+            "key_technical_risks": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 3,
+              "items": {
+                "type": "string"
+              }
+            },
+            "azure_integration_points": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "complexity_tier",
+            "recommended_architecture_pattern",
+            "estimated_build_effort",
+            "key_technical_risks",
+            "azure_integration_points"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "key_sources": {
+        "type": "array",
+        "minItems": 10,
+        "maxItems": 10,
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "publication_date": {
+              "type": "string"
+            },
+            "why_authoritative": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "url",
+            "publication_date",
+            "why_authoritative"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "technology_comparison_matrix",
+      "recommended_architecture_diagram_description",
+      "primary_stack_recommendation",
+      "alternative_stack_recommendation",
+      "architectural_pattern_deep_dives",
+      "build_approach_decision_matrix",
+      "key_sources"
+    ],
+    "additionalProperties": false
+  }
+}
