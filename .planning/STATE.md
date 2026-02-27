@@ -47,7 +47,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+1. **Rules engine and decision platform architecture for unified operations system** (planning) — Evaluate Kogito/Drools/jBPM as enterprise decision platform; validation spike needed before commitment. Impacts Phase 1 adjudication Decisions 1, 2, 6, 9. See `.planning/todos/pending/2026-02-27-rules-engine-and-decision-platform-architecture-for-unified-operations-system.md`
 
 ### Blockers/Concerns
 
